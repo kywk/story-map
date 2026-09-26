@@ -37,6 +37,8 @@ jobs:
         run: npm install --global pnpm@12.6.0
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - run: pnpm install --frozen-lockfile
       - name: Build the site and its dependencies
         env:
