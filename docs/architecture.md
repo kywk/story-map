@@ -11,7 +11,7 @@ reference) and the Docusaurus/Remark publishing path.
 ```text
 story-map/
   package.json                 pnpm workspace root scripts
-  pnpm-workspace.yaml          packages/* and examples/*
+  pnpm-workspace.yaml          packages/*, examples/*, and site
   tsconfig.base.json           shared strict TS options
   tsconfig.json                no-emit workspace analysis; source paths for unbuilt checkouts
   SPEC.md AGENTS.md README.md  contract, working agreement, overview
@@ -25,6 +25,13 @@ story-map/
     basic.md                   sample story-map document
     react/                     standalone Vite app
     docusaurus/                config snippets, client plugin, theme bridge
+  site/                        bilingual landing page (Vite + React, published)
+    index.html                 Vite entry and font/meta setup
+    public/favicon.svg
+    src/App.tsx                sections, language switch, live examples
+    src/i18n.ts                en/zh copy and language detection
+    src/stories.ts             localised example StoryMapConfigs
+    src/styles.css             cartographic design tokens and layout
 ```
 
 ## 2. Dependency graph
@@ -266,7 +273,17 @@ pnpm build            # tsc -b for libraries, esbuild for the plugin, vite for t
 pnpm dev:obsidian     # build core + react, then obsidian dev (single build, not watch)
 pnpm --filter @story-map/example-react dev
 pnpm --filter @story-map/obsidian-story-map build
+pnpm --filter @story-map/site dev        # landing page at http://127.0.0.1:5174
+pnpm --filter @story-map/site build      # static output in site/dist
 ```
+
+The landing page is a private workspace package (`@story-map/site`). It imports
+`story-map-core` and `react-story-map` through the workspace and renders the shared
+component for several live examples, so the normal `pnpm build` builds it too. Language is
+selected from `?lang=en|zh` (falling back to `navigator.language`) and reflected into the
+URL. `.github/workflows/pages.yml` builds `@story-map/site` with its dependencies and
+publishes `site/dist` through GitHub Actions Pages (`SITE_BASE` defaults to the repository
+name); no `gh-pages` branch is used.
 
 Plugin artifacts land in `packages/obsidian-story-map/dist/` as `main.js`, `manifest.json`,
 `styles.css`, `versions.json`, and `THIRD_PARTY_NOTICES.txt`; install the JavaScript,
@@ -308,7 +325,7 @@ partial release retry. Account-side Trusted Publishers must be configured separa
 | `packages/obsidian-story-map/src/main.test.ts` | scoped routing, explicit Markdown mode and wrapper ownership on disable |
 | `packages/remark-story-map/src/index.test.ts` | fence transform, document flag, `VaultIndex`, folder discovery, `noteDisplay`, source-relative media, scan exclusions, host route resolver |
 
-The examples have no automated tests; verify them manually.
+The examples and the landing site have no automated tests; verify them manually.
 
 ## 11. Where to change what
 
@@ -320,6 +337,7 @@ The examples have no automated tests; verify them manually.
 | Obsidian note/media resolution | `obsidian-story-map/src/resolver.ts` |
 | Remark/Docusaurus pipeline | `remark-story-map/src/index.ts`, `vault.ts`, `client.tsx` |
 | Docusaurus host config / theme bridge | `examples/docusaurus/*` (site-owned) |
+| Landing page content or design | `site/src/*`; examples in `site/src/stories.ts` |
 | A new defaultable setting | core schema + defaults, `settings-data.ts`, `settings-tab.ts`, parser tests |
 
 ## 12. History

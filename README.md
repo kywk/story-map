@@ -7,6 +7,13 @@ A small, reusable Leaflet-based StoryMap stack. One Markdown source and one stan
 - an Obsidian plugin (file-backed full-leaf view);
 - a Docusaurus site via a Remark build-time transform and browser client.
 
+## Website
+
+A bilingual project site (English / 繁體中文) lives in `site/` and renders several live
+examples with the shared renderer. It is published to GitHub Pages from `main` by
+`.github/workflows/pages.yml` at <https://kywk.github.io/story-map/>; run it locally with
+`pnpm --filter @story-map/site dev`.
+
 ## Geo Story Map for Obsidian
 
 Turn Markdown notes into geographic stories with an interactive map and slides.

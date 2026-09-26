@@ -1,6 +1,6 @@
 ---
 name: docs-maintenance
-description: Use when reorganizing or updating this project's documentation, including README, SPEC, AGENTS, docs/architecture, onboarding docs, handoffs, and implementation plans. Covers trimming top-level docs, archiving plans under docs/history/<YYYY-MM-DD>-<slug>/, deleting merged development-process notes, and keeping docs in sync with the code.
+description: Use when reorganizing or updating this project's documentation or landing site, including README, SPEC, AGENTS, docs/architecture, onboarding docs, handoffs, implementation plans, and the bilingual site/ pages. Covers trimming top-level docs, archiving plans under docs/history/<YYYY-MM-DD>-<slug>/, deleting merged development-process notes, keeping docs in sync with the code, asking whether the website needs a matching update, and loading the frontend-design skill for site changes.
 ---
 
 # Docs maintenance
@@ -19,6 +19,7 @@ agent to onboard from without reading the source first.
 | `docs/README.md` | Docs index and documentation rules | Keep the table current. |
 | `docs/history/<YYYY-MM-DD>-<slug>/` | Archived plans and background | Append-only. Never edit archived files. |
 | Package `README.md` | Package-specific usage only | Keep scoped to that package. |
+| `site/` | Bilingual landing page (English / 繁體中文) | User-facing copy lives in `site/src/i18n.ts`; examples in `site/src/stories.ts`. Ask before changing it; load `frontend-design` for layout or visual work. |
 
 ## Rules
 
@@ -34,7 +35,13 @@ agent to onboard from without reading the source first.
 6. **Same-change updates.** When behavior changes, update the matching doc in the same
    change. A new defaultable config key, for example, touches `SPEC.md` and
    `docs/architecture.md`.
-7. **Prefer a short table or list** over prose paragraphs of enumeration.
+7. **Ask about the website first.** When a change touches user-facing behavior, features,
+   package names, versions, or onboarding, ask the user whether `site/` should be updated in
+   the same change before assuming yes or no. Do not silently edit site copy.
+8. **Load `frontend-design` for site work.** When the user agrees to update the website,
+   invoke the `frontend-design` skill before editing layout, copy, or the visual system, and
+   keep the existing cartographic tokens and structure in `site/src/styles.css`.
+9. **Prefer a short table or list** over prose paragraphs of enumeration.
 
 ## Workflow
 
@@ -46,7 +53,9 @@ agent to onboard from without reading the source first.
    rg -n "implementation-plan|handoff|conversation-summary|<old-filename>" --glob '!node_modules' .
    ```
 
-2. Archive superseded plans and remove merged process notes:
+2. Ask the user whether the website needs a matching update (rule 7). Note the answer
+   before editing so site copy is never changed by assumption.
+3. Archive superseded plans and remove merged process notes:
 
    ```bash
    mkdir -p docs/history/<YYYY-MM-DD>-<slug>
@@ -54,16 +63,20 @@ agent to onboard from without reading the source first.
    git rm docs/<handoff>.md
    ```
 
-3. Rewrite the affected docs so each one keeps only its role from the table above. Verify
+4. Rewrite the affected docs so each one keeps only its role from the table above. Verify
    claims against `docs/architecture.md`, package `src/`, and `package.json` scripts.
-4. Re-check for broken references and leftover process files.
-5. Update `docs/README.md` if the doc set changed.
-6. Run the repository checks if any code-adjacent claim changed:
+5. Re-check for broken references and leftover process files.
+6. Update `docs/README.md` if the doc set changed.
+7. If the website update was agreed, load the `frontend-design` skill, then update
+   `site/src/i18n.ts` (copy) and `site/src/stories.ts` (examples) as needed, keeping the
+   existing design system.
+8. Run the repository checks if any code-adjacent claim changed:
 
    ```bash
    pnpm typecheck
    pnpm test
    pnpm build
+   pnpm --filter @story-map/site build   # only when site/ changed
    ```
 
 ## Reuse in another project
