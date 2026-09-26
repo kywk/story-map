@@ -303,6 +303,34 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
 
+  site:
+    dependencies:
+      '@story-map/react-story-map':
+        specifier: workspace:*
+        version: link:../packages/react-story-map
+      '@story-map/story-map-core':
+        specifier: workspace:*
+        version: link:../packages/story-map-core
+      leaflet:
+        specifier: ^1.9.4
+        version: 1.9.4
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: 19.3.0
+        version: 19.3.0(react@19.3.0)
+    devDependencies:
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      vite:
+        specifier: ^8.3.1
+        version: 8.3.1(@types/node@24.13.6)(esbuild@0.27.7)
+
 packages:
 
   '@asamuzakjp/css-color@3.2.0':

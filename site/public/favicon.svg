@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Geo Story Map">
+  <rect width="32" height="32" rx="7" fill="#17211c" />
+  <path
+    d="M7 23.5 C12 23.5 10.5 12 16 12 C21.5 12 20 19.5 25 19.5"
+    fill="none"
+    stroke="#e7ebe3"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <circle cx="7" cy="23.5" r="2.6" fill="#e24e1b" />
+  <circle cx="16" cy="12" r="2.6" fill="#e7ebe3" />
+</svg>
