@@ -1,8 +1,8 @@
 # Releasing
 
 The three npm libraries release together; the bundled Obsidian plugin releases independently.
-All three npm libraries are published at `0.1.1` on `latest` with GitHub OIDC provenance.
-Release `0.2.0` is prepared for both lines: the three libraries and the Obsidian plugin.
+All three npm libraries are published at `0.2.0` on `latest` with GitHub OIDC provenance, and
+the Obsidian plugin is released at `0.2.0` on GitHub.
 Published versions are immutable; choose a new version for the next release.
 Obsidian submission is deferred.
 
@@ -30,6 +30,8 @@ on 2026-09-25 by `kywk`, still reference `story-map-monorepo`, and differ from c
 artifacts. Release `0.1.1` corrected the repository metadata and includes the new docs.
 The owner confirmed all three publishers were saved, and GitHub OIDC publication
 succeeded in [run 36235091030](https://github.com/kywk/story-map/actions/runs/36235091030).
+Release `0.2.0` published all three libraries through the same workflow in
+[run 36356915761](https://github.com/kywk/story-map/actions/runs/36356915761).
 Do not push `npm-v0.1.0`: immutable versions cannot be replaced.
 
 The local npm account resolves to `kywk`, but trust-list queries returned HTTP 403 with

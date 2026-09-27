@@ -1,7 +1,7 @@
 # Geo Story Map community submission
 
-The `0.2.0` release is prepared with the three required assets; publish the matching tag
-before submission. Community submission/review status is still pending;
+The [public 0.2.0 release](https://github.com/kywk/story-map/releases/tag/0.2.0) is ready
+with verified download assets. Community submission/review status is still pending;
 the plugin is not claimed to be available through the in-app directory yet.
 
 Plugin: **Geo Story Map**, ID `geo-story-map`, version `0.2.0`. Desktop only; minimum
