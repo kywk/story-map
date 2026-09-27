@@ -226,6 +226,16 @@ This keeps panel, text, border, buttons, and links readable in light and dark
 themes. Dynamic light/dark tile provider switching is deferred; the goal is
 readable, theme-compatible StoryMap chrome/panel content.
 
+## Full-page view
+
+A full-viewport map (Obsidian's "Open as Story Map") with a Markdown toggle is
+**not** a package option. It manipulates Docusaurus theme DOM, collapses the
+docs sidebar, listens to the route lifecycle, and needs host CSS, so it stays in
+the host site. The transform already stamps document hosts with
+`data-story-map-document="true"`; a small host client module reads that. See
+[`../../docs/docusaurus-full-page.md`](../../docs/docusaurus-full-page.md) and
+`examples/docusaurus/story-map-view.js`.
+
 ## How the pipeline fits together
 
 ```text

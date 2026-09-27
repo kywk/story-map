@@ -261,6 +261,11 @@ story-map fence
   without duplicate mounts or leaked React roots.
 - Theme adaptation lives in a host CSS bridge (`examples/docusaurus/story-map-theme.css`)
   that maps Infima variables onto the renderer's `--story-map-*` variables.
+- A full-page view (Open as Story Map, with a Markdown toggle) is host UI, not a package
+  option: it targets Docusaurus theme DOM/sidebar, the route lifecycle, and host CSS. The
+  transform only stamps `data-story-map-document="true"`; see
+  [`docusaurus-full-page.md`](docusaurus-full-page.md) and
+  `examples/docusaurus/story-map-view.js`.
 
 ## 9. Commands
 
@@ -337,6 +342,7 @@ The examples and the landing site have no automated tests; verify them manually.
 | Obsidian note/media resolution | `obsidian-story-map/src/resolver.ts` |
 | Remark/Docusaurus pipeline | `remark-story-map/src/index.ts`, `vault.ts`, `client.tsx` |
 | Docusaurus host config / theme bridge | `examples/docusaurus/*` (site-owned) |
+| Docusaurus full-page map view | `examples/docusaurus/story-map-view.js` + `story-map-full-page.css`; see `docs/docusaurus-full-page.md` |
 | Landing page content or design | `site/src/*`; examples in `site/src/stories.ts` |
 | A new defaultable setting | core schema + defaults, `settings-data.ts`, `settings-tab.ts`, parser tests |
 

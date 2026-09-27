@@ -114,6 +114,10 @@ client mounts the shared renderer. Configure it with `vaultRoot`, `assetBase`, a
 `resolveNoteHref` route callback. See `packages/remark-story-map/README.md` and
 `examples/docusaurus/`.
 
+A full-page map (Open as Story Map, with a Markdown toggle) is deliberately host UI rather
+than a package option; to add it to a site, follow
+[docs/docusaurus-full-page.md](docs/docusaurus-full-page.md).
+
 ## Design rule
 
 `react-story-map` must never import Obsidian or Docusaurus APIs. Platform adapters resolve

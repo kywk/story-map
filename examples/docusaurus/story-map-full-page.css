@@ -1,0 +1,83 @@
+/*
+ * OPTIONAL host stylesheet: toggle + full-page StoryMap view.
+ *
+ * Load it through the Docusaurus theme `customCss` array together with the
+ * theme bridge (`story-map-theme.css`). This is host CSS: it targets Docusaurus
+ * theme class names on purpose, so it stays outside @story-map/remark-story-map.
+ * See docs/docusaurus-full-page.md.
+ */
+
+.story-map-toggle {
+  position: fixed;
+  top: calc(var(--ifm-navbar-height, 3.75rem) + 12px);
+  right: 16px;
+  z-index: 300;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 999px;
+  background: var(--ifm-background-surface-color);
+  color: var(--ifm-font-color-base);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.story-map-toggle:hover,
+.story-map-toggle:focus-visible {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+  outline: none;
+}
+
+/* Full-page view: navbar + collapsible docs sidebar are kept. */
+body.story-map-view-active {
+  overflow: hidden;
+}
+
+/* Drop only the page furniture that would waste map space or steal focus. */
+body.story-map-view-active .theme-doc-toc-desktop,
+body.story-map-view-active .theme-doc-toc-mobile,
+body.story-map-view-active .theme-doc-breadcrumbs,
+body.story-map-view-active .theme-doc-footer,
+body.story-map-view-active .pagination-nav,
+body.story-map-view-active [class*="backToTopButton"],
+body.story-map-view-active .theme-doc-markdown > :not(.story-map-host) {
+  display: none !important;
+}
+
+/* Sidebar sits above the map so its collapse rail / expanded menu stay usable. */
+body.story-map-view-active .theme-doc-sidebar-container {
+  position: relative;
+  z-index: 100;
+}
+
+body.story-map-view-active .story-map-host[data-story-map-document="true"] {
+  position: fixed;
+  top: var(--ifm-navbar-height, 3.75rem);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  width: auto;
+  height: auto;
+  margin: 0;
+}
+
+body.story-map-view-active .story-map-host[data-story-map-document="true"] .story-map {
+  height: 100% !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Leave room for the collapsed sidebar rail so the map controls stay clickable. */
+@media (min-width: 997px) {
+  body.story-map-view-active .story-map-host[data-story-map-document="true"] {
+    left: var(--doc-sidebar-hidden-width, 30px);
+  }
+}
