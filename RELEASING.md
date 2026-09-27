@@ -1,7 +1,7 @@
 # Releasing
 
 The three npm libraries release together; the bundled Obsidian plugin releases independently.
-All three npm libraries are published at `0.2.0` on `latest` with GitHub OIDC provenance, and
+All three npm libraries are published at `0.2.1` on `latest` with GitHub OIDC provenance, and
 the Obsidian plugin is released at `0.2.1` on GitHub. Plugin `0.2.1` raises the minimum app
 version to `1.8.7` for the `loadLocalStorage`/`saveLocalStorage`/`getLanguage` APIs; `0.2.0`
 declared `1.8.0` incorrectly and should not be submitted.
@@ -62,7 +62,7 @@ Do not create placeholder packages or add a token fallback to this workflow.
 
 All three library versions must match; private root, example and Obsidian packages are
 excluded from the explicit release allowlist. Update the three package versions together
-for later releases, then refresh the lockfile. The manifests now match `0.2.0`; bump them to
+for later releases, then refresh the lockfile. The manifests now match `0.2.1`; bump them to
 a new version before the next release. Private root and Obsidian versions remain independent.
 
 ```bash
