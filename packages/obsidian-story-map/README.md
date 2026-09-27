@@ -16,6 +16,10 @@ provider instead. Remote slide images, videos, iframes and Markdown images conne
 their configured hosts when displayed; linked notes open through Obsidian.
 Map tiles need a network connection unless supplied by a locally accessible provider.
 
+The optional **Find coordinates with AI** command runs a local CLI agent. The place name you
+enter is sent to that CLI's configured model provider; nothing else from the vault is sent.
+See [AI coordinate lookup](#ai-coordinate-lookup).
+
 A StoryMap document is a normal Markdown file with:
 
 ```yaml
@@ -59,6 +63,26 @@ Resolution order per key: document block → plugin setting → built-in default
 setting re-renders open StoryMap views immediately. Per-story values — `schema`, `id`, `title`,
 `noteFolder`, `map.center`, `slides`, and `height` — stay in the document and have no setting;
 the full-leaf Obsidian view always fills the pane.
+
+The same tab also manages the device-local **Local agents** used by the AI coordinate lookup
+(executable, arguments, default agent, and detection status). These are stored with
+Obsidian's local storage, never in the vault or in `story-map` defaults.
+
+## AI coordinate lookup
+
+Run **Find coordinates with AI** from the command palette while any Markdown note is active:
+
+1. enter a place name — Chinese and other languages are supported;
+2. the default local CLI agent returns ranked candidate places;
+3. pick one in the modal list or on the interactive OpenStreetMap mini-map;
+4. choose **Update/Add frontmatter** to write `location: [lat, lng]` (and the optional
+   `mapmarker`) to the active note, or **Copy to clipboard** to copy the same
+   `location: [lat, lng]` line and paste it yourself.
+
+Built-in agents are Codex, Claude Code, OpenCode and pi; a custom CLI can be added. Detection,
+testing and defaults live under **Settings → Geo Story Map → Local agents**. This feature is
+desktop-only, and the AI coordinates are advisory — confirm the candidate on the map before
+writing, especially for obscure places.
 
 ## Behavior
 

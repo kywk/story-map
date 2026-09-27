@@ -1,7 +1,10 @@
-import { Plugin, TFile, WorkspaceLeaf, type Menu, type MenuItem, type ViewState } from 'obsidian';
+import { Plugin, TFile, WorkspaceLeaf, getLanguage, type Menu, type MenuItem, type ViewState } from 'obsidian';
 import type { StoryMapSourceDefaults } from '@story-map/story-map-core';
 import { HOVER_LINK_DISPLAY, HOVER_LINK_SOURCE, VIEW_TYPE_STORY_MAP } from './constants.js';
+import { startCoordinateLookup } from './coordinate-lookup.js';
 import { isStoryMapFile } from './detect.js';
+import { configureI18n, t } from './i18n.js';
+import { LocalAgentController } from './local-agents.js';
 import {
   DEFAULT_STORY_MAP_SETTINGS,
   toSourceDefaults,
@@ -40,9 +43,13 @@ export default class StoryMapPlugin extends Plugin implements StoryMapViewHost {
   private loaded = false;
   private persistTimer: number | null = null;
   settings: StoryMapPluginSettings = { ...DEFAULT_STORY_MAP_SETTINGS };
+  agentController!: LocalAgentController;
 
   async onload(): Promise<void> {
     await this.loadSettings();
+    configureI18n(getLanguage());
+    this.agentController = new LocalAgentController(this.app);
+    this.register(() => this.agentController.dispose());
 
     this.registerView(VIEW_TYPE_STORY_MAP, (leaf) => new StoryMapView(leaf, this));
     this.registerHoverLinkSource(HOVER_LINK_SOURCE, {
@@ -71,6 +78,17 @@ export default class StoryMapPlugin extends Plugin implements StoryMapViewHost {
         const view = this.app.workspace.getActiveViewOfType(StoryMapView);
         if (!view?.file) return false;
         if (!checking) this.openAsMarkdown(view.file, view.leaf);
+        return true;
+      },
+    });
+
+    this.addCommand({
+      id: 'find-location-coordinates',
+      name: t('Find coordinates with AI'),
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== 'md') return false;
+        if (!checking) void startCoordinateLookup(this, file);
         return true;
       },
     });

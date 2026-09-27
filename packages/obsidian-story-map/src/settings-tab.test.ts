@@ -7,12 +7,16 @@ vi.mock('obsidian', () => {
   class Control {
     inputEl = { type: '' };
     value: unknown;
+    disabled = false;
+    cta = false;
     change?: (value: never) => void;
     click?: () => void;
     setValue(value: unknown) { this.value = value; return this; }
     setPlaceholder() { return this; }
     addOptions() { return this; }
     setButtonText() { return this; }
+    setDisabled(value: boolean) { this.disabled = value; return this; }
+    setCta() { this.cta = true; return this; }
     onChange(callback: (value: never) => void) { this.change = callback; return this; }
     onClick(callback: () => void) { this.click = callback; return this; }
   }
@@ -31,7 +35,8 @@ vi.mock('obsidian', () => {
       this.control = new Control(); callback(this.control); return this;
     }
   }
-  return { PluginSettingTab, Setting };
+  class Notice { constructor(_message?: unknown, _timeout?: number) {} }
+  return { PluginSettingTab, Setting, Notice };
 });
 
 import type { App } from 'obsidian';
@@ -44,6 +49,27 @@ function setup() {
   const tab = new StoryMapSettingTab({} as App, plugin as unknown as StoryMapPlugin);
   const container = tab.containerEl as unknown as { empty: ReturnType<typeof vi.fn>; rows: Row[] };
   return { tab, plugin, container };
+}
+
+function setupWithAgents() {
+  const controller = {
+    local: {
+      agents: [{ id: 'codex', kind: 'codex', name: 'Codex', command: 'codex', args: 'exec -' }],
+      defaultId: 'codex',
+      detected: [],
+    },
+    saveLocal: vi.fn((next: unknown) => { controller.local = next as typeof controller.local; }),
+    detect: vi.fn(async () => []),
+    test: vi.fn(async () => 'OK'),
+  };
+  const plugin = {
+    settings: { dateField: 'created' },
+    saveSettings: vi.fn(async () => {}),
+    agentController: controller,
+  };
+  const tab = new StoryMapSettingTab({} as App, plugin as unknown as StoryMapPlugin);
+  const container = tab.containerEl as unknown as { empty: ReturnType<typeof vi.fn>; rows: Row[] };
+  return { tab, plugin, controller, container };
 }
 
 describe('settings definitions and legacy rendering', () => {
@@ -82,5 +108,33 @@ describe('settings definitions and legacy rendering', () => {
     expect(container.empty).toHaveBeenCalledTimes(2);
     expect(tab.getSettingDefinitions().map((row) => 'name' in row ? row.name : '')).toEqual(definitions);
     expect(container.rows.find((row) => row.name === 'Default date field')?.control?.value).toBe('');
+  });
+});
+
+describe('local agent settings', () => {
+  it('exposes agent rows and persists the draft', () => {
+    const { tab, controller, container } = setupWithAgents();
+    const names = tab.getSettingDefinitions().map((row) => 'name' in row ? row.name : '');
+    expect(names).toContain('Local agents');
+    expect(names).toContain('Apply local settings');
+
+    tab.display();
+    container.rows.find((row) => row.name === 'Apply local settings')?.control?.click?.();
+    expect(controller.saveLocal).toHaveBeenCalledOnce();
+    expect(controller.saveLocal.mock.calls[0]?.[0]).toMatchObject({ defaultId: 'codex' });
+  });
+
+  it('detects installed agents on open and after a successful test', async () => {
+    const { tab, controller, container } = setupWithAgents();
+    controller.detect.mockResolvedValueOnce([]);
+    tab.display();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(controller.detect).toHaveBeenCalled();
+    expect(container.rows.some((row) => row.name === 'Codex · Not detected')).toBe(true);
+
+    container.rows.find((row) => row.name === 'Codex · Not detected')?.control?.click?.();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(controller.test).toHaveBeenCalled();
+    expect(container.rows.some((row) => row.name === 'Codex · Detected')).toBe(true);
   });
 });

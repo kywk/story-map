@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { builtinModules, createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { assertNoScriptCreation } from '../packages/obsidian-story-map/build/react-script-policy.mjs';
+
+const nodeRequire = createRequire(import.meta.url);
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json')));
@@ -27,12 +30,14 @@ assert(readFileSync(join(dist, 'styles.css'), 'utf8').includes('.story-map'));
 const exports = {};
 const module = { exports };
 const obsidian = Object.fromEntries(['Plugin', 'PluginSettingTab', 'TextFileView',
-  'TFile', 'WorkspaceLeaf', 'Setting'].map(name => [name, class {}]));
+  'TFile', 'WorkspaceLeaf', 'Setting', 'Modal'].map(name => [name, class {}]));
 const host = {
   module, exports, console, setTimeout, clearTimeout, queueMicrotask,
   require(name) {
-    assert.equal(name, 'obsidian', `Unexpected runtime dependency: ${name}`);
-    return obsidian;
+    if (name === 'obsidian') return obsidian;
+    const bare = name.startsWith('node:') ? name.slice(5) : name;
+    if (builtinModules.includes(bare)) return nodeRequire(name);
+    throw new Error(`Unexpected runtime dependency: ${name}`);
   },
   // The browser Markdown decoder eagerly creates an inert element. Map initialization
   // must remain deferred; any other import-time DOM access fails this check.

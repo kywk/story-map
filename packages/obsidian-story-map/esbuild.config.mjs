@@ -1,5 +1,6 @@
 import esbuild from 'esbuild';
 import { appendFile, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { builtinModules } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { assertNoScriptCreation, reactScriptPolicy } from './build/react-script-policy.mjs';
 
@@ -22,7 +23,7 @@ const scriptBuild = await esbuild.build({
   platform: 'browser',
   format: 'cjs',
   target: 'es2022',
-  external: ['obsidian'],
+  external: ['obsidian', 'electron', ...builtinModules, ...builtinModules.map((name) => `node:${name}`)],
   metafile: true,
   legalComments: 'eof',
   plugins: [reactScriptPolicy()],

@@ -345,6 +345,27 @@ Default-open is limited to detected `story-map: true` documents and uses a scope
 `WorkspaceLeaf.setViewState` wrapper. Blanket interception of unrelated Markdown files is
 out of scope.
 
+### 10.1 AI coordinate lookup
+
+The plugin adds a command-palette action `Find coordinates with AI`, available whenever a
+Markdown note is active. It prompts for a place name (Chinese and other languages are
+supported), asks a configured **local CLI agent** for ranked candidate places, and shows
+the candidates in a modal with an interactive Leaflet mini-map.
+
+- The agent invocation follows the existing local-AI workflow: spawn a desktop CLI without
+  a shell, write the query as data on stdin, and parse per-agent output. Built-in agents are
+  Codex, Claude Code, OpenCode and pi, plus a custom CLI.
+- Agent executables, arguments, detection status and the default agent are device-local
+  settings stored with `app.saveLocalStorage`. They are not `story-map` keys, plugin
+  defaults, or vault data.
+- Selecting a candidate enables `Update/Add frontmatter` and `Copy to clipboard`.
+  `Update/Add frontmatter` writes `location: [lat, lng]` and the optional `mapmarker` to the
+  active note through `FileManager.processFrontMatter`; `Copy to clipboard` copies the same
+  `location: [lat, lng]` line for manual pasting.
+- AI candidates are advisory: coordinates are only written after the user confirms one on
+  the map, because models may return inaccurate coordinates for obscure places.
+- The feature is desktop-only, matching the plugin's existing `isDesktopOnly`.
+
 ## 11. Docusaurus / Remark behavior
 
 The Docusaurus path is a build-time adapter plus a browser runtime.
@@ -456,6 +477,8 @@ Complete when all are true:
   by `dateField` using `order: asc | desc` (default `date-created` ascending);
 - explicit `slides` are never reordered or appended to by `noteFolder`;
 - a note may reuse Leaflet-compatible `location`, `mapmarker`, and `mapzoom`;
+- the Obsidian plugin can look up coordinates with a configured local CLI agent, confirm a
+  candidate on a map, and write the confirmed `location` to the active note;
 - an explicit Obsidian slide can use `note: "[[Some Note]]"` and inherit
   `location/title/description/cover`;
 - resizing an Obsidian pane keeps the map correctly sized, and closing/reopening or

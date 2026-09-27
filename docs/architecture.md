@@ -150,13 +150,24 @@ Key invariants:
   recursive `noteFolder` discovery, frontmatter inheritance, local media → resource URL,
   `noteDisplay` handling.
 - `detect.ts` — `isStoryMapFile` reads `story-map: true` frontmatter.
+- `agents.ts` — framework-local CLI agent layer: `DEFAULT_AGENT_CONFIGS`
+  (Codex/Claude/OpenCode/pi), quote-aware `parseArguments`, PATH detection, per-kind
+  `parseAgentOutput`, and `runAgent` (no shell, temp cwd, timeout and output caps).
+- `coordinates.ts` — coordinate prompt, JSON candidate parsing/validation/dedupe, and
+  `location: [lat, lng]` formatting.
+- `local-agents.ts` — `LocalAgentController`: device-local agent settings through
+  `app.saveLocalStorage`, detect/test, and `lookupCoordinates`.
+- `coordinate-lookup.ts` — `Find coordinates with AI` command flow, the query modal, and the
+  candidate picker with an interactive Leaflet mini-map and frontmatter/clipboard actions.
+- `i18n.ts` — English keys with a zh-TW bundle, auto-selected from `getLanguage()`.
 - `settings-data.ts` / `settings-tab.ts` — plugin defaults and their UI, with searchable
   setting definitions on Obsidian 1.13+ and imperative rendering on 1.8–1.12.
   Reset redraws the fixed rows using legacy-compatible APIs; it does not call 1.13's
-  `SettingsTab.update()`.
+  `SettingsTab.update()`. The settings tab also edits the device-local local-agent draft.
 - `constants.ts` — view type, fence language, hover-link identifiers.
-- `esbuild.config.mjs` — bundles `src/main.tsx` to `dist/main.js` (CJS, `obsidian`
-  external) and copies CSS/manifest/versions.
+- `esbuild.config.mjs` — bundles `src/main.tsx` to `dist/main.js` (CJS) and copies
+  CSS/manifest/versions. `obsidian`, `electron` and Node built-ins stay external: the
+  desktop-only local-agent layer requires them at runtime.
 
 ### `@story-map/remark-story-map`
 
@@ -327,7 +338,11 @@ partial release retry. Account-side Trusted Publishers must be configured separa
 | `packages/react-story-map/src/StoryMap.test.tsx` | slide-title rendering: plain heading, browser-link fallback, callback anchor |
 | `packages/obsidian-story-map/src/resolver.test.ts` | explicit slides, folder discovery, note display, media resolution |
 | `packages/obsidian-story-map/src/settings-data.test.ts` | settings → source defaults mapping |
+| `packages/obsidian-story-map/src/agents.test.ts` | argument parsing, per-agent output parsing, executable detection |
+| `packages/obsidian-story-map/src/coordinates.test.ts` | coordinate prompt, candidate parsing/validation/dedupe, YAML line formatting |
+| `packages/obsidian-story-map/src/i18n.test.ts` | locale resolution, translation and message mapping |
 | `packages/obsidian-story-map/src/main.test.ts` | scoped routing, explicit Markdown mode and wrapper ownership on disable |
+| `packages/obsidian-story-map/src/settings-tab.test.ts` | definitions, legacy rendering, local-agent draft persistence |
 | `packages/remark-story-map/src/index.test.ts` | fence transform, document flag, `VaultIndex`, folder discovery, `noteDisplay`, source-relative media, scan exclusions, host route resolver |
 
 The examples and the landing site have no automated tests; verify them manually.
@@ -339,6 +354,7 @@ The examples and the landing site have no automated tests; verify them manually.
 | Schema/defaults/normalization | `story-map-core` (`schema.ts`, `parser.ts`, `types.ts`) + `parser.test.ts` |
 | Rendering, navigation, markers, media, note links | `react-story-map/src/StoryMap.tsx`, `styles.css`, `StoryMap.test.tsx` |
 | Obsidian view, commands, settings, detection | `obsidian-story-map/src/*` |
+| Local AI agent config and coordinate lookup | `obsidian-story-map/src/agents.ts`, `coordinates.ts`, `local-agents.ts`, `coordinate-lookup.ts` |
 | Obsidian note/media resolution | `obsidian-story-map/src/resolver.ts` |
 | Remark/Docusaurus pipeline | `remark-story-map/src/index.ts`, `vault.ts`, `client.tsx` |
 | Docusaurus host config / theme bridge | `examples/docusaurus/*` (site-owned) |

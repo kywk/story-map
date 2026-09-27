@@ -28,6 +28,8 @@ The plugin is named **Geo Story Map** (`geo-story-map`); the source syntax remai
 4. Create a Markdown document using the Story syntax below, then close and reopen it,
    or run **Geo Story Map: Open as map** from the command palette.
 5. Use **Open as Markdown** to edit the same document; the source stays unchanged.
+6. Run **Geo Story Map: Find coordinates with AI** on a note to look up a place with a
+   configured local CLI agent, confirm it on a map, and write `location` or copy it.
 
 Add notes under the document's `noteFolder`, for example `Travel/Chile/Places/Santiago.md`:
 

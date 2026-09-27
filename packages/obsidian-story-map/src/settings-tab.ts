@@ -1,13 +1,20 @@
 import {
-  PluginSettingTab, Setting, type App, type TextComponent,
+  Notice, PluginSettingTab, Setting, type App, type ButtonComponent, type TextComponent,
   type SettingDefinitionItem, type SettingDefinitionRender,
 } from 'obsidian';
 import type { StoryNoteDisplay, StoryOrder } from '@story-map/story-map-core';
+import { parseArguments, type AgentConfig, type DetectedAgent } from './agents.js';
+import { t, translateMessage } from './i18n.js';
+import type { LocalAgents } from './local-agents.js';
 import type StoryMapPlugin from './main.js';
 import {
   DEFAULT_STORY_MAP_SETTINGS,
   type StoryMapPluginSettings,
 } from './settings-data.js';
+
+type SettingRow = Omit<SettingDefinitionRender, 'render'> & {
+  render: (setting: Setting) => void;
+};
 
 const ORDER_OPTIONS: Array<[value: string, label: string]> = [
   ['asc', 'Ascending (default)'],
@@ -21,6 +28,10 @@ const NOTE_DISPLAY_OPTIONS: Array<[value: string, label: string]> = [
 ];
 
 export class StoryMapSettingTab extends PluginSettingTab {
+  private agentDraft: LocalAgents | null = null;
+  private detectionStarted = false;
+  private readonly agentTests = new Set<AbortController>();
+
   constructor(app: App, private readonly plugin: StoryMapPlugin) {
     super(app, plugin);
   }
@@ -32,6 +43,13 @@ export class StoryMapSettingTab extends PluginSettingTab {
   // Obsidian 1.8–1.12 render imperatively; 1.13+ indexes and renders definitions.
   display(): void {
     this.renderFallback();
+  }
+
+  hide(): void {
+    for (const abort of this.agentTests) abort.abort();
+    this.agentTests.clear();
+    this.agentDraft = null;
+    this.detectionStarted = false;
   }
 
   private renderFallback(): void {
@@ -47,8 +65,14 @@ export class StoryMapSettingTab extends PluginSettingTab {
     this.renderFallback();
   }
 
-  private settingRows(): Array<Omit<SettingDefinitionRender, 'render'> & { render: (setting: Setting) => void }> {
-    return [
+  private redraw(): void {
+    const update = (this as Partial<{ update(): void }>).update;
+    if (typeof update === 'function') update.call(this);
+    else this.renderFallback();
+  }
+
+  private settingRows(): SettingRow[] {
+    const rows: SettingRow[] = [
       { name: 'Defaults', render: (setting) => {
         setting
           .setDesc(
@@ -141,6 +165,194 @@ export class StoryMapSettingTab extends PluginSettingTab {
         );
       } },
     ];
+    if (this.plugin.agentController) rows.push(...this.agentRows());
+    return rows;
+  }
+
+  private agentDraftState(): LocalAgents | null {
+    const controller = this.plugin.agentController;
+    if (!controller) return null;
+    if (!this.agentDraft) {
+      this.agentDraft = structuredClone(controller.local);
+      this.startDetection();
+    }
+    return this.agentDraft;
+  }
+
+  private startDetection(): void {
+    if (this.detectionStarted) return;
+    this.detectionStarted = true;
+    void this.runDetection().catch(() => {
+      // Auto-detection is best-effort; the explicit button reports failures.
+    });
+  }
+
+  private async runDetection(): Promise<void> {
+    const controller = this.plugin.agentController;
+    const draft = this.agentDraft;
+    if (!controller || !draft) return;
+    draft.detected = await controller.detect();
+    this.redraw();
+  }
+
+  private markDetected(agent: AgentConfig): void {
+    const draft = this.agentDraft;
+    if (!draft) return;
+    const detected: DetectedAgent = { ...agent, installed: true };
+    const index = draft.detected.findIndex((item) => item.id === agent.id);
+    if (index >= 0) draft.detected[index] = detected;
+    else draft.detected.push(detected);
+    this.redraw();
+  }
+
+  private agentRows(): SettingRow[] {
+    const draft = this.agentDraftState();
+    if (!draft) return [];
+    const rows: SettingRow[] = [
+      { name: t('Local agents'), render: (setting) => {
+        setting
+          .setDesc(t('Uses a local CLI login and model. The place name is sent to that service. Paths, arguments, and the default agent are stored only on this device.'))
+          .setHeading();
+      } },
+    ];
+
+    for (const agent of draft.agents) {
+      const detected = draft.detected.find((item) => item.id === agent.id);
+      const suffix = detected?.installed ? t('Detected') : t('Not detected');
+      const isDefault = agent.id === draft.defaultId;
+      rows.push({ name: `${agent.name} · ${suffix}`, render: (setting) => {
+        setting
+          .addButton((button) =>
+            button
+              .setButtonText(t('Set as default'))
+              .setDisabled(isDefault)
+              .onClick(() => {
+                draft.defaultId = agent.id;
+                this.redraw();
+              }),
+          )
+          .addButton((button) =>
+            button
+              .setButtonText(t('Test'))
+              .onClick(() => void this.testAgent(agent, button)),
+          );
+      } });
+      rows.push({ name: t('Executable name or absolute path'), render: (setting) => {
+        setting.setDesc(agent.name).addText((text) =>
+          text.setValue(agent.command).onChange((value) => {
+            agent.command = value;
+          }),
+        );
+      } });
+      rows.push({ name: t('{name} arguments', { name: agent.name }), render: (setting) => {
+        setting
+          .setDesc(t('Full launch arguments, separated by spaces with quote support; no shell is used. Keep the built-in non-interactive and output-format arguments.'))
+          .addText((text) =>
+            text.setValue(agent.args).onChange((value) => {
+              agent.args = value;
+            }),
+          );
+      } });
+      if (agent.kind === 'custom') {
+        rows.push({ name: t('Display name'), render: (setting) => {
+          setting.addText((text) =>
+            text.setValue(agent.name).onChange((value) => {
+              agent.name = value;
+            }),
+          );
+        } });
+        rows.push({ name: t('Remove custom agent'), render: (setting) => {
+          setting.addButton((button) =>
+            button.setButtonText(t('Remove custom agent')).onClick(() => {
+              draft.agents = draft.agents.filter((item) => item.id !== agent.id);
+              if (draft.defaultId === agent.id) draft.defaultId = draft.agents[0]?.id ?? '';
+              this.redraw();
+            }),
+          );
+        } });
+      }
+    }
+
+    rows.push({ name: t('Apply local settings'), render: (setting) => {
+      setting.addButton((button) =>
+        button
+          .setButtonText(t('Apply local settings'))
+          .setCta()
+          .onClick(() => this.applyAgentDraft()),
+      );
+    } });
+    rows.push({ name: t('Detect saved configurations again'), render: (setting) => {
+      setting.addButton((button) =>
+        button
+          .setButtonText(t('Detect saved configurations again'))
+          .onClick(() => void this.detectAgents(button)),
+      );
+    } });
+    rows.push({ name: t('Add custom CLI'), render: (setting) => {
+      setting.addButton((button) =>
+        button.setButtonText(t('Add custom CLI')).onClick(() => {
+          draft.agents.push({
+            id: `custom-${Date.now()}`,
+            kind: 'custom',
+            name: t('Custom CLI'),
+            command: '',
+            args: '',
+          });
+          this.redraw();
+        }),
+      );
+    } });
+    return rows;
+  }
+
+  private applyAgentDraft(): void {
+    const controller = this.plugin.agentController;
+    const draft = this.agentDraftState();
+    if (!controller || !draft) return;
+    try {
+      for (const agent of draft.agents) {
+        if (!agent.command.trim()) throw new Error(t('Executable cannot be empty'));
+        parseArguments(agent.args);
+      }
+      if (!draft.agents.some((agent) => agent.id === draft.defaultId)) {
+        throw new Error(t('Choose a default agent'));
+      }
+      controller.saveLocal(structuredClone(draft));
+      new Notice(t('Local settings saved'));
+    } catch (error) {
+      new Notice(translateMessage(error instanceof Error ? error.message : String(error)));
+    }
+  }
+
+  private async detectAgents(button: ButtonComponent): Promise<void> {
+    button.setDisabled(true);
+    try {
+      await this.runDetection();
+      new Notice(t('Detection complete; unsaved path and argument drafts were not checked'));
+    } catch (error) {
+      new Notice(translateMessage(error instanceof Error ? error.message : String(error)));
+    } finally {
+      button.setDisabled(false);
+    }
+  }
+
+  private async testAgent(agent: AgentConfig, button: ButtonComponent): Promise<void> {
+    const controller = this.plugin.agentController;
+    if (!controller) return;
+    const abort = new AbortController();
+    this.agentTests.add(abort);
+    button.setDisabled(true);
+    try {
+      parseArguments(agent.args);
+      const answer = await controller.test({ ...agent }, abort.signal);
+      this.markDetected(agent);
+      new Notice(t('Test succeeded: {answer}', { answer: answer.slice(0, 120) }));
+    } catch (error) {
+      new Notice(translateMessage(error instanceof Error ? error.message : String(error)));
+    } finally {
+      this.agentTests.delete(abort);
+      button.setDisabled(false);
+    }
   }
 
   private number(

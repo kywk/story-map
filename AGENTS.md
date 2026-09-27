@@ -51,6 +51,11 @@ hygiene").
   `applySourceDefaults`, to `packages/obsidian-story-map/src/settings-data.ts`, expose it in
   `settings-tab.ts`, and cover the precedence in `story-map-core` parser tests. Do not
   re-implement defaulting in the view; use `parseStoryMapSourceYaml(source, defaults)`.
+- Local AI agent settings (executables, arguments, default agent, detection) are device-local
+  (`app.saveLocalStorage`) and are never `story-map` keys, plugin defaults, or vault data.
+  The AI coordinate lookup writes `location: [lat, lng]` and the optional `mapmarker` to the
+  active note only after the user confirms a candidate on the map; it is desktop-only and
+  stays inside `obsidian-story-map`.
 
 ## Docusaurus / Remark rules
 

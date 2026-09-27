@@ -13,6 +13,7 @@ vi.mock('obsidian', () => {
 });
 vi.mock('./view.js', () => ({ StoryMapView: class {} }));
 vi.mock('./settings-tab.js', () => ({ StoryMapSettingTab: class {} }));
+vi.mock('./coordinate-lookup.js', () => ({ startCoordinateLookup: vi.fn() }));
 
 import { TFile, WorkspaceLeaf, type ViewState } from 'obsidian';
 import StoryMapPlugin from './main.js';

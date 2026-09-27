@@ -52,8 +52,10 @@ Suggested long description:
 > synchronized Leaflet map, discover notes recursively from one vault folder, or supply
 > explicit slides in your chosen order. Choose metadata-only, linked-title or full-body
 > note display. Switch between the map and Markdown without changing your source files.
-> Desktop Obsidian 1.8.0 or newer is required. Map tiles and configured remote media
-> need a network connection; no plugin account or payment is required.
+> An optional coordinate lookup uses a local CLI agent you configure; the place name is
+> sent to that CLI's provider. Desktop Obsidian 1.8.0 or newer is required. Map tiles and
+> configured remote media need a network connection; no plugin account or payment is
+> required.
 
 Screenshots can be added to the listing after capturing the actual plugin; they are
 not a substitute for a working release. No screenshots or unperformed tests are claimed.
