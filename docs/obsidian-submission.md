@@ -1,10 +1,10 @@
 # Geo Story Map community submission
 
-The [public 0.1.3 release](https://github.com/kywk/story-map/releases/tag/0.1.3) is ready
-with verified download assets. Community submission/review status is still pending;
+The `0.2.0` release is prepared with the three required assets; publish the matching tag
+before submission. Community submission/review status is still pending;
 the plugin is not claimed to be available through the in-app directory yet.
 
-Plugin: **Geo Story Map**, ID `geo-story-map`, version `0.1.3`. Desktop only; minimum
+Plugin: **Geo Story Map**, ID `geo-story-map`, version `0.2.0`. Desktop only; minimum
 Obsidian `1.8.0`. The maintainer reports successful 1.8.0 opening, Markdown switching,
 split-pane resize and disable-cleanup checks. A public API declaration review found no
 required API newer than 1.8.0 (`revealLeaf` was introduced in 1.7.2).
@@ -24,7 +24,7 @@ copies them into `packages/obsidian-story-map/dist/`. It also bundles JavaScript
 and generates `THIRD_PARTY_NOTICES.txt` from the actual bundled dependency licenses.
 The scoped view-state wrapper becomes inert on disable and preserves later wrappers.
 
-The GitHub tag must exactly equal the plugin version, **`0.1.3`**, without `v` or
+The GitHub tag must exactly equal the plugin version, **`0.2.0`**, without `v` or
 `npm-v`. Attach only `main.js`, `manifest.json` and `styles.css`.
 Do not attach a repository ZIP as a replacement for these files. Obsidian downloads
 these three automatically. Full dependency notices are appended to `main.js`; the
@@ -49,9 +49,10 @@ Suggested short description (also in the manifest):
 Suggested long description:
 
 > Build geographic stories from ordinary Markdown notes. Display slides beside a
-> synchronized Leaflet map, discover notes recursively from one vault folder, or supply
-> explicit slides in your chosen order. Choose metadata-only, linked-title or full-body
-> note display. Switch between the map and Markdown without changing your source files.
+> synchronized Leaflet map, discover notes recursively from one vault folder, keep or drop
+> them by frontmatter tag, or supply explicit slides in your chosen order. Choose
+> metadata-only, linked-title or full-body note display. Switch between the map and
+> Markdown without changing your source files.
 > An optional coordinate lookup uses a local CLI agent you configure; the place name is
 > sent to that CLI's provider. Desktop Obsidian 1.8.0 or newer is required. Map tiles and
 > configured remote media need a network connection; no plugin account or payment is

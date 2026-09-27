@@ -17,12 +17,12 @@ examples with the shared renderer. It is published to GitHub Pages from `main` b
 ## Geo Story Map for Obsidian
 
 Turn Markdown notes into geographic stories with an interactive map and slides.
-Requires desktop Obsidian 1.8.0 or newer; mobile is not supported in this first release.
+Requires desktop Obsidian 1.8.0 or newer; mobile is not supported in this release.
 The plugin is named **Geo Story Map** (`geo-story-map`); the source syntax remains
 `story-map`. It does not require the separate Obsidian Leaflet plugin.
 
 1. Download `main.js`, `manifest.json`, `styles.css`, and `THIRD_PARTY_NOTICES.txt`
-   from the [plugin release](https://github.com/kywk/story-map/releases/tag/0.1.3).
+   from the [plugin release](https://github.com/kywk/story-map/releases/tag/0.2.0).
 2. Put them in `<Vault>/.obsidian/plugins/geo-story-map/`.
 3. Enable **Geo Story Map** in Settings → Community plugins. Community listing is pending.
 4. Create a Markdown document using the Story syntax below, then close and reopen it,
@@ -52,10 +52,10 @@ their specified hosts. The plugin reads notes and attachments inside your vault.
 
 | Package | Role | Distribution |
 | --- | --- | --- |
-| `@story-map/story-map-core` | Framework-agnostic schema, parser, and helpers | npm (0.1.1) |
-| `@story-map/react-story-map` | React + Leaflet renderer | npm (0.1.1) |
-| `@story-map/remark-story-map` | Remark build-time transform + browser client | npm (0.1.1) |
-| `@story-map/obsidian-story-map` | Geo Story Map Obsidian view and Vault resolver | GitHub Release 0.1.3 |
+| `@story-map/story-map-core` | Framework-agnostic schema, parser, and helpers | npm (0.2.0) |
+| `@story-map/react-story-map` | React + Leaflet renderer | npm (0.2.0) |
+| `@story-map/remark-story-map` | Remark build-time transform + browser client | npm (0.2.0) |
+| `@story-map/obsidian-story-map` | Geo Story Map Obsidian view and Vault resolver | GitHub Release 0.2.0 |
 
 ## Quick start
 

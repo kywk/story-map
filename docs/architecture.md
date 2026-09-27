@@ -311,7 +311,7 @@ Plugin artifacts land in `packages/obsidian-story-map/dist/` as `main.js`, `mani
 `styles.css`, `versions.json`, and `THIRD_PARTY_NOTICES.txt`; install the JavaScript,
 manifest, CSS and notices in `<Vault>/.obsidian/plugins/geo-story-map/`.
 Repository-root `manifest.json` and `versions.json` are canonical plugin metadata;
-`esbuild.config.mjs` copies them into the plugin output. The first release is desktop-only.
+`esbuild.config.mjs` copies them into the plugin output. The plugin is desktop-only.
 The plugin is named Geo Story Map, with ID `geo-story-map`, host view type
 `geo-story-map-view` and hover source `geo-story-map`. Markdown syntax and npm names
 remain unchanged. The build gathers full licenses from actual bundled dependency inputs,

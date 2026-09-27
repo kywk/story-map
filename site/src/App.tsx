@@ -25,6 +25,8 @@ noteFolder: Travel/Chile/Places
 order: asc
 dateField: date-created
 noteDisplay: link
+includeTags: [travel, chile]
+excludeTags: [draft]
 
 map:
   center: [-33.4489, -70.6693]
@@ -38,6 +40,7 @@ title: Santiago
 location: [-33.4489, -70.6693]
 mapmarker: city
 date-created: 2026-01-15
+tags: [travel, chile]
 description: The journey begins here.
 cover: ./assets/santiago.jpg
 ---`;

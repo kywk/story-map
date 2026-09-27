@@ -2,6 +2,7 @@
 
 The three npm libraries release together; the bundled Obsidian plugin releases independently.
 All three npm libraries are published at `0.1.1` on `latest` with GitHub OIDC provenance.
+Release `0.2.0` is prepared for both lines: the three libraries and the Obsidian plugin.
 Published versions are immutable; choose a new version for the next release.
 Obsidian submission is deferred.
 
@@ -57,8 +58,8 @@ Do not create placeholder packages or add a token fallback to this workflow.
 
 All three library versions must match; private root, example and Obsidian packages are
 excluded from the explicit release allowlist. Update the three package versions together
-for later releases, then refresh the lockfile. The manifests currently match the published `0.1.1`; bump them to a new version
-before another release. Private root and Obsidian versions remain independent.
+for later releases, then refresh the lockfile. The manifests now match `0.2.0`; bump them to
+a new version before the next release. Private root and Obsidian versions remain independent.
 
 ```bash
 pnpm install
@@ -99,7 +100,7 @@ not proven by local checks. The workflow does not create an Obsidian release.
 
 ## Obsidian community release
 
-The desktop plugin is **Geo Story Map**, ID `geo-story-map`, current version `0.1.3`,
+The desktop plugin is **Geo Story Map**, ID `geo-story-map`, current version `0.2.0`,
 minimum Obsidian `1.8.0`. Its versions are independent of the npm libraries.
 The previous candidate `story-map` is already used by an unrelated community plugin.
 

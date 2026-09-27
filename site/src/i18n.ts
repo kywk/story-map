@@ -83,7 +83,7 @@ const en: Copy = {
       {
         name: 'Obsidian',
         pkg: 'geo-story-map',
-        body: 'A file-backed full-leaf view. A story-map document opens as a map by default, notes under noteFolder become slides ordered by date, and Open as Markdown returns you to the editable source.',
+        body: 'A file-backed full-leaf view. A story-map document opens as a map by default; notes under noteFolder become slides ordered by date and filtered by includeTags/excludeTags, and Open as Markdown returns you to the editable source. A local CLI agent can look up coordinates on demand.',
         note: 'Desktop 1.8.0+',
       },
       {
@@ -121,6 +121,7 @@ const en: Copy = {
     points: [
       'noteFolder recurses into subfolders and keeps notes marked story-map-note.',
       'order (asc or desc) and dateField control folder-generated slide order.',
+      'includeTags and excludeTags keep or drop folder notes by their frontmatter tags.',
       'Explicit slides keep their exact order and are never reordered or appended.',
       'noteDisplay: basic, link, or full decides how much of each note reaches the slide.',
       'location, mapmarker, and mapzoom reuse the Leaflet metadata your notes already carry.',
@@ -196,7 +197,7 @@ const zh: Copy = {
       {
         name: 'Obsidian',
         pkg: 'geo-story-map',
-        body: '以檔案為後盾的全葉檢視。story-map 文件預設以地圖開啟，noteFolder 底下的筆記依日期成為每一站，「Open as Markdown」則回到可編輯的原始碼。',
+        body: '以檔案為後盾的全葉檢視。story-map 文件預設以地圖開啟；noteFolder 底下的筆記依日期排序，並可用 includeTags／excludeTags 篩選成為每一站，「Open as Markdown」則回到可編輯的原始碼。也能用本機 CLI agent 即時查詢座標。',
         note: '桌面版 1.8.0+',
       },
       {
@@ -234,6 +235,7 @@ const zh: Copy = {
     points: [
       'noteFolder 會遞迴子資料夾，保留標記 story-map-note 的筆記。',
       'order（asc 或 desc）與 dateField 決定資料夾產生幻燈片的順序。',
+      'includeTags 與 excludeTags 依 frontmatter 標籤保留或排除資料夾筆記。',
       '明確列出的 slides 保持原順序，永不重排或附加。',
       'noteDisplay: basic、link 或 full 決定每一則筆記進入投影片的份量。',
       'location、mapmarker、mapzoom 沿用筆記既有的 Leaflet 中介資料。',

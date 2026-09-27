@@ -3,7 +3,7 @@
 Obsidian adapter that opens a StoryMap document as a dedicated, file-backed full-leaf
 view similar to Obsidian Kanban.
 
-The first release targets desktop only. The declared minimum version is Obsidian 1.8.0;
+The plugin targets desktop only. The declared minimum version is Obsidian 1.8.0;
 the maintainer reports successful 1.8.0 desktop checks for opening, Markdown switching,
 split-pane resize and plugin disable cleanup.
 
