@@ -97,12 +97,15 @@ noteFolder: Travel/Chile/Places
 order: asc
 dateField: date-created
 noteDisplay: link
+includeTags: [travel, chile]
+excludeTags: [draft]
 ```
 ````
 
 `noteFolder` recursively discovers Markdown notes with `story-map-note: true`, ordered by
-`dateField` using `order: asc | desc`. Explicit `slides` keep their exact order and are
-never reordered or appended to by folder discovery.
+`dateField` using `order: asc | desc`. `includeTags` keeps notes with any listed
+frontmatter tag and `excludeTags` drops notes with any listed tag (both optional). Explicit
+`slides` keep their exact order and are never reordered or appended to by folder discovery.
 
 `noteDisplay: basic | link | full` controls how resolved notes are shown (default `link`):
 frontmatter basics, basics with a title link to the note, or the full frontmatter-stripped

@@ -70,6 +70,8 @@ export interface StoryMapSourceConfig {
   order: StoryOrder;
   dateField: string;
   noteDisplay: StoryNoteDisplay;
+  includeTags?: string[];
+  excludeTags?: string[];
   map: StoryMapOptions;
   slides?: StorySlide[];
 }

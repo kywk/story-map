@@ -220,6 +220,59 @@ describe('VaultIndex folder discovery', () => {
   });
 });
 
+describe('VaultIndex tag filtering', () => {
+  const vaultRoot = mkdtempSync(path.join(tmpdir(), 'storymap-tags-'));
+  mkdirSync(path.join(vaultRoot, 'Places'));
+
+  writeFileSync(
+    path.join(vaultRoot, 'Places', 'Santiago.md'),
+    matter.stringify('Body', {
+      'story-map-note': true,
+      title: 'Santiago',
+      'date-created': '2026-01-15',
+      tags: ['travel', 'chile'],
+    }),
+  );
+  writeFileSync(
+    path.join(vaultRoot, 'Places', 'Atacama.md'),
+    matter.stringify('Body', {
+      'story-map-note': true,
+      title: 'Atacama',
+      'date-created': '2026-02-20',
+      tags: ['travel', 'draft'],
+    }),
+  );
+  writeFileSync(
+    path.join(vaultRoot, 'Places', 'Lima.md'),
+    matter.stringify('Body', {
+      'story-map-note': true,
+      title: 'Lima',
+      'date-created': '2026-03-01',
+      tag: 'peru',
+    }),
+  );
+
+  afterAll(() => rmSync(vaultRoot, { recursive: true, force: true }));
+
+  it('keeps only notes carrying any include tag', () => {
+    const vault = new VaultIndex({ vaultRoot });
+    const story = vault.resolveSource(
+      parseStoryMapSourceObject({ noteFolder: 'Places', includeTags: ['#Chile'] }),
+    );
+
+    expect(story.slides.map((slide) => slide.title)).toEqual(['Santiago']);
+  });
+
+  it('drops notes carrying any exclude tag', () => {
+    const vault = new VaultIndex({ vaultRoot });
+    const story = vault.resolveSource(
+      parseStoryMapSourceObject({ noteFolder: 'Places', excludeTags: ['draft'] }),
+    );
+
+    expect(story.slides.map((slide) => slide.title)).toEqual(['Santiago', 'Lima']);
+  });
+});
+
 describe('VaultIndex noteDisplay', () => {
   const vaultRoot = mkdtempSync(path.join(tmpdir(), 'storymap-display-'));
   mkdirSync(path.join(vaultRoot, 'Places'));

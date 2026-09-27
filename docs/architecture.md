@@ -95,7 +95,8 @@ Exported from `src/index.ts`.
   `toStoryMapConfig`, `extractFencedBlock`, `StoryMapParseError`.
 - `helpers.ts` — `parseWikiLinkRef`, `stripFrontmatter`, `coerceLocation`, `coerceMedia`,
   `mergeResolvedSlide`, `validCoordinates`, `slideFromNoteFrontmatter`, `toTimestamp`,
-  `compareNoteDates`, `sortNoteDates`, `normalizeVaultFolder`, `isPathInFolder`.
+  `compareNoteDates`, `sortNoteDates`, `normalizeVaultFolder`, `isPathInFolder`,
+  `normalizeTag`, `extractFrontmatterTags`, `matchesTagFilter`.
 
 Key invariants:
 
@@ -204,6 +205,10 @@ interface RemarkStoryMapOptions {
 - Config keys are camelCase; frontmatter role flags stay kebab-case.
 - `noteFolder` is one Vault-relative folder, recursive.
 - `order: asc | desc` and `dateField` are the only folder-ordering controls.
+- `includeTags`/`excludeTags` optionally narrow folder discovery. Both are any-of,
+  case-insensitive, frontmatter-only (`tags`/`tag`, string or list); leading `#` is
+  stripped; nested tags match exactly. They are document-only and do not affect explicit
+  slides.
 - Explicit `slides` keep their exact order; `noteFolder` is ignored when they exist.
 
 ## 6. Default resolution
@@ -218,6 +223,7 @@ duplicate the Obsidian settings UI.
 | `id`, `title` | — | no (document only) |
 | `height` | `520px` | no (`100%` forced in Obsidian) |
 | `noteFolder` | — | no (document only) |
+| `includeTags`, `excludeTags` | — | no (document only) |
 | `order` | `asc` | yes |
 | `dateField` | `date-created` | yes |
 | `noteDisplay` | `link` | yes |
@@ -336,14 +342,14 @@ partial release retry. Account-side Trusted Publishers must be configured separa
 | `scripts/release-npm.test.mjs` | tag mismatch, dependency publication order, partial retry, integrity conflicts and registry errors with a fake npm executable |
 | `packages/story-map-core/src/parser.test.ts` | parsing, normalization, defaults, ordering, fence extraction, helpers |
 | `packages/react-story-map/src/StoryMap.test.tsx` | slide-title rendering: plain heading, browser-link fallback, callback anchor |
-| `packages/obsidian-story-map/src/resolver.test.ts` | explicit slides, folder discovery, note display, media resolution |
+| `packages/obsidian-story-map/src/resolver.test.ts` | explicit slides, folder discovery, tag filtering, note display, media resolution |
 | `packages/obsidian-story-map/src/settings-data.test.ts` | settings → source defaults mapping |
 | `packages/obsidian-story-map/src/agents.test.ts` | argument parsing, per-agent output parsing, executable detection |
 | `packages/obsidian-story-map/src/coordinates.test.ts` | coordinate prompt, candidate parsing/validation/dedupe, YAML line formatting |
 | `packages/obsidian-story-map/src/i18n.test.ts` | locale resolution, translation and message mapping |
 | `packages/obsidian-story-map/src/main.test.ts` | scoped routing, explicit Markdown mode and wrapper ownership on disable |
 | `packages/obsidian-story-map/src/settings-tab.test.ts` | definitions, legacy rendering, local-agent draft persistence |
-| `packages/remark-story-map/src/index.test.ts` | fence transform, document flag, `VaultIndex`, folder discovery, `noteDisplay`, source-relative media, scan exclusions, host route resolver |
+| `packages/remark-story-map/src/index.test.ts` | fence transform, document flag, `VaultIndex`, folder discovery, tag filtering, `noteDisplay`, source-relative media, scan exclusions, host route resolver |
 
 The examples and the landing site have no automated tests; verify them manually.
 
@@ -356,6 +362,7 @@ The examples and the landing site have no automated tests; verify them manually.
 | Obsidian view, commands, settings, detection | `obsidian-story-map/src/*` |
 | Local AI agent config and coordinate lookup | `obsidian-story-map/src/agents.ts`, `coordinates.ts`, `local-agents.ts`, `coordinate-lookup.ts` |
 | Obsidian note/media resolution | `obsidian-story-map/src/resolver.ts` |
+| Tag filtering (`includeTags`/`excludeTags`) | core `helpers.ts` + both adapters (`resolver.ts`, `vault.ts`) |
 | Remark/Docusaurus pipeline | `remark-story-map/src/index.ts`, `vault.ts`, `client.tsx` |
 | Docusaurus host config / theme bridge | `examples/docusaurus/*` (site-owned) |
 | Docusaurus full-page map view | `examples/docusaurus/story-map-view.js` + `story-map-full-page.css`; see `docs/docusaurus-full-page.md` |

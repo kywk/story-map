@@ -19,8 +19,8 @@ and `noteDisplay` semantics. The Docusaurus/Remark path implements the equivalen
 and defers route/slug policy to the host site.
 
 Stay intentionally small. Do not add a visual editor, scroll-driven storytelling, MapLibre,
-3D maps, GPX, GeoJSON editing, query languages, arbitrary filtering/grouping, or a generic
-plugin framework.
+3D maps, GPX, GeoJSON editing, query languages, filtering/grouping beyond the documented
+`includeTags`/`excludeTags` note filter, or a generic plugin framework.
 
 ## 2. Source document model
 
@@ -41,6 +41,8 @@ noteFolder: Travel/Chile/Places
 order: asc
 dateField: date-created
 noteDisplay: link
+includeTags: [travel, chile]
+excludeTags: [draft]
 
 map:
   center: [-33.4489, -70.6693]
@@ -148,11 +150,11 @@ renders a normal browser link (Docusaurus). Otherwise it renders a non-link titl
 
 Owns the file-backed `TextFileView`, `story-map: true` detection, `story-map` fence
 extraction, Markdown <-> StoryMap view switching, default-open of detected documents,
-recursive `noteFolder` discovery filtered by `story-map-note: true`, `dateField` + `order`
-sorting, explicit `slide.note` resolution, `noteDisplay` handling, metadata and local media
-resolution, a settings tab of defaults, and React mount/unmount lifecycle. It is the
-behavioral reference for note resolution and `noteDisplay`, except where browser
-navigation necessarily differs. It must not depend on the community Obsidian Leaflet
+recursive `noteFolder` discovery filtered by `story-map-note: true` and optional
+`includeTags`/`excludeTags`, `dateField` + `order` sorting, explicit `slide.note`
+resolution, `noteDisplay` handling, metadata and local media resolution, a settings tab of
+defaults, and React mount/unmount lifecycle. It is the behavioral reference for note
+resolution and `noteDisplay`, except where browser navigation necessarily differs. It must not depend on the community Obsidian Leaflet
 plugin at runtime.
 
 The first plugin release targets desktop only. The declared minimum Obsidian version is
@@ -164,9 +166,10 @@ package names remain unchanged.
 
 Owns the build-time fenced-block transform, optional `vaultRoot` Vault indexing (skipping
 dot-directories and `node_modules`/`build`/`dist`/`coverage`), recursive `noteFolder`
-resolution with the same `dateField`/`order` semantics as Obsidian, `noteDisplay`
-semantics, explicit `slide.note` resolution, source-aware relative media, a host-provided
-published-route resolver for `noteDisplay: link`, serialization of only normalized
+resolution with the same `dateField`/`order` and `includeTags`/`excludeTags` semantics as
+Obsidian, `noteDisplay` semantics, explicit `slide.note` resolution, source-aware relative
+media, a host-provided published-route resolver for `noteDisplay: link`, serialization of
+only normalized
 `StoryMapConfig` into a browser-safe host element, and a client entry that mounts
 placeholders with `<StoryMap />` and unmounts roots removed during SPA navigation.
 Build-time code never initializes Leaflet; the browser entry never uses Node APIs.
@@ -188,6 +191,8 @@ interface StoryMapSourceConfig {
   order: 'asc' | 'desc';         // default: 'asc'
   dateField: string;             // default: 'date-created'
   noteDisplay: 'basic' | 'link' | 'full';  // default: 'link'
+  includeTags?: string[];        // keep notes with any listed tag
+  excludeTags?: string[];        // drop notes with any listed tag
 
   map: {
     center?: [number, number];
@@ -223,13 +228,32 @@ When `slides` is absent or empty and `noteFolder` is set:
 1. recursively scan the folder and subfolders;
 2. consider Markdown files only;
 3. include only files with `story-map-note: true`;
-4. read the frontmatter field named by `dateField`;
-5. sort valid dates by `order`;
-6. produce one slide per included note.
+4. when `includeTags` is non-empty, include only files whose frontmatter tags contain at
+   least one listed tag;
+5. when `excludeTags` is non-empty, drop files whose frontmatter tags contain any listed
+   tag;
+6. read the frontmatter field named by `dateField`;
+7. sort valid dates by `order`;
+8. produce one slide per included note.
 
 For determinism, notes with a missing or unparseable date are retained after valid dates.
 Ties break by Vault-relative path ascending regardless of `order`. These are stability
 rules, not configurable sort features.
+
+#### 6.2.1 Tag filtering
+
+`includeTags` and `excludeTags` are optional document-only string lists. Matching is
+any-of: `includeTags` keeps a note when it has at least one listed tag, and `excludeTags`
+drops a note when it has any listed tag; the two may be combined. Tags come from the note
+frontmatter `tags` or `tag` key, accept a string or a list, strip a leading `#`, and compare
+case-insensitively. Nested tags (`a/b`) match only their exact value; there is no parent or
+wildcard matching.
+
+Filtering applies only to folder-generated slides. When explicit `slides` are present,
+`noteFolder` is ignored and therefore `includeTags`/`excludeTags` have no effect. The keys
+are not plugin settings defaults and are not serialized into `StoryMapConfig`. Obsidian and
+Remark use the same frontmatter-only rule so both hosts select the same notes; inline
+`#tag` body syntax is not considered.
 
 ### 6.3 Note display
 
@@ -250,8 +274,9 @@ inside the body is not required.
 Obsidian resolves source values in order: document block -> plugin settings -> built-in
 defaults. Plugin settings expose defaults for `order`, `dateField`, `noteDisplay`, and the
 `map` keys `zoom`, `minZoom`, `maxZoom`, `tileUrl`, `attribution`, `showPath`. Per-story
-values — `schema`, `id`, `title`, `noteFolder`, `map.center`, `slides`, `height` — are
-document-only (`height` is forced to `100%` in the Obsidian full-leaf host and remains
+values — `schema`, `id`, `title`, `noteFolder`, `includeTags`, `excludeTags`, `map.center`,
+`slides`, `height` — are document-only (`height` is forced to `100%` in the Obsidian
+full-leaf host and remains
 meaningful in standalone/Docusaurus hosts). Remark uses document values plus built-in
 defaults; it does not duplicate the Obsidian settings UI. See `docs/architecture.md` for
 the full defaults table.
@@ -475,6 +500,8 @@ Complete when all are true:
   switch back to Markdown without changing source content;
 - Obsidian `noteFolder` recursively finds eligible `story-map-note: true` notes and sorts
   by `dateField` using `order: asc | desc` (default `date-created` ascending);
+- `includeTags`/`excludeTags` filter folder-discovered notes identically in Obsidian and
+  Remark, while explicit `slides` are unaffected;
 - explicit `slides` are never reordered or appended to by `noteFolder`;
 - a note may reuse Leaflet-compatible `location`, `mapmarker`, and `mapzoom`;
 - the Obsidian plugin can look up coordinates with a configured local CLI agent, confirm a
@@ -504,7 +531,8 @@ Complete when all are true:
 
 - visual authoring/editor UI;
 - multiple `noteFolder` sources;
-- custom `sortBy`, secondary sorting, grouping, filtering, or query syntax;
+- custom `sortBy`, secondary sorting, grouping, and filtering beyond the documented
+  `includeTags`/`excludeTags` note filter;
 - scrollama/scrollytelling mode;
 - MapLibre adapter;
 - `CRS.Simple`/gigapixel mode;

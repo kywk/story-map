@@ -27,6 +27,11 @@ hygiene").
 - `noteFolder` supports one Vault-relative folder and includes subfolders recursively.
 - Folder-generated slide order is controlled only by `order: asc | desc` (default `asc`)
   and `dateField` (default `date-created`).
+- Folder-generated slide selection is optionally filtered by `includeTags` (keep notes with
+  any listed tag) and `excludeTags` (drop notes with any listed tag). Matching is any-of,
+  case-insensitive, tag-prefix and whitespace tolerant, and uses note frontmatter tags only
+  (`tags`/`tag`, string or list) so Obsidian and Remark select the same notes. Nested tags
+  match exactly; no wildcard or parent matching. Inline `#tag` body syntax is ignored.
 - Explicit `slides` preserve exact author order and are never implicitly appended to or
   reordered by folder discovery. When `slides` is non-empty, `noteFolder` is ignored.
 - Reuse Leaflet-compatible note metadata such as `location`, `mapmarker`, and `mapzoom`.
@@ -40,8 +45,9 @@ hygiene").
 - Defaultable `story-map` keys (Obsidian plugin settings): `order`, `dateField`,
   `noteDisplay`, and `map.zoom`, `map.minZoom`, `map.maxZoom`, `map.tileUrl`,
   `map.attribution`, `map.showPath`. Keys that vary per document — `schema`, `id`, `title`,
-  `noteFolder`, `map.center`, `slides`, `height` — must stay document-only and must not be
-  added to plugin settings or defaults. Resolution order for defaultable keys is always:
+  `noteFolder`, `includeTags`, `excludeTags`, `map.center`, `slides`, `height` — must stay
+  document-only and must not be added to plugin settings or defaults. Resolution order for
+  defaultable keys is always:
   1. the key present in the document's `story-map` block;
   2. otherwise the plugin setting;
   3. otherwise the built-in code default.
@@ -81,7 +87,8 @@ Do not introduce unless explicitly requested:
 - visual editors, scroll-driven storytelling, a generic plugin framework;
 - premature abstraction for multiple map engines;
 - multiple `noteFolder` sources;
-- generic `sortBy`, grouping, filtering, or query syntax;
+- generic `sortBy`, grouping, or query syntax, or filtering beyond
+  `includeTags`/`excludeTags`;
 - a generic route/slug framework;
 - automatic full Markdown-open interception through `WorkspaceLeaf` monkey patches (a
   scoped `setViewState` wrapper may still open detected `story-map: true` documents in the

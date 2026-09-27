@@ -5,7 +5,9 @@ import {
   coerceMedia,
   compareNoteDates,
   extractFencedBlock,
+  extractFrontmatterTags,
   isPathInFolder,
+  matchesTagFilter,
   mergeResolvedSlide,
   parseStoryMapObject,
   parseStoryMapSourceObject,
@@ -237,6 +239,79 @@ describe('parseStoryMapSourceYaml', () => {
   it('accepts an empty slides array', () => {
     const source = parseStoryMapSourceYaml('slides: []');
     expect(source.slides).toEqual([]);
+  });
+});
+
+describe('includeTags and excludeTags', () => {
+  it('parses tag arrays and keeps them out of the render config', () => {
+    const source = parseStoryMapSourceYaml(
+      ['noteFolder: Places', 'includeTags: [Travel, chile]', 'excludeTags: [draft]'].join('\n'),
+    );
+
+    expect(source.includeTags).toEqual(['Travel', 'chile']);
+    expect(source.excludeTags).toEqual(['draft']);
+  });
+
+  it('coerces a comma or space separated tag string into a list', () => {
+    expect(parseStoryMapSourceYaml('includeTags: Travel, chile').includeTags).toEqual([
+      'Travel',
+      'chile',
+    ]);
+    expect(parseStoryMapSourceYaml('excludeTags: draft').excludeTags).toEqual(['draft']);
+  });
+
+  it('leaves the keys unset when omitted', () => {
+    const source = parseStoryMapSourceYaml('noteFolder: Places');
+    expect(source.includeTags).toBeUndefined();
+    expect(source.excludeTags).toBeUndefined();
+  });
+
+  it('is document-only and ignores plugin defaults', () => {
+    const source = parseStoryMapSourceYaml('noteFolder: Places', {
+      order: 'desc',
+      noteDisplay: 'full',
+    });
+    expect(source.includeTags).toBeUndefined();
+    expect(source.excludeTags).toBeUndefined();
+  });
+});
+
+describe('extractFrontmatterTags', () => {
+  it('reads tags and tag, arrays or strings, normalized and deduped', () => {
+    expect(
+      extractFrontmatterTags({ tags: ['#Travel', 'Chile', 'travel'], tag: 'draft notes' }),
+    ).toEqual(['travel', 'chile', 'draft', 'notes']);
+  });
+
+  it('ignores missing or non-string values', () => {
+    expect(extractFrontmatterTags({})).toEqual([]);
+    expect(extractFrontmatterTags({ tags: 42 })).toEqual([]);
+  });
+});
+
+describe('matchesTagFilter', () => {
+  const note = { tags: ['travel', 'chile'] };
+
+  it('accepts any note when no filter is configured', () => {
+    expect(matchesTagFilter(note)).toBe(true);
+    expect(matchesTagFilter({}, [], [])).toBe(true);
+  });
+
+  it('includes a note when it has any listed include tag', () => {
+    expect(matchesTagFilter(note, ['chile'], undefined)).toBe(true);
+    expect(matchesTagFilter(note, ['#Chile', 'peru'], undefined)).toBe(true);
+    expect(matchesTagFilter(note, ['peru'], undefined)).toBe(false);
+  });
+
+  it('excludes a note when it has any listed exclude tag', () => {
+    expect(matchesTagFilter(note, undefined, ['chile'])).toBe(false);
+    expect(matchesTagFilter(note, undefined, ['peru'])).toBe(true);
+  });
+
+  it('applies include and exclude together', () => {
+    expect(matchesTagFilter(note, ['travel'], ['draft'])).toBe(true);
+    expect(matchesTagFilter(note, ['travel'], ['chile'])).toBe(false);
+    expect(matchesTagFilter(note, ['peru'], undefined)).toBe(false);
   });
 });
 

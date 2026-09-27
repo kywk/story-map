@@ -39,6 +39,14 @@ function normalizeSlide(value: unknown, index: number): Record<string, unknown> 
   return slide;
 }
 
+function coerceTagList(value: string): string[] | undefined {
+  const tags = value
+    .split(/[,\s]+/)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+  return tags.length > 0 ? tags : undefined;
+}
+
 export function normalizeStoryMapInput(value: unknown): unknown {
   const input = { ...asRecord(value) };
   const map = { ...asRecord(input.map) };
@@ -62,6 +70,8 @@ export function normalizeStoryMapInput(value: unknown): unknown {
 
   input.map = map;
   if (Array.isArray(input.slides)) input.slides = input.slides.map(normalizeSlide);
+  if (typeof input.includeTags === 'string') input.includeTags = coerceTagList(input.includeTags);
+  if (typeof input.excludeTags === 'string') input.excludeTags = coerceTagList(input.excludeTags);
 
   delete input.lat;
   delete input.long;

@@ -148,10 +148,17 @@ Only notes whose frontmatter contains `story-map-note: true` are discovered;
 other Markdown files in the folder are ignored. Notes without a parseable date
 sort last.
 
+`includeTags` keeps only notes whose frontmatter tags contain any listed tag,
+and `excludeTags` drops notes whose frontmatter tags contain any listed tag.
+Both are optional, compare case-insensitively, and read the frontmatter `tags` or
+`tag` key only (matching Obsidian).
+
 ```yaml
 noteFolder: Trips/Santiago
 order: desc
 dateField: date-created
+includeTags: [travel, chile]
+excludeTags: [draft]
 ```
 
 ## `noteDisplay`

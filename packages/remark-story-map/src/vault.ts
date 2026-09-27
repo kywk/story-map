@@ -3,6 +3,7 @@ import path from 'node:path';
 import matter from 'gray-matter';
 import {
   isPathInFolder,
+  matchesTagFilter,
   mergeResolvedSlide,
   parseWikiLinkRef,
   slideFromNoteFrontmatter,
@@ -46,7 +47,14 @@ export class VaultIndex {
     const slides = explicitSlides.length > 0
       ? this.resolveExplicitSlides(explicitSlides, sourcePath, noteDisplay)
       : source.noteFolder
-        ? this.resolveFolder(source.noteFolder, source.dateField, source.order, noteDisplay)
+        ? this.resolveFolder(
+            source.noteFolder,
+            source.dateField,
+            source.order,
+            noteDisplay,
+            source.includeTags,
+            source.excludeTags,
+          )
         : [];
 
     return toStoryMapConfig(source, slides);
@@ -69,6 +77,8 @@ export class VaultIndex {
     dateField: string,
     order: StoryMapSourceConfig['order'],
     noteDisplay: StoryNoteDisplay,
+    includeTags?: readonly string[],
+    excludeTags?: readonly string[],
   ): StorySlide[] {
     const entries = this.notes
       .filter((note) => isPathInFolder(note.relativePath, noteFolder))
@@ -77,7 +87,8 @@ export class VaultIndex {
         date: toTimestamp(note.frontmatter[dateField]),
         note,
       }))
-      .filter((entry) => entry.note.frontmatter['story-map-note'] === true);
+      .filter((entry) => entry.note.frontmatter['story-map-note'] === true)
+      .filter((entry) => matchesTagFilter(entry.note.frontmatter, includeTags, excludeTags));
 
     return sortNoteDates(entries, order).map((entry) => this.slideForNote(entry.note, noteDisplay));
   }

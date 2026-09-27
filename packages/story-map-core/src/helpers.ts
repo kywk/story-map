@@ -173,3 +173,52 @@ export function isPathInFolder(filePath: string, folder: string): boolean {
   if (!normalizedFolder) return true;
   return normalizedFile.startsWith(`${normalizedFolder}/`);
 }
+
+export function normalizeTag(value: string): string {
+  return value.trim().replace(/^#+/, '').toLowerCase();
+}
+
+export function extractFrontmatterTags(frontmatter: Record<string, unknown>): string[] {
+  const collected: string[] = [];
+
+  for (const raw of [frontmatter.tags, frontmatter.tag]) {
+    if (Array.isArray(raw)) {
+      for (const item of raw) {
+        if (typeof item === 'string') collected.push(...item.split(/[,\s]+/));
+      }
+    } else if (typeof raw === 'string') {
+      collected.push(...raw.split(/[,\s]+/));
+    }
+  }
+
+  const tags = new Set<string>();
+  for (const token of collected) {
+    const tag = normalizeTag(token);
+    if (tag) tags.add(tag);
+  }
+  return [...tags];
+}
+
+export function matchesTagFilter(
+  frontmatter: Record<string, unknown>,
+  includeTags?: readonly string[],
+  excludeTags?: readonly string[],
+): boolean {
+  const include = normalizeTagList(includeTags);
+  const exclude = normalizeTagList(excludeTags);
+  if (include.length === 0 && exclude.length === 0) return true;
+
+  const tags = new Set(extractFrontmatterTags(frontmatter));
+  if (exclude.some((tag) => tags.has(tag))) return false;
+  if (include.length > 0 && !include.some((tag) => tags.has(tag))) return false;
+  return true;
+}
+
+function normalizeTagList(values?: readonly string[]): string[] {
+  const tags = new Set<string>();
+  for (const value of values ?? []) {
+    const tag = normalizeTag(value);
+    if (tag) tags.add(tag);
+  }
+  return [...tags];
+}

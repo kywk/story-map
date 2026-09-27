@@ -37,6 +37,8 @@ noteFolder: Travel/Chile/Places
 order: asc
 dateField: date-created
 noteDisplay: link
+includeTags: [travel, chile]
+excludeTags: [draft]
 map:
   center: [-33.4489, -70.6693]
   zoom: 5
@@ -61,8 +63,8 @@ map:
 
 Resolution order per key: document block → plugin setting → built-in default. Changing a
 setting re-renders open StoryMap views immediately. Per-story values — `schema`, `id`, `title`,
-`noteFolder`, `map.center`, `slides`, and `height` — stay in the document and have no setting;
-the full-leaf Obsidian view always fills the pane.
+`noteFolder`, `includeTags`, `excludeTags`, `map.center`, `slides`, and `height` — stay in the
+document and have no setting; the full-leaf Obsidian view always fills the pane.
 
 The same tab also manages the device-local **Local agents** used by the AI coordinate lookup
 (executable, arguments, default agent, and detection status). These are stored with
@@ -92,6 +94,8 @@ writing, especially for obscure places.
   returns it to the StoryMap view.
 - `noteFolder` recursively discovers Markdown notes with `story-map-note: true`; explicit
   `slides` keep their exact configured order and are never appended to.
+- `includeTags`/`excludeTags` narrow folder discovery by frontmatter tags (any-of,
+  case-insensitive); they do not affect explicit slides.
 - Notes may reuse Leaflet-compatible `location`, `mapmarker`, `mapzoom`, `title`,
   `description`/`summary`, and `cover`/`image`/`media` frontmatter.
 - In `noteDisplay: link`, the slide title opens the note in a new tab and shows the Obsidian page

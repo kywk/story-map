@@ -53,6 +53,8 @@ export const storyMapSourceSchema = storyMapBaseSchema.extend({
   order: z.enum(['asc', 'desc']).default('asc'),
   dateField: z.string().min(1).default('date-created'),
   noteDisplay: z.enum(['basic', 'link', 'full']).default('link'),
+  includeTags: z.array(z.string().min(1)).optional(),
+  excludeTags: z.array(z.string().min(1)).optional(),
   slides: z.array(storySlideSchema).optional(),
 });
 

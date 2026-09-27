@@ -187,6 +187,78 @@ describe('resolveObsidianStory folder discovery', () => {
   });
 });
 
+describe('resolveObsidianStory tag filtering', () => {
+  const files: FakeFile[] = [
+    note('Places/Santiago.md', {
+      'story-map-note': true,
+      title: 'Santiago',
+      'date-created': '2026-01-15',
+      tags: ['travel', 'chile'],
+    }),
+    note('Places/Atacama.md', {
+      'story-map-note': true,
+      title: 'Atacama',
+      'date-created': '2026-02-20',
+      tags: ['travel', 'draft'],
+    }),
+    note('Places/Lima.md', {
+      'story-map-note': true,
+      title: 'Lima',
+      'date-created': '2026-03-01',
+      tag: 'peru',
+    }),
+    note('Places/Untagged.md', {
+      'story-map-note': true,
+      title: 'Untagged',
+      'date-created': '2026-04-01',
+    }),
+  ];
+
+  it('keeps only notes carrying any include tag', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({ noteFolder: 'Places', includeTags: ['#Chile'] });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+    expect(story.slides.map((slide) => slide.title)).toEqual(['Santiago']);
+  });
+
+  it('drops notes carrying any exclude tag', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({ noteFolder: 'Places', excludeTags: ['draft'] });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+    expect(story.slides.map((slide) => slide.title)).toEqual([
+      'Santiago',
+      'Lima',
+      'Untagged',
+    ]);
+  });
+
+  it('combines include and exclude filters', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({
+      noteFolder: 'Places',
+      includeTags: ['travel'],
+      excludeTags: ['draft'],
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+    expect(story.slides.map((slide) => slide.title)).toEqual(['Santiago']);
+  });
+
+  it('does not filter explicit slides', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({
+      noteFolder: 'Places',
+      includeTags: ['nonexistent'],
+      slides: [{ title: 'Explicit' }],
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+    expect(story.slides.map((slide) => slide.title)).toEqual(['Explicit']);
+  });
+});
+
 describe('resolveObsidianStory noteDisplay', () => {
   const body = [
     '---',

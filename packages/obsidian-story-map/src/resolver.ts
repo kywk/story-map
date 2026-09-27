@@ -1,6 +1,7 @@
 import type { App, TFile } from 'obsidian';
 import {
   isPathInFolder,
+  matchesTagFilter,
   mergeResolvedSlide,
   parseWikiLinkRef,
   slideFromNoteFrontmatter,
@@ -25,7 +26,15 @@ export async function resolveObsidianStory(
   const slides = explicitSlides.length > 0
     ? await resolveExplicitSlides(app, explicitSlides, sourcePath, noteDisplay)
     : source.noteFolder
-      ? await resolveFolderSlides(app, source.noteFolder, source.dateField, source.order, noteDisplay)
+      ? await resolveFolderSlides(
+          app,
+          source.noteFolder,
+          source.dateField,
+          source.order,
+          noteDisplay,
+          source.includeTags,
+          source.excludeTags,
+        )
       : [];
 
   return toStoryMapConfig(source, slides);
@@ -46,6 +55,8 @@ async function resolveFolderSlides(
   dateField: string,
   order: StoryMapSourceConfig['order'],
   noteDisplay: StoryNoteDisplay,
+  includeTags?: readonly string[],
+  excludeTags?: readonly string[],
 ): Promise<StorySlide[]> {
   const entries = app.vault
     .getMarkdownFiles()
@@ -59,7 +70,8 @@ async function resolveFolderSlides(
         frontmatter,
       };
     })
-    .filter((entry) => entry.frontmatter['story-map-note'] === true);
+    .filter((entry) => entry.frontmatter['story-map-note'] === true)
+    .filter((entry) => matchesTagFilter(entry.frontmatter, includeTags, excludeTags));
 
   return Promise.all(
     sortNoteDates(entries, order).map((entry) =>
