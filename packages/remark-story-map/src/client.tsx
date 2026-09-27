@@ -1,14 +1,20 @@
 import { createRoot, type Root } from 'react-dom/client';
+import type { ComponentType } from 'react';
 import type { StoryMapConfig } from '@story-map/story-map-core';
 import 'leaflet/dist/leaflet.css';
 import '@story-map/react-story-map/styles.css';
 
 const roots = new Map<Element, Root>();
 const pending = new Set<Element>();
-let rendererPromise: Promise<typeof import('@story-map/react-story-map')> | undefined;
 
-function loadRenderer() {
-  rendererPromise ??= import('@story-map/react-story-map');
+interface RendererModule {
+  StoryMap: ComponentType<{ story: StoryMapConfig }>;
+}
+
+let rendererPromise: Promise<RendererModule> | undefined;
+
+function loadRenderer(): Promise<RendererModule> {
+  rendererPromise ??= import('@story-map/react-story-map') as unknown as Promise<RendererModule>;
   return rendererPromise;
 }
 

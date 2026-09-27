@@ -84,7 +84,7 @@ const en: Copy = {
         name: 'Obsidian',
         pkg: 'geo-story-map',
         body: 'A file-backed full-leaf view. A story-map document opens as a map by default; notes under noteFolder become slides ordered by date and filtered by includeTags/excludeTags, and Open as Markdown returns you to the editable source. A local CLI agent can look up coordinates on demand.',
-        note: 'Desktop 1.8.0+',
+        note: 'Desktop 1.8.7+',
       },
       {
         name: 'React',
@@ -134,7 +134,7 @@ const en: Copy = {
       heading: 'Obsidian plugin',
       steps: [
         'Download main.js, manifest.json, and styles.css from the latest release.',
-        'Put them in <Vault>/.obsidian/plugins/geo-story-map/.',
+        "Put them in the plugins/geo-story-map/ folder inside your vault's configuration folder.",
         'Enable Geo Story Map in Settings, then Community plugins.',
         'Add story-map: true to a note and reopen it as a map.',
       ],
@@ -198,7 +198,7 @@ const zh: Copy = {
         name: 'Obsidian',
         pkg: 'geo-story-map',
         body: '以檔案為後盾的全葉檢視。story-map 文件預設以地圖開啟；noteFolder 底下的筆記依日期排序，並可用 includeTags／excludeTags 篩選成為每一站，「Open as Markdown」則回到可編輯的原始碼。也能用本機 CLI agent 即時查詢座標。',
-        note: '桌面版 1.8.0+',
+        note: '桌面版 1.8.7+',
       },
       {
         name: 'React',
@@ -248,7 +248,7 @@ const zh: Copy = {
       heading: 'Obsidian 外掛',
       steps: [
         '從最新 release 下載 main.js、manifest.json 與 styles.css。',
-        '放進 <Vault>/.obsidian/plugins/geo-story-map/。',
+        '放進 vault 設定資料夾下的 plugins/geo-story-map/。',
         '在「設定 → 第三方外掛」啟用 Geo Story Map。',
         '在筆記加入 story-map: true，重新開啟即可作為地圖檢視。',
       ],

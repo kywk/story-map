@@ -157,10 +157,11 @@ defaults, and React mount/unmount lifecycle. It is the behavioral reference for 
 resolution and `noteDisplay`, except where browser navigation necessarily differs. It must not depend on the community Obsidian Leaflet
 plugin at runtime.
 
-The first plugin release targets desktop only. The declared minimum Obsidian version is
-1.8.0; compatibility on that version must be verified before community submission.
-Its community identity is `Geo Story Map` / `geo-story-map`; the source syntax and npm
-package names remain unchanged.
+The plugin targets desktop only. The declared minimum Obsidian version is 1.8.7, required
+by the `App.loadLocalStorage`/`App.saveLocalStorage` and `getLanguage` APIs used for
+device-local agent settings and locale detection. Its community identity is
+`Geo Story Map` / `geo-story-map`; the source syntax and npm package names remain
+unchanged.
 
 ### `remark-story-map`
 

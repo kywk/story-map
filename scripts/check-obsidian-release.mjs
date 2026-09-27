@@ -18,7 +18,7 @@ assert.equal(manifest.name, 'Geo Story Map');
 assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
 assert.equal(manifest.version, plugin.version);
 assert.equal(manifest.isDesktopOnly, true);
-assert.equal(manifest.minAppVersion, '1.8.0');
+assert.equal(manifest.minAppVersion, '1.8.7');
 assert(manifest.description.length <= 250 && manifest.description.endsWith('.'));
 assert.deepEqual(JSON.parse(readFileSync(join(dist, 'manifest.json'))), manifest);
 assert.deepEqual(JSON.parse(readFileSync(join(dist, 'versions.json'))),

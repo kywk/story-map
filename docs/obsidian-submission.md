@@ -1,13 +1,15 @@
 # Geo Story Map community submission
 
-The [public 0.2.0 release](https://github.com/kywk/story-map/releases/tag/0.2.0) is ready
+The [public 0.2.1 release](https://github.com/kywk/story-map/releases/tag/0.2.1) is ready
 with verified download assets. Community submission/review status is still pending;
 the plugin is not claimed to be available through the in-app directory yet.
 
-Plugin: **Geo Story Map**, ID `geo-story-map`, version `0.2.0`. Desktop only; minimum
-Obsidian `1.8.0`. The maintainer reports successful 1.8.0 opening, Markdown switching,
-split-pane resize and disable-cleanup checks. A public API declaration review found no
-required API newer than 1.8.0 (`revealLeaf` was introduced in 1.7.2).
+Plugin: **Geo Story Map**, ID `geo-story-map`, version `0.2.1`. Desktop only; minimum
+Obsidian `1.8.7`. The device-local agent settings and locale detection use
+`App.loadLocalStorage`, `App.saveLocalStorage` and `getLanguage`, all introduced in 1.8.7.
+The earlier 1.8.0 compatibility checks covered opening, Markdown switching, split-pane
+resize and disable cleanup; re-verify those on 1.8.7 before resubmission. `0.2.0` declared
+`1.8.0` incorrectly and was rejected by the review scanner; do not submit it.
 
 ## Prepare the release
 
@@ -24,7 +26,7 @@ copies them into `packages/obsidian-story-map/dist/`. It also bundles JavaScript
 and generates `THIRD_PARTY_NOTICES.txt` from the actual bundled dependency licenses.
 The scoped view-state wrapper becomes inert on disable and preserves later wrappers.
 
-The GitHub tag must exactly equal the plugin version, **`0.2.0`**, without `v` or
+The GitHub tag must exactly equal the plugin version, **`0.2.1`**, without `v` or
 `npm-v`. Attach only `main.js`, `manifest.json` and `styles.css`.
 Do not attach a repository ZIP as a replacement for these files. Obsidian downloads
 these three automatically. Full dependency notices are appended to `main.js`; the
@@ -54,7 +56,7 @@ Suggested long description:
 > metadata-only, linked-title or full-body note display. Switch between the map and
 > Markdown without changing your source files.
 > An optional coordinate lookup uses a local CLI agent you configure; the place name is
-> sent to that CLI's provider. Desktop Obsidian 1.8.0 or newer is required. Map tiles and
+> sent to that CLI's provider. Desktop Obsidian 1.8.7 or newer is required. Map tiles and
 > configured remote media need a network connection; no plugin account or payment is
 > required.
 

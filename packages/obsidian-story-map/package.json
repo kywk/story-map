@@ -1,6 +1,6 @@
 {
   "name": "@story-map/obsidian-story-map",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Obsidian file-backed full-leaf StoryMap view and Vault resolver.",
   "license": "MIT",
   "repository": {

@@ -188,7 +188,7 @@ export async function runAgent(config: AgentConfig, options: RunAgentOptions): P
       const finish = (error?: Error): void => {
         if (settled) return;
         settled = true;
-        clearTimeout(timer);
+        window.clearTimeout(timer);
         options.signal?.removeEventListener('abort', abort);
         if (error) {
           try {
@@ -201,7 +201,7 @@ export async function runAgent(config: AgentConfig, options: RunAgentOptions): P
         } else resolve(stdout);
       };
       const abort = (): void => finish(new Error(t('The request was cancelled.')));
-      const timer = setTimeout(
+      const timer = window.setTimeout(
         () => finish(new Error(t('The local agent timed out.'))),
         options.timeoutMs ?? 120_000,
       );

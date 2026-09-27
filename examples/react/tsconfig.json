@@ -3,7 +3,11 @@
   "compilerOptions": {
     "noEmit": true,
     "types": ["vite/client"],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@story-map/story-map-core": ["../../packages/story-map-core/src/index.ts"],
+      "@story-map/react-story-map": ["../../packages/react-story-map/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"]
 }

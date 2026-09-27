@@ -248,7 +248,7 @@ export async function startCoordinateLookup(plugin: StoryMapPlugin, file: TFile)
       tileUrl: plugin.settings.mapTileUrl?.trim() || DEFAULT_TILE_URL,
       attribution: plugin.settings.mapAttribution?.trim() || DEFAULT_TILE_ATTRIBUTION,
       onApply: (lat, lng, mapmarker) =>
-        plugin.app.fileManager.processFrontMatter(file, (frontmatter) => {
+        plugin.app.fileManager.processFrontMatter(file, (frontmatter: Record<string, unknown>) => {
           frontmatter.location = [lat, lng];
           if (mapmarker) frontmatter.mapmarker = mapmarker;
         }),
