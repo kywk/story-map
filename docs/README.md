@@ -8,7 +8,7 @@ Start here when you need to understand or change StoryMap.
 | [`../SPEC.md`](../SPEC.md) | Product and architecture contract (source of truth). |
 | [`../AGENTS.md`](../AGENTS.md) | Working agreement, boundaries, definition of done. |
 | [`architecture.md`](architecture.md) | Concrete implementation map: packages, data flow, files, APIs, commands. |
-| [`plans/2026-09-28-map-theme-layout/README.md`](plans/2026-09-28-map-theme-layout/README.md) | Original design bundle for implemented map themes and layouts. |
+| [`history/2026-09-28-map-theme-layout/README.md`](history/2026-09-28-map-theme-layout/README.md) | Archived design bundle for the implemented map themes and layouts. |
 | [`docusaurus-full-page.md`](docusaurus-full-page.md) | Host-owned full-page StoryMap view example for Docusaurus (not a package option). |
 | [`obsidian-submission.md`](obsidian-submission.md) | Geo Story Map GitHub release assets and community submission steps. |
 | [`../RELEASING.md`](../RELEASING.md) | npm publishing, Trusted Publisher setup and deferred Obsidian submission. |

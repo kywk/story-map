@@ -11,7 +11,7 @@ Built-in map themes (`auto`, `light`, `dark`, `vintage`, `cyber`, `atlas`) and d
 `card`/`full` layouts render through the same shared component in all three hosts.
 `auto` follows the host theme (Obsidian native light/dark and colors; `prefers-color-scheme`
 elsewhere), while `light`/`dark` are fixed palettes.
-The [design bundle](docs/plans/2026-09-28-map-theme-layout/README.md) records the milestone.
+The [design bundle](docs/history/2026-09-28-map-theme-layout/README.md) records the milestone.
 
 ## Website
 
