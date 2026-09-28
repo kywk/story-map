@@ -133,9 +133,9 @@ const en: Copy = {
     obsidian: {
       heading: 'Obsidian plugin',
       steps: [
-        'Download main.js, manifest.json, and styles.css from the latest release.',
-        "Put them in the plugins/geo-story-map/ folder inside your vault's configuration folder.",
-        'Enable Geo Story Map in Settings, then Community plugins.',
+        'Open Settings → Community plugins → Browse in Obsidian.',
+        'Search for Geo Story Map in the official community plugin directory.',
+        'Select Install, then Enable.',
         'Copy both examples above into a story document and a note under Travel/Chile/Places. Reopen the story as a map.',
       ],
     },
@@ -247,9 +247,9 @@ const zh: Copy = {
     obsidian: {
       heading: 'Obsidian 外掛',
       steps: [
-        '從最新 release 下載 main.js、manifest.json 與 styles.css。',
-        '放進 vault 設定資料夾下的 plugins/geo-story-map/。',
-        '在「設定 → 第三方外掛」啟用 Geo Story Map。',
+        '在 Obsidian 開啟「設定 → 第三方外掛 → 瀏覽」。',
+        '在官方社群外掛市集搜尋 Geo Story Map。',
+        '選擇「安裝」，完成後按下「啟用」。',
         '複製上方兩份範例，建立故事文件，並在 Travel/Chile/Places 放入故事筆記。重新開啟故事文件即可顯示地圖。',
       ],
     },
@@ -339,7 +339,7 @@ export const guideCopy: Record<Lang, GuideCopy> = {
     ],
     documentOnly: 'Folder, tags, center, layout, slides, height, title, id, and schema belong in the document, not plugin defaults. Local AI agent settings stay on this device.',
     clipboard: { idle: 'Copy source', done: 'Copied', error: 'Select and copy manually' },
-    download: 'Download the Obsidian plugin', reactGuide: 'Complete React example', remarkGuide: 'Docusaurus setup & browser client',
+    download: 'Get it from the plugin directory', reactGuide: 'Complete React example', remarkGuide: 'Docusaurus setup & browser client',
     faqHeading: 'Before you begin.', faqLede: 'A few practical details about the way StoryMap works.',
     faq: [
       { question: 'Do I need a StoryMap account?', answer: 'No StoryMap account or database is required. Your source stays in Markdown files. Map tiles and example images use external providers, so the demo needs a network connection.' },
@@ -381,7 +381,7 @@ export const guideCopy: Record<Lang, GuideCopy> = {
     ],
     documentOnly: '資料夾、標籤、中心座標、版型、投影片、高度、標題、id 與 schema 僅能在文件設定。本機 AI agent 設定只儲存在這台裝置。',
     clipboard: { idle: '複製原始碼', done: '已複製', error: '請選取文字手動複製' },
-    download: '下載 Obsidian 外掛', reactGuide: '完整 React 範例', remarkGuide: 'Docusaurus 設定與瀏覽器端整合',
+    download: '前往官方外掛市集', reactGuide: '完整 React 範例', remarkGuide: 'Docusaurus 設定與瀏覽器端整合',
     faqHeading: '開始前，你可能想知道。', faqLede: '幾個關於 StoryMap 使用方式的實用解答。',
     faq: [
       { question: '需要註冊 StoryMap 帳號嗎？', answer: '不需要 StoryMap 帳號，也不需要資料庫。來源保留為 Markdown 檔案。地圖圖磚與範例圖片使用外部服務，因此示範頁需要網路連線。' },

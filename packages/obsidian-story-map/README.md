@@ -7,6 +7,17 @@ The plugin targets desktop only. The declared minimum version is Obsidian 1.8.7,
 by the device-local agent storage and language helpers; the earlier 1.8.0 desktop checks
 covered opening, Markdown switching, split-pane resize and plugin disable cleanup.
 
+## Install
+
+Open **Settings → Community plugins → Browse**, search for **Geo Story Map**, then select
+**Install** and **Enable**. The plugin is available in the
+[Obsidian community directory](https://community.obsidian.md/plugins/geo-story-map).
+
+For manual installation, download `main.js`, `manifest.json`, and `styles.css` from the
+[plugin release](https://github.com/kywk/story-map/releases/tag/0.2.1), place them in
+`<Vault>/.obsidian/plugins/geo-story-map/`, then enable **Geo Story Map**. Dependency notices
+are included in `main.js`; local builds also provide a separate notice file (see [Build](#build)).
+
 ## Network use
 
 Maps load tiles from OpenStreetMap (`https://{s}.tile.openstreetmap.org`) by default
@@ -135,7 +146,7 @@ Copy `dist/main.js`, `dist/manifest.json`, `dist/styles.css`, and
 ```
 
 The repository-root `manifest.json` and `versions.json` are canonical; the build copies
-them into `dist`. See [submission instructions](../../docs/obsidian-submission.md) for release and review status.
+them into `dist`. See [release instructions](../../docs/obsidian-submission.md) for release assets and verification.
 
 ## License
 

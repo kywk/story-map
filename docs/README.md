@@ -10,10 +10,11 @@ Start here when you need to understand or change StoryMap.
 | [`architecture.md`](architecture.md) | Concrete implementation map: packages, data flow, files, APIs, commands. |
 | [`../DESIGN.md`](../DESIGN.md) | Introduction website visual tokens and responsive conventions. |
 | [`acceptance/2026-09-28-site-redesign.md`](acceptance/2026-09-28-site-redesign.md) | Bilingual website verification, CI evidence, and unrun gates. |
+| [`acceptance/2026-09-28-atlas-comparison.md`](acceptance/2026-09-28-atlas-comparison.md) | Atlas screenshot diagnosis and community installation update verification. |
 | [`history/2026-09-28-map-theme-layout/README.md`](history/2026-09-28-map-theme-layout/README.md) | Archived design bundle for the implemented map themes and layouts. |
 | [`docusaurus-full-page.md`](docusaurus-full-page.md) | Host-owned full-page StoryMap view example for Docusaurus (not a package option). |
-| [`obsidian-submission.md`](obsidian-submission.md) | Geo Story Map GitHub release assets and community submission steps. |
-| [`../RELEASING.md`](../RELEASING.md) | npm publishing, Trusted Publisher setup and deferred Obsidian submission. |
+| [`obsidian-submission.md`](obsidian-submission.md) | Geo Story Map community listing, release assets and follow-up release checks. |
+| [`../RELEASING.md`](../RELEASING.md) | npm publishing, Trusted Publisher setup and Obsidian community releases. |
 | [`history/`](history/) | Archived plans and background. Superseded, not authoritative. |
 
 Recommended reading order for a new agent: `README.md` -> `architecture.md` -> `SPEC.md` -> `AGENTS.md`.

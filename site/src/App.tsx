@@ -7,7 +7,7 @@ import { examples } from './stories.js';
 const REPO = 'https://github.com/kywk/story-map';
 
 const LINKS = {
-  release: `${REPO}/releases/latest`,
+  community: 'https://community.obsidian.md/plugins/geo-story-map',
   repo: REPO,
   spec: `${REPO}/blob/main/SPEC.md`,
   architecture: `${REPO}/blob/main/docs/architecture.md`,
@@ -357,7 +357,7 @@ export default function App() {
                     <li key={step}>{step}</li>
                   ))}
                 </ol>
-                <a className="btn btn--primary" href={LINKS.release}>{g.download}</a>
+                <a className="btn btn--primary" href={LINKS.community}>{g.download}</a>
               </div>
               <div className="start__col">
                 <h3>{c.start.libraries.heading}</h3>

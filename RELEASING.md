@@ -106,8 +106,9 @@ not proven by local checks. The workflow does not create an Obsidian release.
 
 The desktop plugin is **Geo Story Map**, ID `geo-story-map`, current version `0.2.1`,
 minimum Obsidian `1.8.7`. Its versions are independent of the npm libraries.
+It is published in the [Obsidian community directory](https://community.obsidian.md/plugins/geo-story-map).
 The previous candidate `story-map` is already used by an unrelated community plugin.
 
-See [the submission guide](docs/obsidian-submission.md) for build verification, exact
-GitHub release assets, community account submission and follow-up releases.
+See [the community release guide](docs/obsidian-submission.md) for build verification, exact
+GitHub release assets, listing maintenance and follow-up releases.
 Repository-root `manifest.json` and `versions.json` are canonical.

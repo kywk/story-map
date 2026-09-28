@@ -1,14 +1,17 @@
-# Geo Story Map community submission
+# Geo Story Map community release
 
-The [public 0.2.1 release](https://github.com/kywk/story-map/releases/tag/0.2.1) is ready
-with verified download assets. Community submission/review status is still pending;
-the plugin is not claimed to be available through the in-app directory yet.
+Geo Story Map is published in the
+[Obsidian community directory](https://community.obsidian.md/plugins/geo-story-map).
+Install it through **Settings → Community plugins → Browse → Geo Story Map**, then enable it.
+The [public 0.2.1 release](https://github.com/kywk/story-map/releases/tag/0.2.1) provides
+the plugin assets. This documentation update does not publish a new plugin version.
 
 Plugin: **Geo Story Map**, ID `geo-story-map`, version `0.2.1`. Desktop only; minimum
 Obsidian `1.8.7`. The device-local agent settings and locale detection use
 `App.loadLocalStorage`, `App.saveLocalStorage` and `getLanguage`, all introduced in 1.8.7.
 The earlier 1.8.0 compatibility checks covered opening, Markdown switching, split-pane
-resize and disable cleanup; re-verify those on 1.8.7 before resubmission. `0.2.0` declared
+resize and disable cleanup; repeat those smoke tests on the declared minimum version
+for future releases. `0.2.0` declared
 `1.8.0` incorrectly and was rejected by the review scanner; do not submit it.
 
 ## Prepare the release
@@ -33,16 +36,12 @@ these three automatically. Full dependency notices are appended to `main.js`; th
 separate local notice file is not attached to community releases.
 Root `versions.json` supports fallback downloads; a release attachment cannot replace it.
 
-## Submit in the community directory
+## Maintain the community listing
 
-1. Sign in at [community.obsidian.md](https://community.obsidian.md).
-2. Confirm the linked GitHub account is `kywk`.
-3. Open **Plugins** and select the action to add a plugin.
-4. Enter repository URL `https://github.com/kywk/story-map` and select your account
-   as owner. The directory reads the manifest at the default branch's HEAD.
-5. Read and accept the developer policies and maintenance commitment, then submit.
-6. Open the entry's scanner/review results. Share any errors or warnings for correction.
-   A GitHub release alone does not mean community approval or in-app availability.
+Manage the published [Geo Story Map listing](https://community.obsidian.md/plugins/geo-story-map)
+through the owning account at [community.obsidian.md](https://community.obsidian.md).
+Keep the listing consistent with the current manifest, supported Obsidian version, and
+released behavior. Follow-up plugin versions still require the build and release checks below.
 
 Suggested short description (also in the manifest):
 

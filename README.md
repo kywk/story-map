@@ -28,14 +28,12 @@ Requires desktop Obsidian 1.8.7 or newer; mobile is not supported in this releas
 The plugin is named **Geo Story Map** (`geo-story-map`); the source syntax remains
 `story-map`. It does not require the separate Obsidian Leaflet plugin.
 
-1. Download `main.js`, `manifest.json`, `styles.css`, and `THIRD_PARTY_NOTICES.txt`
-   from the [plugin release](https://github.com/kywk/story-map/releases/tag/0.2.1).
-2. Put them in `<Vault>/.obsidian/plugins/geo-story-map/`.
-3. Enable **Geo Story Map** in Settings → Community plugins. Community listing is pending.
-4. Create a Markdown document using the Story syntax below, then close and reopen it,
+1. Open Settings → Community plugins → Browse, search for **Geo Story Map**, then install
+   and enable it. See the [community listing](https://community.obsidian.md/plugins/geo-story-map).
+2. Create a Markdown document using the Story syntax below, then close and reopen it,
    or run **Geo Story Map: Open as map** from the command palette.
-5. Use **Open as Markdown** to edit the same document; the source stays unchanged.
-6. Run **Geo Story Map: Find coordinates with AI** on a note to look up a place with a
+3. Use **Open as Markdown** to edit the same document; the source stays unchanged.
+4. Run **Geo Story Map: Find coordinates with AI** on a note to look up a place with a
    configured local CLI agent, confirm it on a map, and write `location` or copy it.
 
 Add notes under the document's `noteFolder`, for example `Travel/Chile/Places/Santiago.md`:
@@ -50,7 +48,8 @@ description: The journey begins here.
 ---
 ```
 
-See [the plugin guide](packages/obsidian-story-map/README.md) for settings and note display.
+See [the plugin guide](packages/obsidian-story-map/README.md) for settings, note display,
+and manual installation.
 Geo Story Map is free, needs no plugin account, and includes no telemetry. Maps request
 OpenStreetMap tiles by default; configured tile providers and remote media connect to
 their specified hosts. The plugin reads notes and attachments inside your vault.
@@ -62,7 +61,7 @@ their specified hosts. The plugin reads notes and attachments inside your vault.
 | `@story-map/story-map-core` | Framework-agnostic schema, parser, and helpers | npm (0.2.1) |
 | `@story-map/react-story-map` | React + Leaflet renderer | npm (0.2.1) |
 | `@story-map/remark-story-map` | Remark build-time transform + browser client | npm (0.2.1) |
-| `@story-map/obsidian-story-map` | Geo Story Map Obsidian view and Vault resolver | GitHub Release 0.2.1 |
+| `@story-map/obsidian-story-map` | Geo Story Map Obsidian view and Vault resolver | Obsidian Community plugins / GitHub Release 0.2.1 |
 
 ## Quick start
 
