@@ -535,9 +535,11 @@ still takes precedence.
 ```
 
 Behavior: Previous/Next buttons, Left/Right keyboard navigation, slide counter, active
-slide `flyTo`, a small circle marker per located slide, an optional path polyline,
-responsive resize handling, a normal `href` fallback for a resolved `slide.notePath` when
-platform callbacks are absent, and no scroll mode.
+slide `flyTo` that keeps the marker clear of the card/full overlay, a small circle marker
+per located slide, an optional path polyline, responsive resize handling, a normal `href`
+fallback for a resolved `slide.notePath` when platform callbacks are absent, and no scroll
+mode. In `full` mode navigation floats over the container edges and the complete note body
+scrolls beneath it.
 
 ## 13. Acceptance criteria
 

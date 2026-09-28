@@ -112,6 +112,12 @@ changing the tile provider. `light` and `dark` are fixed palettes; `auto` follow
 `heightRatio` (`0.20..0.95`). Full supports `side: left | right` and `contentRatio`
 (`0.30..0.70`); on narrow screens its fade becomes vertical.
 
+Card renders Previous/Next buttons inside the panel. Full floats circular arrows at the
+left and right edges with a slide counter at the bottom center, so the whole note body
+stays scrollable without hunting for the controls. Both layouts keep the active marker
+clear of the overlay: a centered card (and any narrow viewport) parks it at the top
+quarter, and full centers it in the map area beside the article.
+
 These semantic CSS variables are advanced, explicit host overrides:
 
 Set these semantic CSS variables on the StoryMap or an ancestor to match your host:

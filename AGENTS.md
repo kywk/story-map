@@ -37,7 +37,9 @@ hygiene").
 - Reuse Leaflet-compatible note metadata such as `location`, `mapmarker`, and `mapzoom`.
 - Note presentation is controlled by `noteDisplay: basic | link | full`, default `link`:
   `basic` uses frontmatter metadata only; `link` resolves a slide-title link; `full` uses
-  the frontmatter-stripped note body as slide text.
+  the frontmatter-stripped note body as slide text and drops frontmatter title/media.
+  The `full` layout always resolves notes as `full` regardless of the configured
+  `noteDisplay`; that override lives in `story-map-core` and both adapters must use it.
 - `link` is platform-specific only at navigation time: Obsidian supplies callbacks (Page
   preview on hover, open in new tab on click); Docusaurus resolves the final published
   route and the renderer emits a normal browser link. `react-story-map` must not import

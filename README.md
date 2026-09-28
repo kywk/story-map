@@ -122,8 +122,9 @@ frontmatter tag and `excludeTags` drops notes with any listed tag (both optional
 
 `noteDisplay: basic | link | full` controls how resolved notes are shown (default `link`):
 frontmatter basics, basics with a title link to the note, or the full frontmatter-stripped
-note body. Obsidian opens the note through host callbacks; Docusaurus renders the
-published route as a normal browser link.
+note body. The `full` layout always uses the note body regardless of this setting. Obsidian
+opens the note through host callbacks; Docusaurus renders the published route as a normal
+browser link.
 
 ## Docusaurus
 
