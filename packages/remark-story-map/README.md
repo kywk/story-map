@@ -80,6 +80,10 @@ using forward slashes, for example `Trips/Santiago`.
 When `vaultRoot` is omitted, fenced blocks are parsed and serialized, but no
 note or `noteFolder` resolution happens.
 
+The normalized `map.theme` (`light`, `dark`, `vintage`, `cyber`, `atlas`) and
+document-owned `layout` (`card` or `full`) pass through to the shared renderer
+unchanged. Remark adds no theme palette or layout behavior of its own.
+
 ## Resolving published note routes
 
 `resolveNoteHref` lets the host decide published URLs. The `kywk.github.io`
@@ -214,13 +218,13 @@ browser bundle.
 
 ## Docusaurus theme bridge
 
-The generic renderer owns the StoryMap semantic CSS variables. The Docusaurus
-site maps Infima variables onto them via a host stylesheet, not inside the
-renderer. Copy `examples/docusaurus/story-map-theme.css` into the site and
-load it through the Docusaurus stylesheet chain:
+The built-in `map.theme` preset styles both cartography and StoryMap chrome.
+The Docusaurus site can load `examples/docusaurus/story-map-theme.css` without
+overriding that palette. For a deliberate site-color override, add the
+`story-map-use-infima-colors` class to the chosen host and load that stylesheet:
 
 ```css
-.story-map-host {
+.story-map-host.story-map-use-infima-colors {
   --story-map-bg: var(--ifm-background-surface-color);
   --story-map-fg: var(--ifm-font-color-base);
   --story-map-muted: var(--ifm-color-emphasis-700);
@@ -229,9 +233,8 @@ load it through the Docusaurus stylesheet chain:
 }
 ```
 
-This keeps panel, text, border, buttons, and links readable in light and dark
-themes. Dynamic light/dark tile provider switching is deferred; the goal is
-readable, theme-compatible StoryMap chrome/panel content.
+This optional bridge is an advanced override of the built-in palette. It does
+not change the configured map theme or tile URL.
 
 ## Full-page view
 

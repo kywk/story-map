@@ -1,17 +1,12 @@
 /*
- * Docusaurus / Infima -> StoryMap theme bridge.
+ * Optional Docusaurus / Infima color bridge.
  *
- * This file must be loaded by the Docusaurus site itself (for example via
- * `customCss` or a stylesheet import in the site theme). It does not belong in
- * the generic @story-map/react-story-map package, which stays host-agnostic and
- * only owns the semantic --story-map-* defaults. Mapping Infima variables here
- * keeps panel, text, border, buttons, and links readable in both light and dark
- * Docusaurus themes without importing Docusaurus APIs into the renderer.
- *
- * Dynamic light/dark tile provider switching is deferred; this bridge only
- * adapts StoryMap chrome/panel colors.
+ * Built-in map themes already style the map and StoryMap chrome together. Add
+ * `story-map-use-infima-colors` to a particular host only when the site wants
+ * its Infima palette to override those colors. Typography still inherits from
+ * the host without this class.
  */
-.story-map-host {
+.story-map-host.story-map-use-infima-colors {
   --story-map-bg: var(--ifm-background-surface-color);
   --story-map-fg: var(--ifm-font-color-base);
   --story-map-muted: var(--ifm-color-emphasis-700);

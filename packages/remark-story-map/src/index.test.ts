@@ -35,6 +35,42 @@ describe('remarkStoryMap', () => {
     expect((config.slides as Array<{ title: string }>)[0]?.title).toBe('One');
   });
 
+  it('serializes the canonical theme and layout for each host independently', () => {
+    const tree: Root = {
+      type: 'root',
+      children: [
+        {
+          type: 'code',
+          lang: 'story-map',
+          value: 'map:\n  theme: cyber\nlayout:\n  mode: full\n  full:\n    side: right\n    contentRatio: 0.6\nslides:\n  - title: First',
+        },
+        {
+          type: 'code',
+          lang: 'story-map',
+          value: 'map:\n  theme: vintage\nlayout:\n  mode: card\n  card:\n    align: center\n    widthRatio: 0.5\nslides:\n  - title: Second',
+        },
+      ],
+    };
+
+    remarkStoryMap()(tree);
+
+    const [first, second] = tree.children.map((node) => readConfig(node as Html));
+    expect(first?.map).toMatchObject({ theme: 'cyber' });
+    expect(first?.layout).toEqual({
+      mode: 'full',
+      card: { align: 'left' },
+      full: { side: 'right', contentRatio: 0.6 },
+    });
+    expect(second?.map).toMatchObject({ theme: 'vintage' });
+    expect(second?.layout).toEqual({
+      mode: 'card',
+      card: { align: 'center', widthRatio: 0.5 },
+      full: { side: 'left', contentRatio: 0.5 },
+    });
+    expect(first?.slides).toEqual([{ title: 'First' }]);
+    expect(second?.slides).toEqual([{ title: 'Second' }]);
+  });
+
   it('ignores the legacy storymap fence', () => {
     const tree: Root = {
       type: 'root',
@@ -106,9 +142,15 @@ describe('VaultIndex', () => {
     height: '520px',
     map: {
       zoom: 6,
+      theme: 'light' as const,
       tileUrl: 'https://example.test/{z}/{x}/{y}.png',
       attribution: 'test',
       showPath: true,
+    },
+    layout: {
+      mode: 'card' as const,
+      card: { align: 'left' as const },
+      full: { side: 'left' as const, contentRatio: 0.5 },
     },
     slides: [],
   };
