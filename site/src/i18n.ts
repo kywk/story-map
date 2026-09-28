@@ -102,7 +102,7 @@ const en: Copy = {
   },
   examples: {
     heading: 'Three stories, one renderer.',
-    lede: 'These are not screenshots. Each story below is the shared React component running live in this page. Pick one and step through the stops.',
+    lede: 'Explore the live shared renderer. Choose a story, then switch among five map themes and card or full layouts.',
     switchLabel: 'Choose a story',
     openLabel: 'Open',
     slideCountLabel: 'stops',
@@ -216,7 +216,7 @@ const zh: Copy = {
   },
   examples: {
     heading: '三段故事，同一個渲染器。',
-    lede: '這些不是截圖。以下每一段故事，都是共用的 React 元件正在本頁即時執行。選一段，逐站走下去。',
+    lede: '直接操作共用渲染器：選擇故事，切換五種地圖主題與 card／full 版型。',
     switchLabel: '選擇故事',
     openLabel: '開啟',
     slideCountLabel: '站',

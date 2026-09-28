@@ -51,6 +51,7 @@ function buildStory(
     title: title[lang],
     height: '100%',
     map: {
+      theme: 'light',
       center: map.center,
       zoom: map.zoom,
       ...(map.minZoom === undefined ? {} : { minZoom: map.minZoom }),
@@ -59,6 +60,7 @@ function buildStory(
       attribution: ATTRIBUTION,
       showPath: true,
     },
+    layout: { mode: 'card', card: { align: 'left' }, full: { side: 'left', contentRatio: 0.5 } },
     slides: spots.map((spot): StorySlide => {
       const media = mediaFor(spot, lang);
       return {

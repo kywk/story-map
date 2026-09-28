@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StoryMap } from '@story-map/react-story-map';
-import type { StoryLocation, StorySlide } from '@story-map/story-map-core';
+import type { StoryLocation, StorySlide, StoryMapTheme, StoryMapLayoutMode } from '@story-map/story-map-core';
 import { copy, initialLang, type Lang } from './i18n.js';
 import { examples } from './stories.js';
 
@@ -29,9 +29,15 @@ includeTags: [travel, chile]
 excludeTags: [draft]
 
 map:
+  theme: vintage
   center: [-33.4489, -70.6693]
   zoom: 6
   showPath: true
+layout:
+  mode: full
+  full:
+    side: left
+    contentRatio: 0.5
 \`\`\``;
 
 const noteSnippet = `---
@@ -80,11 +86,27 @@ function Contours() {
 export default function App() {
   const [lang, setLang] = useState<Lang>(initialLang);
   const [exampleId, setExampleId] = useState('chile');
+  const [theme, setTheme] = useState<StoryMapTheme>('light');
+  const [layoutMode, setLayoutMode] = useState<StoryMapLayoutMode>('card');
+  const [cardAlign, setCardAlign] = useState<'left' | 'center' | 'right'>('left');
+  const [fullSide, setFullSide] = useState<'left' | 'right'>('left');
+  const [cardWidth, setCardWidth] = useState<number | undefined>();
+  const [cardHeight, setCardHeight] = useState<number | undefined>();
+  const [contentRatio, setContentRatio] = useState(0.5);
   const [heroStop, setHeroStop] = useState<HeroStop>({ index: 0 });
 
   const c = copy[lang];
   const heroStory = examples[0]!.story[lang];
   const current = examples.find((item) => item.id === exampleId) ?? examples[1]!;
+  const exampleStory = {
+    ...current.story[lang],
+    map: { ...current.story[lang].map, theme },
+    layout: {
+      mode: layoutMode,
+      card: { align: cardAlign, ...(cardWidth === undefined ? {} : { widthRatio: cardWidth }), ...(cardHeight === undefined ? {} : { heightRatio: cardHeight }) },
+      full: { side: fullSide, contentRatio },
+    },
+  } satisfies typeof current.story.en;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -249,7 +271,53 @@ export default function App() {
                 })}
               </div>
               <div className="examples__map" role="tabpanel">
-                <StoryMap key={`${current.id}-${lang}`} story={current.story[lang]} />
+                <div className="theme-playground" aria-label={lang === 'zh' ? '地圖主題與版型' : 'Map theme and layout'}>
+                  <label>{lang === 'zh' ? '主題' : 'Theme'}
+                    <select value={theme} onChange={(event) => setTheme(event.target.value as StoryMapTheme)}>
+                      {(['light', 'dark', 'vintage', 'cyber', 'atlas'] as const).map((value) => <option key={value} value={value}>{value}</option>)}
+                    </select>
+                  </label>
+                  <label>{lang === 'zh' ? '版型' : 'Layout'}
+                    <select value={layoutMode} onChange={(event) => setLayoutMode(event.target.value as StoryMapLayoutMode)}>
+                      <option value="card">card</option><option value="full">full</option>
+                    </select>
+                  </label>
+                  {layoutMode === 'card' ? (
+                    <>
+                      <label>{lang === 'zh' ? '卡片對齊' : 'Card align'}
+                        <select value={cardAlign} onChange={(event) => setCardAlign(event.target.value as typeof cardAlign)}>
+                          <option value="left">left</option><option value="center">center</option><option value="right">right</option>
+                        </select>
+                      </label>
+                      <label>{lang === 'zh' ? '寬度' : 'Width'}
+                        <select value={cardWidth ?? ''} onChange={(event) => setCardWidth(event.target.value ? Number(event.target.value) : undefined)}>
+                          <option value="">auto</option><option value="0.35">35%</option><option value="0.55">55%</option><option value="0.75">75%</option>
+                        </select>
+                      </label>
+                      <label>{lang === 'zh' ? '高度' : 'Height'}
+                        <select value={cardHeight ?? ''} onChange={(event) => setCardHeight(event.target.value ? Number(event.target.value) : undefined)}>
+                          <option value="">auto</option><option value="0.55">55%</option><option value="0.72">72%</option><option value="0.9">90%</option>
+                        </select>
+                      </label>
+                    </>
+                  ) : (
+                    <>
+                      <label>{lang === 'zh' ? '內容位置' : 'Content side'}
+                        <select value={fullSide} onChange={(event) => setFullSide(event.target.value as typeof fullSide)}>
+                          <option value="left">left</option><option value="right">right</option>
+                        </select>
+                      </label>
+                      <label>{lang === 'zh' ? '內容比例' : 'Content ratio'}
+                        <select value={contentRatio} onChange={(event) => setContentRatio(Number(event.target.value))}>
+                          <option value="0.35">35%</option><option value="0.5">50%</option><option value="0.65">65%</option>
+                        </select>
+                      </label>
+                    </>
+                  )}
+                </div>
+                <div className="examples__canvas">
+                  <StoryMap key={`${current.id}-${lang}`} story={exampleStory} />
+                </div>
               </div>
             </div>
           </div>
