@@ -5,7 +5,7 @@
 title: Taiwan sample
 height: 520px
 map:
-  theme: light # light | dark | vintage | cyber | atlas
+  theme: light # auto | light | dark | vintage | cyber | atlas
   center: [24.4, 121.0]
   zoom: 7
   showPath: true

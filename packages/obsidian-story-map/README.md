@@ -74,13 +74,13 @@ document and have no setting; the full-leaf Obsidian view always fills the pane.
 
 ## Theming
 
-The StoryMap window follows your Obsidian theme. The neutral `light` and `dark` map themes
-inherit Obsidian's own colors (`--background-primary`, `--text-normal`, `--text-muted`,
+The `auto` map theme (the default) follows your Obsidian theme: it inherits Obsidian's own
+colors (`--background-primary`, `--text-normal`, `--text-muted`,
 `--background-modifier-border`, `--interactive-accent`, and the marker/path accents), so
 switching light/dark or applying a custom community theme restyles the panel, controls,
-markers, and the dark-mode map treatment with no per-document config. The expressive
-`vintage`, `cyber`, and `atlas` themes keep their authored palettes; a host can still pin
-exact colors by setting `--story-map-*` variables.
+markers, and the dark-mode map treatment with no per-document config. The fixed `light` and
+`dark` palettes, and the expressive `vintage`, `cyber`, and `atlas` themes, render the same
+way in every host; a host can still pin exact colors by setting `--story-map-*` variables.
 
 The same tab also manages the device-local **Local agents** used by the AI coordinate lookup
 (executable, arguments, default agent, and detection status). These are stored with

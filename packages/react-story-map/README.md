@@ -103,9 +103,11 @@ uses `ResizeObserver`, when available, to refresh map sizing after layout change
 
 ## Themes and layouts
 
-Set `story.map.theme` to `light`, `dark`, `vintage`, `cyber`, or `atlas`. The preset
+Set `story.map.theme` to `auto`, `light`, `dark`, `vintage`, `cyber`, or `atlas`. The preset
 coordinates tiles, markers, path, controls, and StoryMap's content surface without
-changing the tile provider. `story.layout.mode` selects `card` or `full`. Card supports
+changing the tile provider. `light` and `dark` are fixed palettes; `auto` follows the host
+(the Obsidian host maps it onto the native theme, other hosts use `prefers-color-scheme`).
+`story.layout.mode` selects `card` or `full`. Card supports
 `align: left | center | right` and optional `widthRatio` (`0.20..0.80`) and
 `heightRatio` (`0.20..0.95`). Full supports `side: left | right` and `contentRatio`
 (`0.30..0.70`); on narrow screens its fade becomes vertical.

@@ -70,7 +70,7 @@ const storyMapBaseSchema = z.object({
     zoom: z.number().min(0).max(24).default(6),
     minZoom: z.number().min(0).max(24).optional(),
     maxZoom: z.number().min(0).max(24).optional(),
-    theme: z.enum(['light', 'dark', 'vintage', 'cyber', 'atlas']).default(DEFAULT_MAP_THEME),
+    theme: z.enum(['auto', 'light', 'dark', 'vintage', 'cyber', 'atlas']).default(DEFAULT_MAP_THEME),
     tileUrl: z.string().min(1).default('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
     attribution: z.string().default('© OpenStreetMap contributors'),
     showPath: z.boolean().default(true),

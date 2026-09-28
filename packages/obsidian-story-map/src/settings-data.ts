@@ -19,6 +19,7 @@ export interface StoryMapPluginSettings {
 }
 
 export const DEFAULT_STORY_MAP_SETTINGS: StoryMapPluginSettings = {
+  mapTheme: 'auto',
   mapShowPath: true,
 };
 

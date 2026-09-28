@@ -24,14 +24,13 @@
 
 /* Obsidian-native theme bridge.
  *
- * The neutral `light` and `dark` presets inherit the active Obsidian theme
- * instead of shipping two fixed palettes, so switching themes (including custom
- * community themes) restyles the StoryMap through Obsidian's own CSS variables.
- * The expressive `vintage` / `cyber` / `atlas` presets keep their authored look,
+ * The `auto` theme follows the active Obsidian theme instead of shipping its
+ * own palette, so switching light/dark (including custom community themes)
+ * restyles the StoryMap through Obsidian's own CSS variables. The fixed
+ * `light`/`dark`/`vintage`/`cyber`/`atlas` presets keep their authored look,
  * and an explicit host `--story-map-*` override still wins because the renderer
  * consumes those semantic variables directly. */
-.story-map-view .story-map[data-map-theme='light'],
-.story-map-view .story-map[data-map-theme='dark'] {
+.story-map-view .story-map[data-map-theme='auto'] {
   --story-map-bg: var(--background-primary);
   --story-map-fg: var(--text-normal);
   --story-map-muted: var(--text-muted);
@@ -44,15 +43,13 @@
   --story-map-path: var(--interactive-accent);
 }
 
-/* Tile layers cannot read Obsidian color variables, so the neutral presets
- * follow Obsidian's dark/light mode classes for the cartography filter. */
-body.theme-dark .story-map-view .story-map[data-map-theme='light'],
-body.theme-dark .story-map-view .story-map[data-map-theme='dark'] {
+/* Tile layers cannot read Obsidian color variables, so `auto` follows
+ * Obsidian's dark/light mode classes for the cartography filter. */
+body.theme-dark .story-map-view .story-map[data-map-theme='auto'] {
   --story-map-tile-filter: brightness(0.58) saturate(0.64) hue-rotate(165deg);
 }
 
-body.theme-light .story-map-view .story-map[data-map-theme='light'],
-body.theme-light .story-map-view .story-map[data-map-theme='dark'] {
+body.theme-light .story-map-view .story-map[data-map-theme='auto'] {
   --story-map-tile-filter: none;
 }
 

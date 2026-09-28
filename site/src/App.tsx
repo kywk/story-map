@@ -274,7 +274,7 @@ export default function App() {
                 <div className="theme-playground" aria-label={lang === 'zh' ? '地圖主題與版型' : 'Map theme and layout'}>
                   <label>{lang === 'zh' ? '主題' : 'Theme'}
                     <select value={theme} onChange={(event) => setTheme(event.target.value as StoryMapTheme)}>
-                      {(['light', 'dark', 'vintage', 'cyber', 'atlas'] as const).map((value) => <option key={value} value={value}>{value}</option>)}
+                      {(['auto', 'light', 'dark', 'vintage', 'cyber', 'atlas'] as const).map((value) => <option key={value} value={value}>{value}</option>)}
                     </select>
                   </label>
                   <label>{lang === 'zh' ? '版型' : 'Layout'}

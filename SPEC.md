@@ -143,8 +143,9 @@ metadata, route resolution, and real asset resolution belong to adapters.
 Owns the `<StoryMap />` component, Leaflet instance lifecycle, paged navigation, `flyTo`
 synchronization, markers and optional path, image/video/iframe media, Markdown text
 rendering, resize handling (`invalidateSize()`), minimal responsive CSS, generic
-note-title link rendering from a resolved `notePath`, five coordinated map/chrome theme
-presets, card/full presentation modes, and the semantic `--story-map-*` CSS
+note-title link rendering from a resolved `notePath`, six map/chrome theme
+presets (`auto` plus five fixed palettes), card/full presentation modes, and the semantic
+`--story-map-*` CSS
 variables. Must remain SSR-import-safe: Leaflet is dynamically imported inside client
 effects. Must not know what a Vault, WikiLink, frontmatter file, note folder, Obsidian
 workspace, or Docusaurus route is.
@@ -204,7 +205,7 @@ interface StoryMapSourceConfig {
 
   map: {
     center?: [number, number];
-    theme: 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas'; // default: 'light'
+    theme: 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas'; // built-in default: 'light'; Obsidian plugin default: 'auto'
     zoom: number;
     minZoom?: number;
     maxZoom?: number;
@@ -286,9 +287,12 @@ inside the body is not required.
 
 ### 6.4 Default precedence
 
-`map.theme` is a coordinated built-in visual preset independent of `tileUrl`. Its five
-values are `light`, `dark`, `vintage`, `cyber`, and `atlas`, with `light` as the built-in
-default. `layout` is document-owned: `card` preserves the existing floating card by
+`map.theme` is a coordinated visual preset independent of `tileUrl`. Its six values are
+`auto`, `light`, `dark`, `vintage`, `cyber`, and `atlas`, with `light` as the framework
+built-in default and `auto` as the Obsidian plugin default. `auto` follows the host: the
+Obsidian plugin maps it onto Obsidian's own light/dark theme and colors, while other hosts
+fall back to the OS/browser `prefers-color-scheme` light/dark palette. `light` and `dark`
+are fixed, host-independent palettes. `layout` is document-owned: `card` preserves the existing floating card by
 default, while `full` places a scrollable story surface to the left or right over a
 full-bleed map with a progressive fade. Card alignment defaults to `left`; optional
 `widthRatio` accepts `0.20..0.80` and `heightRatio` accepts `0.20..0.95`. Full `side`
@@ -316,7 +320,7 @@ interface StoryMapConfig {
   height: string;
   map: {
     center?: [number, number];
-    theme: 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
+    theme: 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
     zoom: number;
     minZoom?: number;
     maxZoom?: number;
@@ -488,9 +492,12 @@ dependencies only when a host exists; Leaflet remains dynamically imported by
 
 ### 11.6 Theme bridge
 
-The generic renderer owns five coordinated map/chrome themes and semantic
-`--story-map-*` CSS override variables. The Docusaurus host stylesheet offers an opt-in
-Infima bridge for a host that deliberately wants to override the selected preset:
+The generic renderer owns six map/chrome themes and semantic `--story-map-*` CSS override
+variables. `light` and `dark` are fixed, host-independent palettes; the `vintage`, `cyber`,
+and `atlas` presets are coordinated author-look presets. `auto` is host-adaptive: the
+renderer falls back to a `prefers-color-scheme` light/dark palette, and the Obsidian host
+bridges it onto Obsidian's own theme variables. The Docusaurus host stylesheet offers an
+opt-in Infima bridge for a host that deliberately wants to override the selected preset:
 
 ```css
 .story-map-host.story-map-use-infima-colors {
@@ -506,14 +513,13 @@ Docusaurus/Infima variables are not hard-coded inside the generic React package.
 light/dark tile provider switching is not required; the selected built-in preset styles
 the map tiles, markers, path, controls, and StoryMap-owned story surface together.
 
-The Obsidian host is the inverse case: its plugin stylesheet bridges the neutral `light` and
-`dark` presets onto Obsidian's own theme variables (`--background-primary`, `--text-normal`,
-`--text-muted`, `--background-modifier-border`, `--interactive-accent`, and the
-marker/path accents) and follows Obsidian's `theme-dark`/`theme-light` class for the neutral
-tile filter. Switching Obsidian light/dark or a custom community theme therefore restyles
-the StoryMap without per-document config. The expressive `vintage`, `cyber`, and `atlas`
-presets keep their authored palettes, and an explicit host `--story-map-*` override still
-takes precedence.
+The Obsidian host bridges `auto` onto Obsidian's own theme variables (`--background-primary`,
+`--text-normal`, `--text-muted`, `--background-modifier-border`, `--interactive-accent`, and
+the marker/path accents) and follows Obsidian's `theme-dark`/`theme-light` class for the
+tile filter. Switching Obsidian light/dark or a custom community theme therefore restyles an
+`auto` StoryMap without per-document config, and it is the plugin's default `map.theme`. The
+fixed/author-look presets keep their palettes, and an explicit host `--story-map-*` override
+still takes precedence.
 
 ## 12. React API
 
@@ -564,7 +570,7 @@ Complete when all are true:
 - SPA navigation adds and removes StoryMap hosts without duplicate mounts or leaked React
   roots;
 - Leaflet is never initialized during Node/SSR build;
-- all five built-in themes style map and StoryMap-owned chrome coherently;
+- all built-in themes style map and StoryMap-owned chrome coherently;
 - card alignment and optional ratios, full left/right placement and content ratio, and
   narrow-screen vertical fallback render without remounting Leaflet;
 - a host can intentionally override semantic `--story-map-*` colors;

@@ -28,7 +28,8 @@ const NOTE_DISPLAY_OPTIONS: Array<[value: string, label: string]> = [
 ];
 
 const MAP_THEME_OPTIONS: Array<[value: StoryMapTheme, label: string]> = [
-  ['light', 'Light (default)'],
+  ['auto', 'Auto (follow Obsidian theme) (default)'],
+  ['light', 'Light'],
   ['dark', 'Dark'],
   ['vintage', 'Vintage'],
   ['cyber', 'Cyber'],
@@ -123,11 +124,11 @@ export class StoryMapSettingTab extends PluginSettingTab {
       } },
       { name: 'Default map theme', render: (setting) => {
         setting
-          .setDesc('Built-in default: light. A theme selected in the document takes precedence.')
+          .setDesc('Default: auto, which follows the Obsidian light/dark theme and colors. A theme selected in the document takes precedence.')
           .addDropdown((dropdown) =>
             dropdown
               .addOptions(Object.fromEntries(MAP_THEME_OPTIONS))
-              .setValue(this.plugin.settings.mapTheme ?? 'light')
+              .setValue(this.plugin.settings.mapTheme ?? 'auto')
               .onChange((value) => this.patch({ mapTheme: toMapTheme(value) })),
           );
       } },
@@ -410,6 +411,6 @@ function toNoteDisplay(value: string): StoryNoteDisplay | undefined {
 }
 
 function toMapTheme(value: string): StoryMapTheme | undefined {
-  return value === 'light' || value === 'dark' || value === 'vintage' || value === 'cyber' || value === 'atlas'
+  return value === 'auto' || value === 'light' || value === 'dark' || value === 'vintage' || value === 'cyber' || value === 'atlas'
     ? value : undefined;
 }

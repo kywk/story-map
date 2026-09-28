@@ -35,7 +35,7 @@ export type StoryNoteDisplay = 'basic' | 'link' | 'full';
 
 export const DEFAULT_NOTE_DISPLAY: StoryNoteDisplay = 'link';
 
-export type StoryMapTheme = 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
+export type StoryMapTheme = 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
 export const DEFAULT_MAP_THEME: StoryMapTheme = 'light';
 
 export type StoryMapLayoutMode = 'card' | 'full';

@@ -74,12 +74,13 @@ hygiene").
   explicit slide media resolves relative to the StoryMap source document.
 - The browser client must handle Docusaurus SPA insertion/removal without duplicate mounts
   or leaked React roots.
-- Built-in `map.theme` values are `light`, `dark`, `vintage`, `cyber`, and `atlas`.
-  The renderer styles map and StoryMap chrome together; inherited `--story-map-*`
-  variables are explicit host overrides. The Docusaurus Infima bridge is opt-in. In the
-  Obsidian host the neutral `light`/`dark` presets bridge to native Obsidian CSS variables
-  and the `theme-dark`/`theme-light` tile filter, while the expressive presets keep their
-  authored palettes.
+- Built-in `map.theme` values are `auto`, `light`, `dark`, `vintage`, `cyber`, and
+  `atlas`. `light`/`dark` are fixed, host-independent palettes; `auto` follows the host
+  (the Obsidian host bridges it to native CSS variables and the `theme-dark`/`theme-light`
+  tile filter, other hosts use `prefers-color-scheme`); `vintage`/`cyber`/`atlas` keep
+  authored palettes. The renderer styles map and StoryMap chrome together; inherited
+  `--story-map-*` variables are explicit host overrides. The Docusaurus Infima bridge is
+  opt-in, and the Obsidian plugin defaults `map.theme` to `auto`.
 - `layout` is document-only: `card` (default) or `full`. The renderer owns both layouts;
   Obsidian and Remark pass the canonical config through.
 
@@ -168,7 +169,7 @@ Then manually smoke-test:
 7. source-relative and note-relative media;
 8. multiple StoryMaps on one page and clean SPA host removal;
 9. Docusaurus SSR/build never initializes Leaflet;
-10. five built-in themes in card/full modes, card alignment and ratios, full left/right
+10. the built-in themes in card/full modes, card alignment and ratios, full left/right
     ratios, narrow-screen vertical fallback, and a stable Leaflet instance while switching;
 11. the Docusaurus Infima override bridge remains opt-in and readable when applied.
 

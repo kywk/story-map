@@ -74,7 +74,8 @@ cannot override it.
 | `layout.full.contentRatio` | `0.5` |
 
 `map.center`, `map.minZoom`, and `map.maxZoom` are optional. All source keys use camelCase.
-Themes are `light`, `dark`, `vintage`, `cyber`, and `atlas`. Card layouts also accept
+Themes are `auto`, `light`, `dark`, `vintage`, `cyber`, and `atlas` (built-in default
+`light`). Card layouts also accept
 `widthRatio` (`0.20..0.80`) and `heightRatio` (`0.20..0.95`); both are optional. Full
 layouts accept `contentRatio` (`0.30..0.70`). The canonical config contains both `card`
 and `full` groups, including defaults for the inactive mode.

@@ -172,26 +172,40 @@
 }
 
 /* Built-in presets style both cartography and StoryMap-owned chrome. Public
-   --story-map-* semantic variables inherited from a host still win. */
+   --story-map-* semantic variables inherited from a host still win.
+   `auto` follows the host: Obsidian maps it onto its own theme variables
+   (packages/obsidian-story-map), while other hosts fall back to the
+   `prefers-color-scheme` light/dark palettes below. `light`/`dark` are fixed,
+   host-independent palettes. */
 .story-map {
-  --story-map-surface: #fff;
+  --story-map-surface: #ffffff;
   --story-map-ink: #1f2937;
-  --story-map-subtle: #6b7280;
-  --story-map-line: rgba(0, 0, 0, 0.14);
+  --story-map-subtle: #64748b;
+  --story-map-line: rgba(15, 23, 42, 0.16);
   --story-map-highlight: #2563eb;
   --story-map-tile-filter: none;
   --story-map-marker: #2563eb;
-  --story-map-marker-border: #fff;
+  --story-map-marker-border: #ffffff;
   --story-map-marker-active: #e76f51;
   --story-map-path: #2563eb;
 }
 .story-map[data-map-theme='dark'] {
-  --story-map-surface: #17232e; --story-map-ink: #f0f6f9;
-  --story-map-subtle: #aec1ca; --story-map-line: #46606b;
-  --story-map-highlight: #70d5e8;
+  --story-map-surface: #16212c; --story-map-ink: #edf4f8;
+  --story-map-subtle: #a8bcc7; --story-map-line: #415b68;
+  --story-map-highlight: #6fd3e6;
   --story-map-tile-filter: brightness(0.58) saturate(0.64) hue-rotate(165deg);
-  --story-map-marker: #70d5e8; --story-map-marker-border: #112731;
-  --story-map-marker-active: #ffca78; --story-map-path: #8bd9e7;
+  --story-map-marker: #6fd3e6; --story-map-marker-border: #0f1a24;
+  --story-map-marker-active: #f5b971; --story-map-path: #8ad7e6;
+}
+@media (prefers-color-scheme: dark) {
+  .story-map[data-map-theme='auto'] {
+    --story-map-surface: #16212c; --story-map-ink: #edf4f8;
+    --story-map-subtle: #a8bcc7; --story-map-line: #415b68;
+    --story-map-highlight: #6fd3e6;
+    --story-map-tile-filter: brightness(0.58) saturate(0.64) hue-rotate(165deg);
+    --story-map-marker: #6fd3e6; --story-map-marker-border: #0f1a24;
+    --story-map-marker-active: #f5b971; --story-map-path: #8ad7e6;
+  }
 }
 .story-map[data-map-theme='vintage'] {
   --story-map-surface: #f4e9d0; --story-map-ink: #40362f;

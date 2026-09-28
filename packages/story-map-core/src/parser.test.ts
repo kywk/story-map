@@ -140,7 +140,7 @@ describe('parseStoryMapObject', () => {
 describe('theme and layout contract', () => {
   const oneSlide = [{ title: 'One' }];
 
-  it.each(['light', 'dark', 'vintage', 'cyber', 'atlas'])(
+  it.each(['auto', 'light', 'dark', 'vintage', 'cyber', 'atlas'])(
     'accepts the %s map theme',
     (theme) => {
       expect(parseStoryMapObject({ map: { theme }, slides: oneSlide }).map.theme).toBe(theme);

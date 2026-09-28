@@ -80,9 +80,10 @@ using forward slashes, for example `Trips/Santiago`.
 When `vaultRoot` is omitted, fenced blocks are parsed and serialized, but no
 note or `noteFolder` resolution happens.
 
-The normalized `map.theme` (`light`, `dark`, `vintage`, `cyber`, `atlas`) and
+The normalized `map.theme` (`auto`, `light`, `dark`, `vintage`, `cyber`, `atlas`) and
 document-owned `layout` (`card` or `full`) pass through to the shared renderer
-unchanged. Remark adds no theme palette or layout behavior of its own.
+unchanged. Remark adds no theme palette or layout behavior of its own. `auto` falls back
+to `prefers-color-scheme` in the published site unless the host sets `--story-map-*`.
 
 ## Resolving published note routes
 

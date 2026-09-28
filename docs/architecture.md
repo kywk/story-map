@@ -137,10 +137,11 @@ Key invariants:
   - `notePath` present without callbacks -> normal `<a href>` (Docusaurus).
 - The renderer owns semantic `--story-map-*` CSS variables with private fallbacks; hosts
   override them on an ancestor (for example `.story-map-host`). `react-story-map` never
-  imports Infima or Docusaurus APIs. `styles.css` supplies five coordinated presets for
-  tile filters, vector layers, controls, and story surfaces. Card alignment/ratios and
-  full side/content ratio affect only the presentation overlay; mobile full mode uses a
-  vertical fade.
+  imports Infima or Docusaurus APIs. `styles.css` supplies fixed `light`/`dark` palettes,
+  an `auto` theme that falls back to `prefers-color-scheme`, and coordinated
+  `vintage`/`cyber`/`atlas` presets for tile filters, vector layers, controls, and story
+  surfaces. Card alignment/ratios and full side/content ratio affect only the presentation
+  overlay; mobile full mode uses a vertical fade.
 
 ### `@story-map/obsidian-story-map`
 
@@ -175,9 +176,9 @@ Key invariants:
   CSS/manifest/versions. `obsidian`, `electron` and Node built-ins stay external: the
   desktop-only local-agent layer requires them at runtime.
 - `obsidian.css` imports the renderer stylesheet and adds the Obsidian-native theme bridge:
-  the neutral `light`/`dark` presets inherit Obsidian CSS variables and the
-  `theme-dark`/`theme-light` tile filter, while `vintage`/`cyber`/`atlas` and explicit
-  `--story-map-*` overrides keep their own colors.
+  the `auto` preset (the plugin default) inherits Obsidian CSS variables and the
+  `theme-dark`/`theme-light` tile filter, while `light`/`dark`/`vintage`/`cyber`/`atlas`
+  and explicit `--story-map-*` overrides keep their own colors.
 
 ### `@story-map/remark-story-map`
 
@@ -237,7 +238,7 @@ duplicate the Obsidian settings UI.
 | `dateField` | `date-created` | yes |
 | `noteDisplay` | `link` | yes |
 | `map.center` | — | no (document only) |
-| `map.theme` | `light` | yes |
+| `map.theme` | `light` (Obsidian plugin default `auto`) | yes |
 | `map.zoom` | `6` | yes |
 | `map.minZoom`, `map.maxZoom` | — | yes |
 | `map.tileUrl` | OpenStreetMap standard | yes |

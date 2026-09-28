@@ -48,9 +48,11 @@ describe('toSourceDefaults', () => {
   });
 
   it('lets the document theme override the plugin default', () => {
-    const defaults = toSourceDefaults({ mapTheme: 'cyber' });
-    expect(parseStoryMapSourceObject({}, defaults).map.theme).toBe('cyber');
-    expect(parseStoryMapSourceObject({ map: { theme: 'atlas' } }, defaults).map.theme).toBe('atlas');
+    const defaults = toSourceDefaults({ mapTheme: 'auto' });
+    expect(parseStoryMapSourceObject({}, defaults).map.theme).toBe('auto');
+    const cyberDefaults = toSourceDefaults({ mapTheme: 'cyber' });
+    expect(parseStoryMapSourceObject({}, cyberDefaults).map.theme).toBe('cyber');
+    expect(parseStoryMapSourceObject({ map: { theme: 'atlas' } }, cyberDefaults).map.theme).toBe('atlas');
     expect(parseStoryMapSourceObject({}).map.theme).toBe('light');
   });
 });

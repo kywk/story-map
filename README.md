@@ -7,8 +7,10 @@ A small, reusable Leaflet-based StoryMap stack. One Markdown source and one stan
 - an Obsidian plugin (file-backed full-leaf view);
 - a Docusaurus site via a Remark build-time transform and browser client.
 
-Built-in map themes (`light`, `dark`, `vintage`, `cyber`, `atlas`) and document-owned
+Built-in map themes (`auto`, `light`, `dark`, `vintage`, `cyber`, `atlas`) and document-owned
 `card`/`full` layouts render through the same shared component in all three hosts.
+`auto` follows the host theme (Obsidian native light/dark and colors; `prefers-color-scheme`
+elsewhere), while `light`/`dark` are fixed palettes.
 The [design bundle](docs/plans/2026-09-28-map-theme-layout/README.md) records the milestone.
 
 ## Website

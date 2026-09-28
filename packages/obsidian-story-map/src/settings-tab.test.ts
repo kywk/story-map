@@ -101,12 +101,12 @@ describe('settings definitions and legacy rendering', () => {
     const { tab, plugin, container } = setup();
     tab.display();
     const theme = container.rows.find((row) => row.name === 'Default map theme');
-    expect(theme?.control?.value).toBe('light');
+    expect(theme?.control?.value).toBe('auto');
     theme?.control?.change?.('atlas');
     expect(plugin.settings).toMatchObject({ mapTheme: 'atlas' });
     expect(plugin.saveSettings).toHaveBeenCalledOnce();
     container.rows.find((row) => row.name === 'Restore defaults')?.control?.click?.();
-    expect(container.rows.find((row) => row.name === 'Default map theme')?.control?.value).toBe('light');
+    expect(container.rows.find((row) => row.name === 'Default map theme')?.control?.value).toBe('auto');
   });
 
   it('redraws reset values without invoking newer host APIs', () => {
