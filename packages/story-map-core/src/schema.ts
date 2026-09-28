@@ -1,4 +1,11 @@
 import { z } from 'zod';
+import {
+  DEFAULT_CARD_ALIGN,
+  DEFAULT_FULL_CONTENT_RATIO,
+  DEFAULT_FULL_SIDE,
+  DEFAULT_LAYOUT_MODE,
+  DEFAULT_MAP_THEME,
+} from './types.js';
 
 const locationSchema = z.object({
   lat: z.number().min(-90).max(90),
@@ -24,6 +31,32 @@ export const storySlideSchema = z.object({
   mapmarker: z.string().optional(),
 });
 
+const cardLayoutSchema = z.object({
+  align: z.enum(['left', 'center', 'right']).default(DEFAULT_CARD_ALIGN),
+  widthRatio: z.number().min(0.20).max(0.80).optional(),
+  heightRatio: z.number().min(0.20).max(0.95).optional(),
+});
+
+const fullLayoutSchema = z.object({
+  side: z.enum(['left', 'right']).default(DEFAULT_FULL_SIDE),
+  contentRatio: z.number().min(0.30).max(0.70).default(DEFAULT_FULL_CONTENT_RATIO),
+});
+
+const defaultLayout = {
+  mode: DEFAULT_LAYOUT_MODE,
+  card: { align: DEFAULT_CARD_ALIGN },
+  full: { side: DEFAULT_FULL_SIDE, contentRatio: DEFAULT_FULL_CONTENT_RATIO },
+};
+
+export const storyMapLayoutSchema = z.object({
+  mode: z.enum(['card', 'full']).default(DEFAULT_LAYOUT_MODE),
+  card: cardLayoutSchema.default({ align: DEFAULT_CARD_ALIGN }),
+  full: fullLayoutSchema.default({
+    side: DEFAULT_FULL_SIDE,
+    contentRatio: DEFAULT_FULL_CONTENT_RATIO,
+  }),
+});
+
 const storyMapBaseSchema = z.object({
   schema: z.literal('storymap/v1').default('storymap/v1'),
   id: z.string().optional(),
@@ -37,15 +70,18 @@ const storyMapBaseSchema = z.object({
     zoom: z.number().min(0).max(24).default(6),
     minZoom: z.number().min(0).max(24).optional(),
     maxZoom: z.number().min(0).max(24).optional(),
+    theme: z.enum(['light', 'dark', 'vintage', 'cyber', 'atlas']).default(DEFAULT_MAP_THEME),
     tileUrl: z.string().min(1).default('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
     attribution: z.string().default('© OpenStreetMap contributors'),
     showPath: z.boolean().default(true),
   }).default({
     zoom: 6,
+    theme: DEFAULT_MAP_THEME,
     tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
     showPath: true,
   }),
+  layout: storyMapLayoutSchema.default(defaultLayout),
 });
 
 export const storyMapSourceSchema = storyMapBaseSchema.extend({

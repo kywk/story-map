@@ -22,6 +22,12 @@ title: Taipei walk
 map:
   center: [25.033, 121.5654]
   zoom: 13
+  theme: atlas
+layout:
+  mode: full
+  full:
+    side: right
+    contentRatio: 0.45
 slides:
   - title: Taipei 101
     text: Start here.
@@ -47,7 +53,8 @@ That conversion copies fields; it does not validate or resolve the supplied slid
 
 Defaults have the following precedence: source value, supplied `StoryMapSourceDefaults`,
 then built-in default. Supplied defaults support `order`, `dateField`, `noteDisplay`, and
-map options other than `center`.
+map options other than `center`. `layout` is always document-owned; supplied defaults
+cannot override it.
 
 | Field | Built-in default |
 | --- | --- |
@@ -57,17 +64,28 @@ map options other than `center`.
 | `dateField` | `date-created` |
 | `noteDisplay` | `link` |
 | `map.zoom` | `6` |
+| `map.theme` | `light` |
 | `map.tileUrl` | `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png` |
 | `map.attribution` | `© OpenStreetMap contributors` |
 | `map.showPath` | `true` |
+| `layout.mode` | `card` |
+| `layout.card.align` | `left` |
+| `layout.full.side` | `left` |
+| `layout.full.contentRatio` | `0.5` |
 
 `map.center`, `map.minZoom`, and `map.maxZoom` are optional. All source keys use camelCase.
+Themes are `light`, `dark`, `vintage`, `cyber`, and `atlas`. Card layouts also accept
+`widthRatio` (`0.20..0.80`) and `heightRatio` (`0.20..0.95`); both are optional. Full
+layouts accept `contentRatio` (`0.30..0.70`). The canonical config contains both `card`
+and `full` groups, including defaults for the inactive mode.
 
 ## Other exports
 
 - Types: `StoryMapConfig`, `StoryMapSourceConfig`, `StoryMapSourceDefaults`, `StorySlide`,
-  `StoryLocation`, `StoryMedia`, and related map/display/order types.
-- Zod schemas: `storyMapSchema`, `storyMapSourceSchema`, and `storySlideSchema`.
+  `StoryLocation`, `StoryMedia`, `StoryMapTheme`, `StoryMapLayoutOptions`, and related
+  map/display/order types.
+- Zod schemas: `storyMapSchema`, `storyMapSourceSchema`, `storyMapLayoutSchema`, and
+  `storySlideSchema`.
 - Source utilities: `extractFencedBlock(markdown, 'story-map')`, `applySourceDefaults`,
   and `normalizeStoryMapInput`.
 - Pure helpers for frontmatter stripping, WikiLink references, location/media coercion,

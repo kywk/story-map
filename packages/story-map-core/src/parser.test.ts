@@ -128,6 +128,74 @@ describe('parseStoryMapObject', () => {
     expect(story.schema).toBe('storymap/v1');
     expect(story.map.zoom).toBe(6);
     expect(story.map.tileUrl).toContain('openstreetmap.org');
+    expect(story.map.theme).toBe('light');
+    expect(story.layout).toEqual({
+      mode: 'card',
+      card: { align: 'left' },
+      full: { side: 'left', contentRatio: 0.5 },
+    });
+  });
+});
+
+describe('theme and layout contract', () => {
+  const oneSlide = [{ title: 'One' }];
+
+  it.each(['light', 'dark', 'vintage', 'cyber', 'atlas'])(
+    'accepts the %s map theme',
+    (theme) => {
+      expect(parseStoryMapObject({ map: { theme }, slides: oneSlide }).map.theme).toBe(theme);
+    },
+  );
+
+  it('rejects invalid map themes and layout modes', () => {
+    expect(() => parseStoryMapObject({ map: { theme: 'sepia' }, slides: oneSlide })).toThrow(
+      /theme/,
+    );
+    expect(() => parseStoryMapObject({ layout: { mode: 'sidebar' }, slides: oneSlide })).toThrow(
+      /mode/,
+    );
+  });
+
+  it('normalizes partial card and full options independently', () => {
+    const story = parseStoryMapObject({
+      layout: {
+        mode: 'full',
+        card: { align: 'center', widthRatio: 0.55, heightRatio: 0.72 },
+        full: { side: 'right', contentRatio: 0.45 },
+      },
+      slides: oneSlide,
+    });
+
+    expect(story.layout).toEqual({
+      mode: 'full',
+      card: { align: 'center', widthRatio: 0.55, heightRatio: 0.72 },
+      full: { side: 'right', contentRatio: 0.45 },
+    });
+    expect(parseStoryMapObject({ layout: { mode: 'full', full: {} }, slides: oneSlide }).layout)
+      .toEqual({ mode: 'full', card: { align: 'left' }, full: { side: 'left', contentRatio: 0.5 } });
+  });
+
+  it.each([
+    { card: { widthRatio: 0.19 } },
+    { card: { widthRatio: 0.81 } },
+    { card: { heightRatio: 0.19 } },
+    { card: { heightRatio: 0.96 } },
+    { full: { contentRatio: 0.29 } },
+    { full: { contentRatio: 0.71 } },
+  ])('rejects out-of-range ratios in %j', (layout) => {
+    expect(() => parseStoryMapObject({ layout, slides: oneSlide })).toThrow();
+  });
+
+  it('accepts inclusive ratio boundaries', () => {
+    const layout = parseStoryMapObject({
+      layout: {
+        card: { widthRatio: 0.20, heightRatio: 0.95 },
+        full: { contentRatio: 0.70 },
+      },
+      slides: oneSlide,
+    }).layout;
+    expect(layout.card).toEqual({ align: 'left', widthRatio: 0.20, heightRatio: 0.95 });
+    expect(layout.full).toEqual({ side: 'left', contentRatio: 0.70 });
   });
 });
 
@@ -320,7 +388,7 @@ describe('parseStoryMapSourceYaml defaults', () => {
     order: 'desc' as const,
     dateField: 'visited',
     noteDisplay: 'full' as const,
-    map: { zoom: 10, showPath: false, tileUrl: 'https://tiles.test/{z}/{x}/{y}.png' },
+    map: { theme: 'dark' as const, zoom: 10, showPath: false, tileUrl: 'https://tiles.test/{z}/{x}/{y}.png' },
   };
 
   it('fills keys a document omits', () => {
@@ -330,6 +398,7 @@ describe('parseStoryMapSourceYaml defaults', () => {
     expect(source.dateField).toBe('visited');
     expect(source.noteDisplay).toBe('full');
     expect(source.map.zoom).toBe(10);
+    expect(source.map.theme).toBe('dark');
     expect(source.map.showPath).toBe(false);
     expect(source.map.tileUrl).toBe('https://tiles.test/{z}/{x}/{y}.png');
     expect(source.map.minZoom).toBe(3);
@@ -343,6 +412,7 @@ describe('parseStoryMapSourceYaml defaults', () => {
         'noteDisplay: basic',
         'map:',
         '  zoom: 4',
+        '  theme: vintage',
         '  showPath: true',
       ].join('\n'),
       defaults,
@@ -352,6 +422,7 @@ describe('parseStoryMapSourceYaml defaults', () => {
     expect(source.dateField).toBe('date-created');
     expect(source.noteDisplay).toBe('basic');
     expect(source.map.zoom).toBe(4);
+    expect(source.map.theme).toBe('vintage');
     expect(source.map.showPath).toBe(true);
   });
 
@@ -373,6 +444,20 @@ describe('parseStoryMapSourceYaml defaults', () => {
     expect(source.dateField).toBe('date-created');
     expect(source.noteDisplay).toBe('link');
     expect(source.map.zoom).toBe(6);
+    expect(source.map.theme).toBe('light');
+    expect(source.layout.mode).toBe('card');
+  });
+
+  it('keeps layout document-owned when source defaults are supplied', () => {
+    const source = parseStoryMapSourceYaml(
+      'layout:\n  mode: full\n  full:\n    side: right\n    contentRatio: 0.6',
+      defaults,
+    );
+    expect(source.layout).toEqual({
+      mode: 'full',
+      card: { align: 'left' },
+      full: { side: 'right', contentRatio: 0.6 },
+    });
   });
 });
 
@@ -392,13 +477,34 @@ describe('toStoryMapConfig', () => {
       height: '520px',
       map: {
         zoom: 6,
+        theme: 'light',
         tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         attribution: '© OpenStreetMap contributors',
         showPath: true,
       },
+      layout: {
+        mode: 'card',
+        card: { align: 'left' },
+        full: { side: 'left', contentRatio: 0.5 },
+      },
       slides: [{ title: 'Santiago' }],
     });
     expect('noteFolder' in config).toBe(false);
+  });
+
+  it('copies the selected theme and document layout into the render config', () => {
+    const source = parseStoryMapSourceObject({
+      map: { theme: 'atlas' },
+      layout: { mode: 'full', full: { side: 'right', contentRatio: 0.45 } },
+    });
+
+    const config = toStoryMapConfig(source, [{ title: 'Santiago' }]);
+    expect(config.map.theme).toBe('atlas');
+    expect(config.layout).toEqual({
+      mode: 'full',
+      card: { align: 'left' },
+      full: { side: 'right', contentRatio: 0.45 },
+    });
   });
 });
 

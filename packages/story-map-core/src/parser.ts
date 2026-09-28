@@ -124,6 +124,7 @@ export function applySourceDefaults(
 
   const mapDefaults = defaults.map;
   if (mapDefaults) {
+    if (map.theme === undefined && mapDefaults.theme !== undefined) map.theme = mapDefaults.theme;
     if (map.zoom === undefined && mapDefaults.zoom !== undefined) map.zoom = mapDefaults.zoom;
     if (map.minZoom === undefined && mapDefaults.minZoom !== undefined) map.minZoom = mapDefaults.minZoom;
     if (map.maxZoom === undefined && mapDefaults.maxZoom !== undefined) map.maxZoom = mapDefaults.maxZoom;
@@ -145,6 +146,7 @@ export function toStoryMapConfig(source: StoryMapSourceConfig, slides: StorySlid
     schema: source.schema,
     height: source.height,
     map: source.map,
+    layout: source.layout,
     slides,
   };
   if (source.id !== undefined) config.id = source.id;

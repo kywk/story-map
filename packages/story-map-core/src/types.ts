@@ -35,11 +35,38 @@ export type StoryNoteDisplay = 'basic' | 'link' | 'full';
 
 export const DEFAULT_NOTE_DISPLAY: StoryNoteDisplay = 'link';
 
+export type StoryMapTheme = 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
+export const DEFAULT_MAP_THEME: StoryMapTheme = 'light';
+
+export type StoryMapLayoutMode = 'card' | 'full';
+export const DEFAULT_LAYOUT_MODE: StoryMapLayoutMode = 'card';
+export const DEFAULT_CARD_ALIGN: StoryMapCardLayout['align'] = 'left';
+export const DEFAULT_FULL_SIDE: StoryMapFullLayout['side'] = 'left';
+export const DEFAULT_FULL_CONTENT_RATIO = 0.5;
+
+export interface StoryMapCardLayout {
+  align: 'left' | 'center' | 'right';
+  widthRatio?: number;
+  heightRatio?: number;
+}
+
+export interface StoryMapFullLayout {
+  side: 'left' | 'right';
+  contentRatio: number;
+}
+
+export interface StoryMapLayoutOptions {
+  mode: StoryMapLayoutMode;
+  card: StoryMapCardLayout;
+  full: StoryMapFullLayout;
+}
+
 export interface StoryMapOptions {
   center?: LatLngTuple;
   zoom: number;
   minZoom?: number;
   maxZoom?: number;
+  theme: StoryMapTheme;
   tileUrl: string;
   attribution: string;
   showPath: boolean;
@@ -51,6 +78,7 @@ export interface StoryMapConfig {
   title?: string;
   height: string;
   map: StoryMapOptions;
+  layout: StoryMapLayoutOptions;
   slides: StorySlide[];
 }
 
@@ -73,5 +101,6 @@ export interface StoryMapSourceConfig {
   includeTags?: string[];
   excludeTags?: string[];
   map: StoryMapOptions;
+  layout: StoryMapLayoutOptions;
   slides?: StorySlide[];
 }
