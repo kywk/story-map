@@ -37,11 +37,13 @@ const story: StoryMapConfig = {
   title: 'A walk through Taipei',
   height: '520px',
   map: {
+    theme: 'light',
     zoom: 14,
     tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
     showPath: true,
   },
+  layout: { mode: 'card', card: { align: 'left' }, full: { side: 'left', contentRatio: 0.5 } },
   slides: [
     {
       title: 'Taipei Main Station',
@@ -60,8 +62,8 @@ const story: StoryMapConfig = {
 createRoot(document.getElementById('root')!).render(<StoryMap story={story} />);
 ```
 
-Keep the `story` object stable between unrelated React renders. The renderer
-recreates its Leaflet map when the story changes. The example requests map tiles
+Keep the `story` object stable between unrelated React renders for efficient updates. The
+Leaflet instance remains mounted when theme, layout, or slides change. The example requests map tiles
 from OpenStreetMap; supply your own `tileUrl` and attribution for another provider.
 
 For YAML parsing and built-in defaults, use the separate
@@ -87,7 +89,8 @@ Providing either note callback prevents default click navigation; provide
 `notePath` renders as plain text. Slide text supports Markdown and GitHub-flavored
 Markdown; note WikiLinks and embeds must be resolved by the host if needed.
 
-`StoryMapProps`, `StoryMapConfig`, `StoryMapOptions`, `StoryNoteDisplay`,
+`StoryMapProps`, `StoryMapConfig`, `StoryMapOptions`, `StoryMapTheme`,
+`StoryMapLayoutOptions`, `StoryNoteDisplay`,
 `StorySlide`, `StoryLocation`, and `StoryMedia` are exported as TypeScript types.
 
 ## Server rendering
@@ -98,7 +101,16 @@ the slide panel and the client hydrates it. Import CSS through your framework's
 supported global stylesheet entry. The renderer cleans up its map on unmount and
 uses `ResizeObserver`, when available, to refresh map sizing after layout changes.
 
-## Theme
+## Themes and layouts
+
+Set `story.map.theme` to `light`, `dark`, `vintage`, `cyber`, or `atlas`. The preset
+coordinates tiles, markers, path, controls, and StoryMap's content surface without
+changing the tile provider. `story.layout.mode` selects `card` or `full`. Card supports
+`align: left | center | right` and optional `widthRatio` (`0.20..0.80`) and
+`heightRatio` (`0.20..0.95`). Full supports `side: left | right` and `contentRatio`
+(`0.30..0.70`); on narrow screens its fade becomes vertical.
+
+These semantic CSS variables are advanced, explicit host overrides:
 
 Set these semantic CSS variables on the StoryMap or an ancestor to match your host:
 
@@ -116,8 +128,8 @@ Set these semantic CSS variables on the StoryMap or an ancestor to match your ho
 <StoryMap story={story} className="my-story-theme" />
 ```
 
-These variables style the panel, text, links, borders, and navigation. The tile
-provider controls the underlying map imagery.
+These variables override the selected preset's panel, text, links, borders, and
+navigation colors. The selected theme applies a filter only to the tile layer.
 
 ## License
 

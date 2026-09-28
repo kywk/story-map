@@ -8,11 +8,13 @@ function config(slide: StorySlide): StoryMapConfig {
     schema: 'storymap/v1',
     height: '400px',
     map: {
+      theme: 'light',
       zoom: 3,
       tileUrl: 'https://tile.example/{z}/{x}/{y}.png',
       attribution: 'Example',
       showPath: false,
     },
+    layout: { mode: 'card', card: { align: 'left' }, full: { side: 'left', contentRatio: 0.5 } },
     slides: [slide],
   };
 }
@@ -44,5 +46,29 @@ describe('StoryMap slide title', () => {
 
     expect(html).toContain('href="/docs/santiago/"');
     expect(html).toContain('story-map__note-link');
+  });
+});
+
+describe('StoryMap presentation', () => {
+  it('renders the selected theme and full layout in SSR without initializing Leaflet', () => {
+    const story = config({ title: 'Santiago' });
+    story.map.theme = 'vintage';
+    story.layout = { mode: 'full', card: { align: 'right' }, full: { side: 'right', contentRatio: 0.45 } };
+    const html = renderToStaticMarkup(<StoryMap story={story} />);
+    expect(html).toContain('data-map-theme="vintage"');
+    expect(html).toContain('data-layout="full"');
+    expect(html).toContain('data-full-side="right"');
+    expect(html).toContain('--story-map-content-ratio:45%');
+    expect(html).toContain('story-map__map');
+  });
+
+  it('renders card ratios and alignment without moving the map element', () => {
+    const story = config({ title: 'Santiago' });
+    story.layout.card = { align: 'center', widthRatio: 0.55, heightRatio: 0.72 };
+    const html = renderToStaticMarkup(<StoryMap story={story} />);
+    expect(html).toContain('data-card-align="center"');
+    expect(html).toContain('--story-map-card-width:55%');
+    expect(html).toContain('--story-map-card-height:72%');
+    expect(html.indexOf('story-map__map')).toBeLessThan(html.indexOf('story-map__presentation'));
   });
 });

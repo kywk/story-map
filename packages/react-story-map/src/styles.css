@@ -3,11 +3,11 @@
      bridge on .story-map-host) set --story-map-* on an ancestor, so the
      renderer must not re-declare them here. These private fallback variables
      only provide defaults when no host sets the semantic variables. */
-  --story-map-bg-fallback: var(--background-primary, #ffffff);
-  --story-map-fg-fallback: var(--text-normal, #1f2937);
-  --story-map-muted-fallback: var(--text-muted, #6b7280);
-  --story-map-border-fallback: var(--background-modifier-border, rgba(0, 0, 0, 0.14));
-  --story-map-accent-fallback: var(--interactive-accent, #2563eb);
+  --story-map-bg-fallback: var(--story-map-surface, #ffffff);
+  --story-map-fg-fallback: var(--story-map-ink, #1f2937);
+  --story-map-muted-fallback: var(--story-map-subtle, #6b7280);
+  --story-map-border-fallback: var(--story-map-line, rgba(0, 0, 0, 0.14));
+  --story-map-accent-fallback: var(--story-map-highlight, #2563eb);
 
   position: relative;
   width: 100%;
@@ -28,6 +28,13 @@
   position: absolute;
   inset: 0;
   z-index: 0;
+}
+
+.story-map__presentation {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
 }
 
 .story-map__empty {
@@ -54,11 +61,16 @@
   background: color-mix(in srgb, var(--story-map-bg, var(--story-map-bg-fallback)) 94%, transparent);
   backdrop-filter: blur(6px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  pointer-events: auto;
 }
 
 .story-map__panel h2 {
   margin: 0 0 10px;
   font-size: 1.2rem;
+}
+
+.story-map__panel :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--story-map-fg, var(--story-map-fg-fallback));
 }
 
 .story-map__note-link {
@@ -156,5 +168,121 @@
 
   .story-map__media {
     max-height: 140px;
+  }
+}
+
+/* Built-in presets style both cartography and StoryMap-owned chrome. Public
+   --story-map-* semantic variables inherited from a host still win. */
+.story-map {
+  --story-map-surface: #fff;
+  --story-map-ink: #1f2937;
+  --story-map-subtle: #6b7280;
+  --story-map-line: rgba(0, 0, 0, 0.14);
+  --story-map-highlight: #2563eb;
+  --story-map-tile-filter: none;
+  --story-map-marker: #2563eb;
+  --story-map-marker-border: #fff;
+  --story-map-marker-active: #e76f51;
+  --story-map-path: #2563eb;
+}
+.story-map[data-map-theme='dark'] {
+  --story-map-surface: #17232e; --story-map-ink: #f0f6f9;
+  --story-map-subtle: #aec1ca; --story-map-line: #46606b;
+  --story-map-highlight: #70d5e8;
+  --story-map-tile-filter: brightness(0.58) saturate(0.64) hue-rotate(165deg);
+  --story-map-marker: #70d5e8; --story-map-marker-border: #112731;
+  --story-map-marker-active: #ffca78; --story-map-path: #8bd9e7;
+}
+.story-map[data-map-theme='vintage'] {
+  --story-map-surface: #f4e9d0; --story-map-ink: #40362f;
+  --story-map-subtle: #756658; --story-map-line: #b6a389;
+  --story-map-highlight: #9b493d;
+  --story-map-tile-filter: sepia(0.68) saturate(0.66) contrast(0.88);
+  --story-map-marker: #995346; --story-map-marker-border: #f4e9d0;
+  --story-map-marker-active: #5a332d; --story-map-path: #9b493d;
+}
+.story-map[data-map-theme='cyber'] {
+  --story-map-surface: #101b2a; --story-map-ink: #e6fbff;
+  --story-map-subtle: #9fc6d0; --story-map-line: #417b89;
+  --story-map-highlight: #62eff3;
+  --story-map-tile-filter: brightness(0.44) saturate(1.2) hue-rotate(175deg) contrast(1.12);
+  --story-map-marker: #62eff3; --story-map-marker-border: #122736;
+  --story-map-marker-active: #f087c6; --story-map-path: #62eff3;
+}
+.story-map[data-map-theme='atlas'] {
+  --story-map-surface: #ede9dc; --story-map-ink: #253b4c;
+  --story-map-subtle: #5f6b6c; --story-map-line: #a7aaa0;
+  --story-map-highlight: #8e3f47;
+  --story-map-tile-filter: sepia(0.28) saturate(0.6) hue-rotate(175deg) contrast(0.92);
+  --story-map-marker: #304b60; --story-map-marker-border: #f3f0e5;
+  --story-map-marker-active: #8e3f47; --story-map-path: #304b60;
+}
+.story-map .story-map__tiles { filter: var(--story-map-tile-filter); }
+.story-map .story-map__marker { fill: var(--story-map-marker); stroke: var(--story-map-marker-border); }
+.story-map .story-map__marker--active { fill: var(--story-map-marker-active); }
+.story-map .story-map__path { stroke: var(--story-map-path); }
+.story-map[data-map-theme='cyber'] .story-map__marker--active,
+.story-map[data-map-theme='cyber'] .story-map__path { filter: drop-shadow(0 0 3px var(--story-map-highlight)); }
+.story-map .leaflet-control-zoom a,
+.story-map .leaflet-control-attribution {
+  background: var(--story-map-bg, var(--story-map-surface));
+  color: var(--story-map-fg, var(--story-map-ink));
+}
+.story-map .leaflet-control-zoom a { border-color: var(--story-map-border, var(--story-map-line)); }
+.story-map .leaflet-control-attribution a { color: var(--story-map-accent, var(--story-map-highlight)); }
+
+.story-map[data-layout='card'][data-card-align='center'] .story-map__panel {
+  left: 50%; transform: translateX(-50%);
+}
+.story-map[data-layout='card'][data-card-align='right'] .story-map__panel {
+  left: auto; right: 16px;
+}
+.story-map[data-layout='card'] .story-map__panel {
+  width: min(var(--story-map-card-width, 380px), calc(100% - 32px));
+  height: var(--story-map-card-height, auto);
+}
+.story-map[data-layout='full'] .story-map__presentation {
+  background: linear-gradient(to right,
+    var(--story-map-bg, var(--story-map-surface)) 0,
+    var(--story-map-bg, var(--story-map-surface)) calc(var(--story-map-content-ratio) - 8%),
+    transparent calc(var(--story-map-content-ratio) + 18%));
+}
+.story-map[data-layout='full'][data-full-side='right'] .story-map__presentation {
+  background: linear-gradient(to left,
+    var(--story-map-bg, var(--story-map-surface)) 0,
+    var(--story-map-bg, var(--story-map-surface)) calc(var(--story-map-content-ratio) - 8%),
+    transparent calc(var(--story-map-content-ratio) + 18%));
+}
+.story-map[data-layout='full'] .story-map__panel {
+  top: 0; bottom: 0; left: 0;
+  width: var(--story-map-content-ratio);
+  max-height: none;
+  border: 0; border-radius: 0;
+  padding: clamp(20px, 3vw, 48px);
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.story-map[data-layout='full'][data-full-side='right'] .story-map__panel { left: auto; right: 0; }
+.story-map[data-layout='full'] .story-map__media { max-height: min(40vh, 360px); }
+
+@media (max-width: 640px) {
+  .story-map[data-layout='card'] .story-map__panel,
+  .story-map[data-layout='card'][data-card-align='center'] .story-map__panel,
+  .story-map[data-layout='card'][data-card-align='right'] .story-map__panel {
+    left: 8px; right: 8px; width: auto; transform: none;
+    height: var(--story-map-card-height, auto);
+    max-height: 48%;
+  }
+  .story-map[data-layout='full'] .story-map__presentation,
+  .story-map[data-layout='full'][data-full-side='right'] .story-map__presentation {
+    top: 24%;
+    background: linear-gradient(to bottom, transparent, var(--story-map-bg, var(--story-map-surface)) 26%);
+  }
+  .story-map[data-layout='full'] .story-map__panel,
+  .story-map[data-layout='full'][data-full-side='right'] .story-map__panel {
+    top: 20%; bottom: 0; left: 0; right: 0;
+    width: 100%; max-height: none;
+    padding: 36px 16px 16px;
   }
 }

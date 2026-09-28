@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { CircleMarker, LayerGroup, Map as LeafletMap, Polyline } from 'leaflet';
 import type { StoryMapConfig, StorySlide } from '@story-map/story-map-core';
+import { MapCanvas } from './MapCanvas.js';
 
 export interface StoryMapProps {
   story: StoryMapConfig;
@@ -23,111 +24,17 @@ export function StoryMap({
   onNoteHover,
   noteLinkClassName,
 }: StoryMapProps) {
-  const mapElementRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LeafletMap | null>(null);
-  const markerLayerRef = useRef<LayerGroup | null>(null);
-  const markersRef = useRef<CircleMarker[]>([]);
-  const pathRef = useRef<Polyline | null>(null);
-  const activeIndexRef = useRef(0);
   const [rawActiveIndex, setActiveIndex] = useState(() => clamp(initialSlide, 0, story.slides.length - 1));
   const activeIndex = clamp(rawActiveIndex, 0, story.slides.length - 1);
   const activeSlide = story.slides[activeIndex];
-  activeIndexRef.current = activeIndex;
-
-  const locatedSlides = useMemo(
-    () => story.slides.filter((slide) => slide.location),
-    [story],
-  );
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function mountMap() {
-      if (!mapElementRef.current) return;
-      const L = await import('leaflet');
-      if (cancelled || !mapElementRef.current) return;
-
-      const initial = story.slides[activeIndexRef.current]?.location;
-      const center = initial
-        ? [initial.lat, initial.lng] as [number, number]
-        : story.map.center ?? [0, 0];
-      const zoom = initial?.zoom ?? story.map.zoom;
-
-      const zoomOptions = {
-        ...(story.map.minZoom === undefined ? {} : { minZoom: story.map.minZoom }),
-        ...(story.map.maxZoom === undefined ? {} : { maxZoom: story.map.maxZoom }),
-      };
-
-      const map = L.map(mapElementRef.current, zoomOptions).setView(center, zoom);
-
-      L.tileLayer(story.map.tileUrl, {
-        attribution: story.map.attribution,
-        ...zoomOptions,
-      }).addTo(map);
-
-      const markerLayer = L.layerGroup().addTo(map);
-      const markers = locatedSlides.map((slide) => {
-        const location = slide.location!;
-        return L.circleMarker([location.lat, location.lng], {
-          radius: 6,
-          weight: 2,
-          fillOpacity: 0.85,
-        }).addTo(markerLayer);
-      });
-
-      const path = story.map.showPath && locatedSlides.length >= 2
-        ? L.polyline(
-            locatedSlides.map((slide) => [slide.location!.lat, slide.location!.lng] as [number, number]),
-            { weight: 3, opacity: 0.65 },
-          ).addTo(map)
-        : null;
-
-      mapRef.current = map;
-      markerLayerRef.current = markerLayer;
-      markersRef.current = markers;
-      pathRef.current = path;
-      updateMarkerStyles(story, activeIndexRef.current, markers);
-    }
-
-    void mountMap();
-
-    return () => {
-      cancelled = true;
-      pathRef.current = null;
-      markersRef.current = [];
-      markerLayerRef.current = null;
-      mapRef.current?.remove();
-      mapRef.current = null;
-    };
-  }, [story, locatedSlides]);
-
-  useEffect(() => {
-    const location = activeSlide?.location;
-    if (location && mapRef.current) {
-      mapRef.current.flyTo(
-        [location.lat, location.lng],
-        location.zoom ?? story.map.zoom,
-        { duration: 1.1 },
-      );
-    }
-    updateMarkerStyles(story, activeIndex, markersRef.current);
     if (activeSlide) onSlideChange?.(activeIndex, activeSlide);
-  }, [activeIndex, activeSlide, onSlideChange, story]);
+  }, [activeIndex, activeSlide, onSlideChange]);
 
   useEffect(() => {
     setActiveIndex((current) => clamp(current, 0, story.slides.length - 1));
   }, [story.slides.length]);
-
-  useEffect(() => {
-    const element = mapElementRef.current;
-    if (!element || typeof ResizeObserver === 'undefined') return;
-
-    const observer = new ResizeObserver(() => {
-      mapRef.current?.invalidateSize();
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
 
   function goTo(next: number) {
     setActiveIndex(clamp(next, 0, story.slides.length - 1));
@@ -138,6 +45,8 @@ export function StoryMap({
       <section
         className={['story-map', className].filter(Boolean).join(' ')}
         style={{ height: story.height }}
+        data-map-theme={story.map.theme}
+        data-layout={story.layout.mode}
         aria-label={story.title ?? 'Story map'}
       >
         <div className="story-map__empty">This StoryMap has no slides.</div>
@@ -145,10 +54,22 @@ export function StoryMap({
     );
   }
 
+  const layout = story.layout;
+  const style = {
+    height: story.height,
+    ...(layout.card.widthRatio === undefined ? {} : { '--story-map-card-width': `${Math.round(layout.card.widthRatio * 10000) / 100}%` }),
+    ...(layout.card.heightRatio === undefined ? {} : { '--story-map-card-height': `${Math.round(layout.card.heightRatio * 10000) / 100}%` }),
+    '--story-map-content-ratio': `${Math.round(layout.full.contentRatio * 10000) / 100}%`,
+  } as CSSProperties;
+
   return (
     <section
       className={['story-map', className].filter(Boolean).join(' ')}
-      style={{ height: story.height }}
+      style={style}
+      data-map-theme={story.map.theme}
+      data-layout={layout.mode}
+      data-card-align={layout.card.align}
+      data-full-side={layout.full.side}
       tabIndex={0}
       aria-label={story.title ?? 'Story map'}
       onKeyDown={(event) => {
@@ -156,8 +77,9 @@ export function StoryMap({
         if (event.key === 'ArrowRight') goTo(activeIndex + 1);
       }}
     >
-      <div className="story-map__map" ref={mapElementRef} />
-      <div className="story-map__panel">
+      <MapCanvas story={story} activeIndex={activeIndex} />
+      <div className="story-map__presentation">
+        <div className="story-map__panel">
         {story.title && <div className="story-map__story-title">{story.title}</div>}
         <SlideTitle
           slide={activeSlide}
@@ -184,6 +106,7 @@ export function StoryMap({
             Next
           </button>
         </nav>
+        </div>
       </div>
     </section>
   );
@@ -262,20 +185,6 @@ function StoryMediaView({ slide }: { slide: StorySlide }) {
       {media.caption && <figcaption>{media.caption}</figcaption>}
     </figure>
   );
-}
-
-function updateMarkerStyles(story: StoryMapConfig, activeIndex: number, markers: CircleMarker[]) {
-  let markerIndex = 0;
-  story.slides.forEach((slide, slideIndex) => {
-    if (!slide.location) return;
-    const marker = markers[markerIndex++];
-    if (!marker) return;
-    marker.setRadius(slideIndex === activeIndex ? 8 : 5);
-    marker.setStyle({
-      weight: slideIndex === activeIndex ? 3 : 2,
-      fillOpacity: slideIndex === activeIndex ? 1 : 0.7,
-    });
-  });
 }
 
 function clamp(value: number, min: number, max: number) {
