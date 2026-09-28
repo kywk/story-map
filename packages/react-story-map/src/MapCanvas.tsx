@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { CircleMarker, LayerGroup, Map as LeafletMap, Polyline, TileLayer } from 'leaflet';
 import type { StoryMapConfig } from '@story-map/story-map-core';
+import { focusPixelOffset, getMarkerFocus } from './markerOffset.js';
 
 interface MapCanvasProps {
   story: StoryMapConfig;
@@ -85,7 +86,10 @@ export function MapCanvas({ story, activeIndex }: MapCanvasProps) {
       const center = initial
         ? [initial.lat, initial.lng] as [number, number]
         : current.map.center ?? [0, 0];
-      mapRef.current = L.map(element).setView(center, initial?.zoom ?? current.map.zoom);
+      const map = L.map(element);
+      mapRef.current = map;
+      const initialZoom = initial?.zoom ?? current.map.zoom;
+      map.setView(focusTarget(map, L, center, initialZoom, current, element), initialZoom);
       updateLayers(current);
     }
     void mount();
@@ -109,12 +113,27 @@ export function MapCanvas({ story, activeIndex }: MapCanvasProps) {
   }, [story]);
 
   useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
     const location = story.slides[activeIndex]?.location;
-    if (location) {
-      mapRef.current?.flyTo([location.lat, location.lng], location.zoom ?? story.map.zoom, { duration: 1.1 });
+    if (map && L && location) {
+      const zoom = location.zoom ?? story.map.zoom;
+      map.flyTo(
+        focusTarget(map, L, [location.lat, location.lng], zoom, story, elementRef.current),
+        zoom,
+        { duration: 1.1 },
+      );
     }
     updateMarkerStyles(story, activeIndex, markersRef.current);
-  }, [activeIndex, story.slides, story.map.zoom]);
+  }, [
+    activeIndex,
+    story.slides,
+    story.map.zoom,
+    story.layout.mode,
+    story.layout.card.align,
+    story.layout.full.side,
+    story.layout.full.contentRatio,
+  ]);
 
   useEffect(() => {
     const element = elementRef.current;
@@ -125,6 +144,32 @@ export function MapCanvas({ story, activeIndex }: MapCanvasProps) {
   }, []);
 
   return <div className="story-map__map" ref={elementRef} />;
+}
+
+/**
+ * Map center that lands the marker on the layout-aware focus point instead of the
+ * container center, so the card/full overlay never covers the active marker.
+ * Falls back to the plain center when the container has no measurable size yet.
+ */
+function focusTarget(
+  map: LeafletMap,
+  L: typeof import('leaflet'),
+  center: [number, number],
+  zoom: number,
+  story: StoryMapConfig,
+  element: HTMLDivElement | null,
+): [number, number] {
+  const width = element?.clientWidth ?? 0;
+  const height = element?.clientHeight ?? 0;
+  const viewportWidth = typeof window === 'undefined' ? width : window.innerWidth;
+  const offset = focusPixelOffset(
+    { width, height },
+    getMarkerFocus(story.layout, viewportWidth),
+  );
+  if (offset.x === 0 && offset.y === 0) return center;
+  const projected = map.project(center, zoom).subtract(L.point(offset.x, offset.y));
+  const focused = map.unproject(projected, zoom);
+  return [focused.lat, focused.lng];
 }
 
 function updateMarkerStyles(story: StoryMapConfig, activeIndex: number, markers: CircleMarker[]) {

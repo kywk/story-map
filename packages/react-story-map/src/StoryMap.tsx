@@ -55,6 +55,7 @@ export function StoryMap({
   }
 
   const layout = story.layout;
+  const isFull = layout.mode === 'full';
   const style = {
     height: story.height,
     ...(layout.card.widthRatio === undefined ? {} : { '--story-map-card-width': `${Math.round(layout.card.widthRatio * 10000) / 100}%` }),
@@ -93,22 +94,44 @@ export function StoryMap({
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{activeSlide.text}</ReactMarkdown>
           </div>
         )}
-        <nav className="story-map__nav" aria-label="Story navigation">
-          <button type="button" disabled={activeIndex === 0} onClick={() => goTo(activeIndex - 1)}>
-            Previous
-          </button>
-          <span>{activeIndex + 1} / {story.slides.length}</span>
-          <button
-            type="button"
-            disabled={activeIndex === story.slides.length - 1}
-            onClick={() => goTo(activeIndex + 1)}
-          >
-            Next
-          </button>
-        </nav>
+        {!isFull && (
+          <StoryNav activeIndex={activeIndex} total={story.slides.length} compact={false} onGo={goTo} />
+        )}
         </div>
       </div>
+      {isFull && (
+        <StoryNav activeIndex={activeIndex} total={story.slides.length} compact onGo={goTo} />
+      )}
     </section>
+  );
+}
+
+function StoryNav({
+  activeIndex,
+  total,
+  compact,
+  onGo,
+}: {
+  activeIndex: number;
+  total: number;
+  compact: boolean;
+  onGo: (index: number) => void;
+}) {
+  return (
+    <nav className="story-map__nav" aria-label="Story navigation">
+      <button type="button" disabled={activeIndex === 0} onClick={() => onGo(activeIndex - 1)} aria-label="Previous">
+        {compact ? '‹' : 'Previous'}
+      </button>
+      <span>{activeIndex + 1} / {total}</span>
+      <button
+        type="button"
+        disabled={activeIndex === total - 1}
+        onClick={() => onGo(activeIndex + 1)}
+        aria-label="Next"
+      >
+        {compact ? '›' : 'Next'}
+      </button>
+    </nav>
   );
 }
 

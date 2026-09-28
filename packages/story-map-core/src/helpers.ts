@@ -1,4 +1,11 @@
-import type { StoryLocation, StoryMedia, StoryOrder, StorySlide } from './types.js';
+import type {
+  StoryLocation,
+  StoryMapLayoutMode,
+  StoryMedia,
+  StoryNoteDisplay,
+  StoryOrder,
+  StorySlide,
+} from './types.js';
 
 export function parseWikiLinkRef(value: string): string {
   let ref = value.trim();
@@ -88,6 +95,31 @@ export function mergeResolvedSlide(base: StorySlide, resolved: Partial<StorySlid
 
 export function validCoordinates(lat: number, lng: number): boolean {
   return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+/**
+ * Note display mode after layout is taken into account. The `full` layout always
+ * shows the complete note body, so it resolves notes with `full` semantics no
+ * matter which `noteDisplay` the document configured.
+ */
+export function effectiveNoteDisplay(
+  layoutMode: StoryMapLayoutMode,
+  noteDisplay: StoryNoteDisplay,
+): StoryNoteDisplay {
+  return layoutMode === 'full' ? 'full' : noteDisplay;
+}
+
+/**
+ * Frontmatter contribution for full-text slides. The slide shows the note body as-is,
+ * so frontmatter-derived display fields (title, text, media) are dropped and never
+ * duplicate body content; only the map location (plus the marker hint) survives.
+ * Fields the story document set explicitly are merged back by the caller.
+ */
+export function locationOnlySlide(resolved: Partial<StorySlide>): Partial<StorySlide> {
+  const out: Partial<StorySlide> = {};
+  if (resolved.location) out.location = resolved.location;
+  if (resolved.mapmarker !== undefined) out.mapmarker = resolved.mapmarker;
+  return out;
 }
 
 export function slideFromNoteFrontmatter(

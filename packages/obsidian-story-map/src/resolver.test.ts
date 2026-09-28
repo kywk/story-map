@@ -277,6 +277,7 @@ describe('resolveObsidianStory noteDisplay', () => {
         title: 'Santiago',
         'date-created': '2026-01-15',
         description: 'Frontmatter summary.',
+        cover: 'cover.jpg',
       },
       body,
     ),
@@ -291,6 +292,7 @@ describe('resolveObsidianStory noteDisplay', () => {
     expect(source.noteDisplay).toBe('link');
     expect(story.slides[0]?.notePath).toBe('Places/Santiago.md');
     expect(story.slides[0]?.text).toBe('Frontmatter summary.');
+    expect(story.slides[0]?.media).toEqual({ type: 'image', src: 'cover.jpg' });
   });
 
   it('basic mode omits the note link and keeps frontmatter text', async () => {
@@ -303,13 +305,44 @@ describe('resolveObsidianStory noteDisplay', () => {
     expect(story.slides[0]?.text).toBe('Frontmatter summary.');
   });
 
-  it('full mode replaces text with the stripped note body', async () => {
+  it('full mode shows the body only and drops frontmatter title and cover', async () => {
     const app = makeApp(files);
     const source = parseStoryMapSourceObject({ noteFolder: 'Places', noteDisplay: 'full' });
 
     const story = await resolveObsidianStory(app, source, 'Story.md');
 
-    expect(story.slides[0]?.notePath).toBeUndefined();
+    expect(story.slides[0]?.notePath).toBe('Places/Santiago.md');
+    expect(story.slides[0]?.title).toBeUndefined();
+    expect(story.slides[0]?.media).toBeUndefined();
+    expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
+  });
+
+  it('full layout forces the note body even when link mode is configured', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({
+      noteFolder: 'Places',
+      noteDisplay: 'link',
+      layout: { mode: 'full' },
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+
+    expect(story.slides[0]?.notePath).toBe('Places/Santiago.md');
+    expect(story.slides[0]?.title).toBeUndefined();
+    expect(story.slides[0]?.media).toBeUndefined();
+    expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
+  });
+
+  it('full mode keeps a title the story document set explicitly', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({
+      noteDisplay: 'full',
+      slides: [{ note: '[[Santiago]]', title: 'Kept title' }],
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+
+    expect(story.slides[0]?.title).toBe('Kept title');
     expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
   });
 

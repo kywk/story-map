@@ -71,4 +71,21 @@ describe('StoryMap presentation', () => {
     expect(html).toContain('--story-map-card-height:72%');
     expect(html.indexOf('story-map__map')).toBeLessThan(html.indexOf('story-map__presentation'));
   });
+
+  it('keeps text-button navigation inside the panel for card layouts', () => {
+    const html = renderToStaticMarkup(<StoryMap story={config({ title: 'Santiago' })} />);
+    expect(html).toContain('>Previous<');
+    expect(html).toContain('>Next<');
+    expect(html.indexOf('story-map__nav')).toBeGreaterThan(html.indexOf('story-map__panel'));
+  });
+
+  it('floats chevron navigation outside the panel for full layouts', () => {
+    const story = config({ title: 'Santiago' });
+    story.layout = { mode: 'full', card: { align: 'left' }, full: { side: 'left', contentRatio: 0.5 } };
+    const html = renderToStaticMarkup(<StoryMap story={story} />);
+    expect(html).toContain('aria-label="Previous">‹<');
+    expect(html).toContain('aria-label="Next">›<');
+    expect(html).not.toContain('>Previous<');
+    expect(html.indexOf('story-map__nav')).toBeGreaterThan(html.indexOf('story-map__panel'));
+  });
 });

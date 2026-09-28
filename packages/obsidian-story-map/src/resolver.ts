@@ -1,6 +1,8 @@
 import type { App, TFile } from 'obsidian';
 import {
+  effectiveNoteDisplay,
   isPathInFolder,
+  locationOnlySlide,
   matchesTagFilter,
   mergeResolvedSlide,
   parseWikiLinkRef,
@@ -21,7 +23,7 @@ export async function resolveObsidianStory(
   source: StoryMapSourceConfig,
   sourcePath: string,
 ): Promise<StoryMapConfig> {
-  const noteDisplay = source.noteDisplay;
+  const noteDisplay = effectiveNoteDisplay(source.layout.mode, source.noteDisplay);
   const explicitSlides = source.slides ?? [];
   const slides = explicitSlides.length > 0
     ? await resolveExplicitSlides(app, explicitSlides, sourcePath, noteDisplay)
@@ -86,7 +88,10 @@ async function resolveDiscoveredNote(
   frontmatter: Record<string, unknown>,
   noteDisplay: StoryNoteDisplay,
 ): Promise<StorySlide> {
-  const slide: StorySlide = { ...slideFromNoteFrontmatter(frontmatter, file.basename) };
+  const frontmatterFields = slideFromNoteFrontmatter(frontmatter, file.basename);
+  const slide: StorySlide = noteDisplay === 'full'
+    ? locationOnlySlide(frontmatterFields)
+    : { ...frontmatterFields };
   const media = slide.media ? await resolveMedia(app, slide.media, file.path) : undefined;
   const withMedia = media ? { ...slide, media } : slide;
   return applyNoteDisplay(app, withMedia, file, noteDisplay);
@@ -104,7 +109,8 @@ async function resolveSlide(
   if (slide.note) {
     noteFile = resolveWikiFile(app, slide.note, sourcePath);
     if (noteFile) {
-      resolved = slideFromNoteFrontmatter(readFrontmatter(app, noteFile), noteFile.basename);
+      const frontmatterFields = slideFromNoteFrontmatter(readFrontmatter(app, noteFile), noteFile.basename);
+      resolved = noteDisplay === 'full' ? locationOnlySlide(frontmatterFields) : frontmatterFields;
     }
   }
 
@@ -125,7 +131,7 @@ async function applyNoteDisplay(
   if (noteDisplay === 'link') return { ...slide, notePath: file.path };
 
   const body = stripFrontmatter(await app.vault.cachedRead(file)).trim();
-  return body ? { ...slide, text: body } : slide;
+  return { ...slide, notePath: file.path, ...(body ? { text: body } : {}) };
 }
 
 async function resolveMedia(app: App, media: StoryMedia, sourcePath: string): Promise<StoryMedia> {

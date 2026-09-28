@@ -128,8 +128,14 @@ Key invariants:
 - Leaflet is loaded with `await import('leaflet')` inside the mount effect, so the package
   is SSR-import-safe.
 - `MapCanvas.tsx` owns one stable Leaflet map. Config updates refresh layers; slide changes
-  call `flyTo` and restyle markers without recreating the map. `StoryMap.tsx` owns content,
-  navigation and the card/full presentation overlay.
+  call `flyTo` and restyle markers without recreating the map. `flyTo` targets a
+  layout-aware focus point (`markerOffset.ts`: centered cards and narrow viewports park
+  the marker at the top quarter; `full` centers it in the remaining map width beside
+  the story surface) so the overlay never covers the active marker. `StoryMap.tsx` owns content,
+  navigation and the card/full presentation overlay. `card` keeps text-button navigation inside
+  the panel; `full` floats circular prev/next arrows and a counter pill at the container
+  edges, layered above the presentation overlay (`z-index` 600 vs 500) so they stay visible
+  and clickable over the article half, and the whole Markdown body stays scrollable.
 - `ResizeObserver` calls `invalidateSize()` on the map container.
 - Slide-title link behavior (`SlideTitle`):
   - `notePath` absent -> plain heading;
@@ -265,7 +271,12 @@ not re-implement defaulting in the view.
     tab on click);
   - Remark passes the published href from `resolveNoteHref`, or omits `notePath` when the
     host cannot resolve it (leaving the title unlinked).
-- `full` — basics plus the frontmatter-stripped note body as slide text.
+- `full` — the frontmatter-stripped note body as slide text, keeping the resolved
+  `slide.notePath` so the title stays linked. Frontmatter-derived title and media are dropped
+  (the body carries them); fields the story document set explicitly are kept. The `full`
+  layout always resolves notes this way (`effectiveNoteDisplay` in `story-map-core`),
+  regardless of the configured `noteDisplay`. Slide prose keeps theme colors even when a
+  host app paints bare `strong`/`em` globally.
 
 ## 8. Docusaurus publishing pipeline
 

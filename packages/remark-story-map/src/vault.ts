@@ -2,7 +2,9 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 import {
+  effectiveNoteDisplay,
   isPathInFolder,
+  locationOnlySlide,
   matchesTagFilter,
   mergeResolvedSlide,
   parseWikiLinkRef,
@@ -42,7 +44,7 @@ export class VaultIndex {
   }
 
   resolveSource(source: StoryMapSourceConfig, sourcePath?: string): StoryMapConfig {
-    const noteDisplay = source.noteDisplay;
+    const noteDisplay = effectiveNoteDisplay(source.layout.mode, source.noteDisplay);
     const explicitSlides = source.slides ?? [];
     const slides = explicitSlides.length > 0
       ? this.resolveExplicitSlides(explicitSlides, sourcePath, noteDisplay)
@@ -94,9 +96,10 @@ export class VaultIndex {
   }
 
   private slideForNote(note: IndexedNote, noteDisplay: StoryNoteDisplay): StorySlide {
-    const slide: StorySlide = {
-      ...slideFromNoteFrontmatter(note.frontmatter, path.basename(note.relativePath)),
-    };
+    const frontmatterFields = slideFromNoteFrontmatter(note.frontmatter, path.basename(note.relativePath));
+    const slide: StorySlide = noteDisplay === 'full'
+      ? locationOnlySlide(frontmatterFields)
+      : { ...frontmatterFields };
     const media = slide.media
       ? this.resolveMedia(slide.media, path.posix.dirname(note.relativePath))
       : undefined;
@@ -115,7 +118,8 @@ export class VaultIndex {
     if (slide.note) {
       note = this.findIndexed(parseWikiLinkRef(slide.note));
       if (note) {
-        resolved = slideFromNoteFrontmatter(note.frontmatter, path.basename(note.relativePath));
+        const frontmatterFields = slideFromNoteFrontmatter(note.frontmatter, path.basename(note.relativePath));
+        resolved = noteDisplay === 'full' ? locationOnlySlide(frontmatterFields) : frontmatterFields;
       }
     }
 
@@ -141,7 +145,8 @@ export class VaultIndex {
     }
 
     const body = stripFrontmatter(readFileSync(note.absolutePath, 'utf8')).trim();
-    return body ? { ...slide, text: body } : slide;
+    const href = this.options.resolveNoteHref?.(note.relativePath);
+    return { ...slide, ...(href ? { notePath: href } : {}), ...(body ? { text: body } : {}) };
   }
 
   private resolveMedia(media: StoryMedia, baseDirectory?: string): StoryMedia {

@@ -73,6 +73,16 @@
   color: var(--story-map-fg, var(--story-map-fg-fallback));
 }
 
+/* Host apps can paint bare strong/em globally (e.g. Obsidian theme accent colors);
+   keep slide prose on the theme foreground so body emphasis never turns invisible. */
+.story-map .story-map__text :is(strong, b) {
+  color: inherit;
+}
+
+.story-map .story-map__text :is(em, i) {
+  color: inherit;
+}
+
 .story-map__note-link {
   color: inherit;
   text-decoration: none;
@@ -280,6 +290,54 @@
 .story-map[data-layout='full'][data-full-side='right'] .story-map__panel { left: auto; right: 0; }
 .story-map[data-layout='full'] .story-map__media { max-height: min(40vh, 360px); }
 
+/* Full mode floats navigation over the whole story container: circular prev/next
+   arrows vertically centered at the container's left/right edges, plus a counter
+   pill pinned to the bottom center. The arrows never cover article text. */
+/* Must sit above .story-map__presentation (z-index 500): the arrow on the
+   article side of the split would otherwise be painted underneath the panel. */
+.story-map[data-layout='full'] .story-map__nav {
+  position: absolute;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0 20px;
+  border: 0;
+  background: none;
+  pointer-events: none;
+}
+.story-map[data-layout='full'] .story-map__nav button {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 0 0 4px;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  line-height: 1;
+  /* Opaque: the panel-side arrow sits on article background, where a translucent
+     button would camouflage into the panel. */
+  background: var(--story-map-bg, var(--story-map-bg-fallback));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+.story-map[data-layout='full'] .story-map__nav span {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 14px;
+  border: 1px solid var(--story-map-border, var(--story-map-border-fallback));
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: var(--story-map-bg, var(--story-map-bg-fallback));
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
   .story-map[data-layout='card'] .story-map__panel,
   .story-map[data-layout='card'][data-card-align='center'] .story-map__panel,
@@ -298,5 +356,22 @@
     top: 20%; bottom: 0; left: 0; right: 0;
     width: 100%; max-height: none;
     padding: 36px 16px 16px;
+  }
+  /* Narrow full mode is a vertical bottom sheet: the arrows share one row with the
+     counter across the top map band instead of floating at container edges. */
+  .story-map[data-layout='full'] .story-map__nav,
+  .story-map[data-layout='full'][data-full-side='left'] .story-map__nav,
+  .story-map[data-layout='full'][data-full-side='right'] .story-map__nav {
+    top: 0;
+    bottom: 80%;
+    padding: 0 12px;
+  }
+  .story-map[data-layout='full'] .story-map__nav button {
+    width: 44px;
+    height: 44px;
+  }
+  .story-map[data-layout='full'] .story-map__nav span {
+    position: static;
+    transform: none;
   }
 }

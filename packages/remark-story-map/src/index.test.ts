@@ -373,12 +373,24 @@ describe('VaultIndex noteDisplay', () => {
     expect(story.slides[0]?.notePath).toBeUndefined();
   });
 
-  it('full mode uses the frontmatter-stripped note body', () => {
+  it('full mode shows the body only and keeps the published href', () => {
     const vault = new VaultIndex({ vaultRoot, resolveNoteHref: () => '/docs/santiago/' });
     const story = vault.resolveSource(parseStoryMapSourceObject({ noteFolder: 'Places', noteDisplay: 'full' }));
 
     expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
-    expect(story.slides[0]?.notePath).toBeUndefined();
+    expect(story.slides[0]?.title).toBeUndefined();
+    expect(story.slides[0]?.notePath).toBe('/docs/santiago/');
+  });
+
+  it('full layout forces the note body even when link mode is configured', () => {
+    const vault = new VaultIndex({ vaultRoot, resolveNoteHref: () => '/docs/santiago/' });
+    const story = vault.resolveSource(
+      parseStoryMapSourceObject({ noteFolder: 'Places', noteDisplay: 'link', layout: { mode: 'full' } }),
+    );
+
+    expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
+    expect(story.slides[0]?.title).toBeUndefined();
+    expect(story.slides[0]?.notePath).toBe('/docs/santiago/');
   });
 
   it('applies full mode to an explicitly referenced note', () => {
@@ -387,7 +399,21 @@ describe('VaultIndex noteDisplay', () => {
       parseStoryMapSourceObject({ noteDisplay: 'full', slides: [{ note: '[[Santiago]]' }] }),
     );
 
-    expect(story.slides[0]?.title).toBe('Santiago');
+    expect(story.slides[0]?.title).toBeUndefined();
+    expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
+  });
+
+  it('full mode keeps explicit document title and media', () => {
+    const vault = new VaultIndex({ vaultRoot });
+    const story = vault.resolveSource(
+      parseStoryMapSourceObject({
+        noteDisplay: 'full',
+        slides: [{ note: '[[Santiago]]', title: 'Kept title', media: './kept.jpg' }],
+      }),
+    );
+
+    expect(story.slides[0]?.title).toBe('Kept title');
+    expect(story.slides[0]?.media).toEqual({ type: 'image', src: './kept.jpg' });
     expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
   });
 });

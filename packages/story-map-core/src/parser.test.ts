@@ -4,9 +4,11 @@ import {
   coerceLocation,
   coerceMedia,
   compareNoteDates,
+  effectiveNoteDisplay,
   extractFencedBlock,
   extractFrontmatterTags,
   isPathInFolder,
+  locationOnlySlide,
   matchesTagFilter,
   mergeResolvedSlide,
   parseStoryMapObject,
@@ -380,6 +382,39 @@ describe('matchesTagFilter', () => {
     expect(matchesTagFilter(note, ['travel'], ['draft'])).toBe(true);
     expect(matchesTagFilter(note, ['travel'], ['chile'])).toBe(false);
     expect(matchesTagFilter(note, ['peru'], undefined)).toBe(false);
+  });
+});
+
+describe('effectiveNoteDisplay', () => {
+  it('keeps the configured mode for card layouts', () => {
+    expect(effectiveNoteDisplay('card', 'basic')).toBe('basic');
+    expect(effectiveNoteDisplay('card', 'link')).toBe('link');
+    expect(effectiveNoteDisplay('card', 'full')).toBe('full');
+  });
+
+  it('forces full mode for full layouts so the story surface shows the whole note', () => {
+    expect(effectiveNoteDisplay('full', 'basic')).toBe('full');
+    expect(effectiveNoteDisplay('full', 'link')).toBe('full');
+    expect(effectiveNoteDisplay('full', 'full')).toBe('full');
+  });
+});
+
+describe('locationOnlySlide', () => {
+  it('keeps only the map location and marker hint from frontmatter fields', () => {
+    expect(
+      locationOnlySlide({
+        title: 'Santiago',
+        text: 'Summary.',
+        location: { lat: 1, lng: 2 },
+        media: { type: 'image', src: 'cover.jpg' },
+        mapmarker: 'city',
+        notePath: '/docs/santiago/',
+      }),
+    ).toEqual({ location: { lat: 1, lng: 2 }, mapmarker: 'city' });
+  });
+
+  it('returns an empty slide when no location survives', () => {
+    expect(locationOnlySlide({ title: 'Santiago' })).toEqual({});
   });
 });
 

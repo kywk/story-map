@@ -280,7 +280,10 @@ Remark use the same frontmatter-only rule so both hosts select the same notes; i
     tab on click);
   - Remark passes the published href from the host `resolveNoteHref`, or omits `notePath`
     when the host cannot resolve it, leaving the title unlinked (default);
-- `full` — the same basics, with the frontmatter-stripped note body as slide text.
+- `full` — the frontmatter-stripped note body as slide text, keeping the resolved
+  `slide.notePath` so the title stays linked. Frontmatter-derived title and media are dropped
+  (the body carries them); fields the story document set explicitly are kept. The `full`
+  layout always resolves notes this way regardless of the configured `noteDisplay`.
 
 Rendering stays platform-neutral. Obsidian/Docusaurus-specific WikiLink or embed expansion
 inside the body is not required.
