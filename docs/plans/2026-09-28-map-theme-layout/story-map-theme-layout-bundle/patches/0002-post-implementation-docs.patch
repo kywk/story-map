@@ -1,0 +1,248 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -88,9 +88,15 @@
+ schema: storymap/v1
+ title: Chile Trip
+ map:
++  theme: vintage
+   center: [-33.4489, -70.6693]
+   zoom: 6
+   showPath: true
++layout:
++  mode: full
++  full:
++    side: left
++    contentRatio: 0.52
+ noteFolder: Travel/Chile/Places
+ order: asc
+ dateField: date-created
+@@ -107,6 +113,16 @@
+ note body. Obsidian opens the note through host callbacks; Docusaurus renders the
+ published route as a normal browser link.
+ 
++`map.theme` selects one coherent StoryMap visual system: `light` (default), `dark`,
++`vintage`, `cyber`, or `atlas`. The theme coordinates the map, markers/path, controls, and
++StoryMap-owned story surface. Markdown semantics and host typography remain host-owned.
++
++`layout.mode` controls how story content and the map share the StoryMap viewport. `card`
++(default) keeps the floating-card presentation and supports left/center/right alignment plus
++optional width/height ratios. `full` keeps the map full-bleed and places the story surface
++on the left or right with a configurable content ratio and progressive transparent fade.
++Layout is authored in the Markdown document and is not replaced by host settings.
++
+ ## Docusaurus
+ 
+ `remark-story-map` transforms each fence at build time into a host element and a browser
+@@ -122,7 +138,8 @@
+ 
+ `react-story-map` must never import Obsidian or Docusaurus APIs. Platform adapters resolve
+ notes, WikiLinks, Vault frontmatter, local assets, and routes into a `StoryMapConfig`
+-before render time.
++before render time. Built-in themes and story/map layout modes are platform-neutral renderer
++concerns and must stay in `react-story-map`.
+ 
+ ## Documentation
+ 
+
+diff --git a/docs/architecture.md b/docs/architecture.md
+--- a/docs/architecture.md
++++ b/docs/architecture.md
+@@ -86,8 +86,7 @@
+ 
+ - `types.ts` — `StoryMapConfig`, `StoryMapSourceConfig`, `StorySlide`, `StoryLocation`,
+   `StoryMedia`, `StoryMapOptions`, `StoryMapSourceDefaults`, `StoryOrder`,
+-  `StoryNoteDisplay`, and `DEFAULT_STORY_ORDER` / `DEFAULT_DATE_FIELD` /
+-  `DEFAULT_NOTE_DISPLAY`.
++  `StoryNoteDisplay`, theme/layout types, and their default constants.
+ - `schema.ts` — Zod `storyMapSchema`, `storyMapSourceSchema`, `storySlideSchema` (ranges,
+   enums, built-in defaults).
+ - `parser.ts` — `parseStoryMapYaml`, `parseStoryMapObject`, `parseStoryMapSourceYaml`,
+@@ -103,6 +102,8 @@
+   `defaultZoom`, `tileServer`), `location: [lat, lng]` and comma-string locations, and
+   string media into the canonical shape before validation.
+ - `applySourceDefaults` only fills keys the document omitted; document values always win.
++- `map.theme` is defaultable through source defaults; `layout` is document-owned and uses
++  built-in defaults only.
+ - `mergeResolvedSlide` makes explicit slide values win over note frontmatter, except that
+   `location` and `media` fall back to the resolved note value when the slide omits them.
+ - `sortNoteDates` keeps notes with missing/unparseable dates last, then breaks ties by
+@@ -125,6 +126,11 @@
+ 
+ - Leaflet is loaded with `await import('leaflet')` inside the mount effect, so the package
+   is SSR-import-safe.
++- The map canvas remains a stable full-bleed layer. Story presentation is dispatched
++  through the shared `card` / `full` layout boundary without moving platform concerns into
++  the renderer.
++- Built-in theme presets coordinate tile treatment, markers/path, Leaflet chrome, and the
++  StoryMap-owned story surface. There is no separate story theme.
+ - The map is rebuilt only when `story` changes; changing slides calls `flyTo` and restyles
+   markers without recreating the map.
+ - `ResizeObserver` calls `invalidateSize()` on the map container.
+@@ -132,9 +138,10 @@
+   - `notePath` absent -> plain heading;
+   - `notePath` present with `onNoteClick`/`onNoteHover` -> callback-driven link (Obsidian);
+   - `notePath` present without callbacks -> normal `<a href>` (Docusaurus).
+-- The renderer owns semantic `--story-map-*` CSS variables with private fallbacks; hosts
+-  override them on an ancestor (for example `.story-map-host`). `react-story-map` never
+-  imports Infima or Docusaurus APIs.
++- The renderer owns built-in theme tokens plus semantic `--story-map-*` CSS variables.
++  Explicit host variables remain an advanced override. Built-in Docusaurus examples do not
++  automatically replace a selected StoryMap theme with Infima colors. `react-story-map`
++  never imports Infima or Docusaurus APIs.
+ 
+ ### `@story-map/obsidian-story-map`
+ 
+@@ -213,9 +220,15 @@
+ | `map.center` | — | no (document only) |
+ | `map.zoom` | `6` | yes |
+ | `map.minZoom`, `map.maxZoom` | — | yes |
++| `map.theme` | `light` | yes |
+ | `map.tileUrl` | OpenStreetMap standard | yes |
+ | `map.attribution` | `© OpenStreetMap contributors` | yes |
+ | `map.showPath` | `true` | yes |
++| `layout.mode` | `card` | no (document only) |
++| `layout.card.align` | `left` | no (document only) |
++| `layout.card.widthRatio`, `layout.card.heightRatio` | — | no (document only) |
++| `layout.full.side` | `left` | no (document only) |
++| `layout.full.contentRatio` | `0.5` | no (document only) |
+ | `slides` | — | no (document only) |
+ 
+ When adding a defaultable key: add it to `story-map-core` schema + `applySourceDefaults`,
+@@ -259,8 +272,9 @@
+ - The browser client is registered as a Docusaurus client module (see
+   `examples/docusaurus/story-map-client-plugin.cjs`) and handles SPA insertion/removal
+   without duplicate mounts or leaked React roots.
+-- Theme adaptation lives in a host CSS bridge (`examples/docusaurus/story-map-theme.css`)
+-  that maps Infima variables onto the renderer's `--story-map-*` variables.
++- Built-in StoryMap theme colors are renderer-owned. The Docusaurus example does not
++  automatically map Infima colors over them. Hosts may still explicitly set
++  `--story-map-*` variables as an advanced override.
+ - A full-page view (Open as Story Map, with a Markdown toggle) is host UI, not a package
+   option: it targets Docusaurus theme DOM/sidebar, the route lifecycle, and host CSS. The
+   transform only stamps `data-story-map-document="true"`; see
+@@ -324,7 +338,7 @@
+ | --- | --- |
+ | `scripts/release-npm.test.mjs` | tag mismatch, dependency publication order, partial retry, integrity conflicts and registry errors with a fake npm executable |
+ | `packages/story-map-core/src/parser.test.ts` | parsing, normalization, defaults, ordering, fence extraction, helpers |
+-| `packages/react-story-map/src/StoryMap.test.tsx` | slide-title rendering: plain heading, browser-link fallback, callback anchor |
++| `packages/react-story-map/src/StoryMap.test.tsx` | slide-title behavior plus theme/layout rendering and regression coverage |
+ | `packages/obsidian-story-map/src/resolver.test.ts` | explicit slides, folder discovery, note display, media resolution |
+ | `packages/obsidian-story-map/src/settings-data.test.ts` | settings → source defaults mapping |
+ | `packages/obsidian-story-map/src/main.test.ts` | scoped routing, explicit Markdown mode and wrapper ownership on disable |
+@@ -338,6 +352,7 @@
+ | --- | --- |
+ | Schema/defaults/normalization | `story-map-core` (`schema.ts`, `parser.ts`, `types.ts`) + `parser.test.ts` |
+ | Rendering, navigation, markers, media, note links | `react-story-map/src/StoryMap.tsx`, `styles.css`, `StoryMap.test.tsx` |
++| Built-in themes and card/full layout modes | `react-story-map/src/themes.ts`, layout components/dispatch, `styles.css`, renderer tests |
+ | Obsidian view, commands, settings, detection | `obsidian-story-map/src/*` |
+ | Obsidian note/media resolution | `obsidian-story-map/src/resolver.ts` |
+ | Remark/Docusaurus pipeline | `remark-story-map/src/index.ts`, `vault.ts`, `client.tsx` |
+@@ -354,6 +369,7 @@
+ - `history/2026-09-26-docusaurus-remark/` — Docusaurus/Remark milestone planning.
+ - `history/2026-09-26-npm-release/` — approved npm release preparation and deferred Obsidian gates.
+ - `history/2026-09-26-obsidian-community-release/` — Geo Story Map submission preparation.
++- `history/2026-09-28-map-theme-layout/` — built-in theme and story/map layout planning.
+ 
+ They are archival; the current contract is `SPEC.md` plus this document.
+ 
+
+diff --git a/examples/basic.md b/examples/basic.md
+--- a/examples/basic.md
++++ b/examples/basic.md
+@@ -5,9 +5,12 @@
+ title: Taiwan sample
+ height: 520px
+ map:
++  theme: light
+   center: [24.4, 121.0]
+   zoom: 7
+   showPath: true
++layout:
++  mode: card
+ slides:
+   - title: Taipei
+     location: [25.0330, 121.5654]
+
+diff --git a/packages/story-map-core/README.md b/packages/story-map-core/README.md
+--- a/packages/story-map-core/README.md
++++ b/packages/story-map-core/README.md
+@@ -57,11 +57,18 @@
+ | `dateField` | `date-created` |
+ | `noteDisplay` | `link` |
+ | `map.zoom` | `6` |
++| `map.theme` | `light` |
+ | `map.tileUrl` | `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png` |
+ | `map.attribution` | `© OpenStreetMap contributors` |
+ | `map.showPath` | `true` |
++| `layout.mode` | `card` |
++| `layout.card.align` | `left` |
++| `layout.full.side` | `left` |
++| `layout.full.contentRatio` | `0.5` |
+ 
+-`map.center`, `map.minZoom`, and `map.maxZoom` are optional. All source keys use camelCase.
++`map.center`, `map.minZoom`, `map.maxZoom`, `layout.card.widthRatio`, and
++`layout.card.heightRatio` are optional. `layout` is document-owned; supplied source
++defaults may set `map.theme` but not layout. All source keys use camelCase.
+ 
+ ## Other exports
+ 
+
+diff --git a/packages/react-story-map/README.md b/packages/react-story-map/README.md
+--- a/packages/react-story-map/README.md
++++ b/packages/react-story-map/README.md
+@@ -37,10 +37,16 @@
+   title: 'A walk through Taipei',
+   height: '520px',
+   map: {
++    theme: 'light',
+     zoom: 14,
+     tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+     attribution: '© OpenStreetMap contributors',
+     showPath: true,
++  },
++  layout: {
++    mode: 'card',
++    card: { align: 'left' },
++    full: { side: 'left', contentRatio: 0.5 },
+   },
+   slides: [
+     {
+@@ -98,9 +104,23 @@
+ supported global stylesheet entry. The renderer cleans up its map on unmount and
+ uses `ResizeObserver`, when available, to refresh map sizing after layout changes.
+ 
+-## Theme
++## Theme and layout
+ 
+-Set these semantic CSS variables on the StoryMap or an ancestor to match your host:
++`map.theme` selects a built-in coherent visual preset:
++
++```text
++light | dark | vintage | cyber | atlas
++```
++
++Theme styling covers map treatment plus StoryMap-owned story chrome. It does not replace
++the host's Markdown semantics or typography.
++
++`layout.mode` is `card` (default) or `full`. Card mode supports left/center/right plus
++optional width/height ratios. Full mode supports left/right story placement plus a content
++ratio and a theme-coherent gradient into the full-bleed map.
++
++Set these semantic CSS variables on the StoryMap or an ancestor for an explicit host
++override:
+ 
+ ```css
+ .my-story-theme {
+@@ -116,8 +136,9 @@
+ <StoryMap story={story} className="my-story-theme" />
+ ```
+ 
+-These variables style the panel, text, links, borders, and navigation. The tile
+-provider controls the underlying map imagery.
++These variables remain an advanced override layer over built-in theme defaults. A host
++that overrides them is responsible for keeping map and story chrome visually coherent.
++Tile provider selection remains independent from the built-in theme.
+ 
+ ## License
+ 

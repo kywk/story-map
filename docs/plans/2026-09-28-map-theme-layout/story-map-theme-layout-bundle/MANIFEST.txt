@@ -1,0 +1,10 @@
+./MANIFEST.txt
+./README.md
+./docs/history/2026-09-28-map-theme-layout/CONVERSATION_SUMMARY.md
+./docs/history/2026-09-28-map-theme-layout/DESIGN_SPEC.md
+./docs/history/2026-09-28-map-theme-layout/HANDOFF_PROMPT.md
+./docs/history/2026-09-28-map-theme-layout/IMPLEMENTATION_PLAN.md
+./docs/history/2026-09-28-map-theme-layout/MULTI_AGENT_TASKS.md
+./patches/0001-pre-implementation-contract.patch
+./patches/0002-post-implementation-docs.patch
+./proposed/SPEC.md

@@ -1,0 +1,82 @@
+diff --git a/AGENTS.md b/AGENTS.md
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -24,6 +24,18 @@
+ - StoryMap note discovery frontmatter: `story-map-note: true`.
+ - StoryMap fenced language: `story-map`.
+ - StoryMap configuration keys use camelCase.
++- `map.theme` is the single built-in StoryMap visual theme selector. Supported values are
++  `light | dark | vintage | cyber | atlas`, default `light`. A selected theme coordinates
++  both cartographic styling and StoryMap-owned story chrome; do not create a separate story
++  theme. Markdown semantics and host typography remain host-owned.
++- `layout.mode` controls the spatial relationship between story content and the map.
++  Supported v1 modes are `card | full`, default `card`. Layout is document-owned and must
++  render consistently across standalone React, Obsidian, and Remark/Docusaurus.
++- `card` mode preserves the current floating-card behavior by default and may configure
++  `align: left | center | right`, `widthRatio`, and `heightRatio`.
++- `full` mode keeps the map full-bleed and places the story surface on the configured
++  `left | right` side with `contentRatio`; the shared renderer owns the progressive
++  transparent transition and responsive vertical fallback.
+ - `noteFolder` supports one Vault-relative folder and includes subfolders recursively.
+ - Folder-generated slide order is controlled only by `order: asc | desc` (default `asc`)
+   and `dateField` (default `date-created`).
+@@ -38,9 +50,10 @@
+   route and the renderer emits a normal browser link. `react-story-map` must not import
+   Obsidian or Docusaurus APIs.
+ - Defaultable `story-map` keys (Obsidian plugin settings): `order`, `dateField`,
+-  `noteDisplay`, and `map.zoom`, `map.minZoom`, `map.maxZoom`, `map.tileUrl`,
++  `noteDisplay`, and `map.zoom`, `map.minZoom`, `map.maxZoom`, `map.theme`, `map.tileUrl`,
+   `map.attribution`, `map.showPath`. Keys that vary per document — `schema`, `id`, `title`,
+-  `noteFolder`, `map.center`, `slides`, `height` — must stay document-only and must not be
++  `noteFolder`, `map.center`, `layout`, `slides`, `height` — must stay document-only and
++  must not be
+   added to plugin settings or defaults. Resolution order for defaultable keys is always:
+   1. the key present in the document's `story-map` block;
+   2. otherwise the plugin setting;
+@@ -63,9 +76,10 @@
+   explicit slide media resolves relative to the StoryMap source document.
+ - The browser client must handle Docusaurus SPA insertion/removal without duplicate mounts
+   or leaked React roots.
+-- Theme adaptation belongs in a host CSS bridge mapping Infima variables onto the
+-  renderer's `--story-map-*` variables; do not hard-code Docusaurus variables in
+-  `react-story-map` except as optional fallbacks.
++- Built-in theme colors belong to the shared renderer. Do not automatically map Infima
++  colors over a selected StoryMap theme. Existing `--story-map-*` semantic variables remain
++  an explicit advanced host override; a host that sets them assumes responsibility for
++  visual coherence.
+ 
+ ## Non-goals
+ 
+@@ -74,6 +88,8 @@
+ - Nx, Turborepo, Bazel, changesets, semantic-release;
+ - Redux/Zustand, React Leaflet, MapLibre;
+ - visual editors, scroll-driven storytelling, a generic plugin framework;
++- independent story/article themes, user-defined theme JSON, theme marketplaces, public
++  `registerTheme`/`registerLayout` APIs, or per-slide theme/layout;
+ - premature abstraction for multiple map engines;
+ - multiple `noteFolder` sources;
+ - generic `sortBy`, grouping, filtering, or query syntax;
+@@ -92,7 +108,8 @@
+ - `packages/story-map-core` — framework agnostic; no DOM, React, Leaflet, Obsidian,
+   Docusaurus, or Node filesystem dependencies; schema, parsing, defaults, pure helpers; no
+   folder scanning or file reads.
+-- `packages/react-story-map` — owns UI and Leaflet rendering, semantic CSS variables, and
++- `packages/react-story-map` — owns UI and Leaflet rendering, built-in theme presets,
++  StoryMap-owned chrome tokens, card/full layout rendering, semantic CSS variables, and
+   generic note-link rendering from a resolved `notePath`; SSR-import-safe (Leaflet is
+   dynamically imported inside client effects only); no Obsidian/Docusaurus/Node APIs; no
+   knowledge of `noteFolder`, Vault scanning, or slug rules.
+@@ -150,6 +167,12 @@
+ 7. source-relative and note-relative media;
+ 8. multiple StoryMaps on one page and clean SPA host removal;
+ 9. Docusaurus SSR/build never initializes Leaflet;
+-10. Docusaurus light/dark theme bridge renders readable UI.
++10. all five built-in themes render coherent map + StoryMap chrome;
++11. card left/center/right plus advanced ratios;
++12. full left/right plus several `contentRatio` values and narrow-screen vertical fallback;
++13. document theme overrides the Obsidian default; layout is never overridden by plugin
++    settings;
++14. explicit host `--story-map-*` overrides still work without automatic Infima color
++    replacement.
+ 
+ Do not mark deferred features as implemented unless they are tested end to end.
