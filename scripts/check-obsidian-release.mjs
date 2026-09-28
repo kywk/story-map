@@ -4,7 +4,7 @@ import { builtinModules, createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
-import { assertNoScriptCreation } from '../packages/obsidian-story-map/build/react-script-policy.mjs';
+import { assertNoScriptCreation } from '../packages/obsidian-story-map/react-script-policy.mjs';
 
 const nodeRequire = createRequire(import.meta.url);
 

@@ -77,7 +77,7 @@ describe('settings definitions and legacy rendering', () => {
     const { tab, container } = setup();
     const definitions = tab.getSettingDefinitions();
     expect(definitions.map((definition) => 'name' in definition ? definition.name : '')).toEqual([
-      'Defaults', 'Default order', 'Default date field', 'Default note display', 'Map',
+      'Defaults', 'Default order', 'Default date field', 'Default note display', 'Map', 'Default map theme',
       'Default zoom', 'Default minimum zoom', 'Default maximum zoom', 'Default tile URL',
       'Default attribution', 'Default show path', 'Restore defaults',
     ]);
@@ -95,6 +95,18 @@ describe('settings definitions and legacy rendering', () => {
     container.rows.find((row) => row.name === 'Restore defaults')?.control?.click?.();
     expect(container.empty).toHaveBeenCalledTimes(2);
     expect(container.rows.find((row) => row.name === 'Default date field')?.control?.value).toBe('');
+  });
+
+  it('persists the map theme and restores the built-in selection', () => {
+    const { tab, plugin, container } = setup();
+    tab.display();
+    const theme = container.rows.find((row) => row.name === 'Default map theme');
+    expect(theme?.control?.value).toBe('light');
+    theme?.control?.change?.('atlas');
+    expect(plugin.settings).toMatchObject({ mapTheme: 'atlas' });
+    expect(plugin.saveSettings).toHaveBeenCalledOnce();
+    container.rows.find((row) => row.name === 'Restore defaults')?.control?.click?.();
+    expect(container.rows.find((row) => row.name === 'Default map theme')?.control?.value).toBe('light');
   });
 
   it('redraws reset values without invoking newer host APIs', () => {

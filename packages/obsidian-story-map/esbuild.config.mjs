@@ -2,7 +2,7 @@ import esbuild from 'esbuild';
 import { appendFile, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { builtinModules } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
-import { assertNoScriptCreation, reactScriptPolicy } from './build/react-script-policy.mjs';
+import { assertNoScriptCreation, reactScriptPolicy } from './react-script-policy.mjs';
 
 const production = process.argv[2] === 'production';
 

@@ -40,9 +40,15 @@ noteDisplay: link
 includeTags: [travel, chile]
 excludeTags: [draft]
 map:
+  theme: vintage
   center: [-33.4489, -70.6693]
   zoom: 5
   showPath: true
+layout:
+  mode: full
+  full:
+    side: left
+    contentRatio: 0.5
 ```
 ````
 
@@ -58,12 +64,12 @@ map:
 ## Plugin settings
 
 **Settings → Geo Story Map** provides defaults for keys a document's `story-map` block omits:
-`order`, `dateField`, `noteDisplay`, and the `map` keys `zoom`, `minZoom`, `maxZoom`,
+`order`, `dateField`, `noteDisplay`, and the `map` keys `theme`, `zoom`, `minZoom`, `maxZoom`,
 `tileUrl`, `attribution`, and `showPath`.
 
 Resolution order per key: document block → plugin setting → built-in default. Changing a
 setting re-renders open StoryMap views immediately. Per-story values — `schema`, `id`, `title`,
-`noteFolder`, `includeTags`, `excludeTags`, `map.center`, `slides`, and `height` — stay in the
+`noteFolder`, `includeTags`, `excludeTags`, `map.center`, `layout`, `slides`, and `height` — stay in the
 document and have no setting; the full-leaf Obsidian view always fills the pane.
 
 The same tab also manages the device-local **Local agents** used by the AI coordinate lookup

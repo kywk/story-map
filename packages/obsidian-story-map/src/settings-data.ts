@@ -1,5 +1,6 @@
 import {
   type StoryMapSourceDefaults,
+  type StoryMapTheme,
   type StoryNoteDisplay,
   type StoryOrder,
 } from '@story-map/story-map-core';
@@ -8,6 +9,7 @@ export interface StoryMapPluginSettings {
   order?: StoryOrder | undefined;
   dateField?: string | undefined;
   noteDisplay?: StoryNoteDisplay | undefined;
+  mapTheme?: StoryMapTheme | undefined;
   mapZoom?: number | undefined;
   mapMinZoom?: number | undefined;
   mapMaxZoom?: number | undefined;
@@ -29,6 +31,7 @@ export function toSourceDefaults(settings: StoryMapPluginSettings): StoryMapSour
   if (settings.noteDisplay !== undefined) defaults.noteDisplay = settings.noteDisplay;
 
   const map: NonNullable<StoryMapSourceDefaults['map']> = {};
+  if (settings.mapTheme !== undefined) map.theme = settings.mapTheme;
   if (isFiniteNumber(settings.mapZoom)) map.zoom = settings.mapZoom;
   if (isFiniteNumber(settings.mapMinZoom)) map.minZoom = settings.mapMinZoom;
   if (isFiniteNumber(settings.mapMaxZoom)) map.maxZoom = settings.mapMaxZoom;

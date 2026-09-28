@@ -2,7 +2,7 @@ import {
   Notice, PluginSettingTab, Setting, type App, type ButtonComponent, type TextComponent,
   type SettingDefinitionItem, type SettingDefinitionRender,
 } from 'obsidian';
-import type { StoryNoteDisplay, StoryOrder } from '@story-map/story-map-core';
+import type { StoryMapTheme, StoryNoteDisplay, StoryOrder } from '@story-map/story-map-core';
 import { parseArguments, type AgentConfig, type DetectedAgent } from './agents.js';
 import { t, translateMessage } from './i18n.js';
 import type { LocalAgents } from './local-agents.js';
@@ -25,6 +25,14 @@ const NOTE_DISPLAY_OPTIONS: Array<[value: string, label: string]> = [
   ['basic', 'Basic information only'],
   ['link', 'Title link with page preview (default)'],
   ['full', 'Full note body'],
+];
+
+const MAP_THEME_OPTIONS: Array<[value: StoryMapTheme, label: string]> = [
+  ['light', 'Light (default)'],
+  ['dark', 'Dark'],
+  ['vintage', 'Vintage'],
+  ['cyber', 'Cyber'],
+  ['atlas', 'Atlas'],
 ];
 
 export class StoryMapSettingTab extends PluginSettingTab {
@@ -112,6 +120,16 @@ export class StoryMapSettingTab extends PluginSettingTab {
       } },
       { name: 'Map', render: (setting) => {
         setting.setHeading();
+      } },
+      { name: 'Default map theme', render: (setting) => {
+        setting
+          .setDesc('Built-in default: light. A theme selected in the document takes precedence.')
+          .addDropdown((dropdown) =>
+            dropdown
+              .addOptions(Object.fromEntries(MAP_THEME_OPTIONS))
+              .setValue(this.plugin.settings.mapTheme ?? 'light')
+              .onChange((value) => this.patch({ mapTheme: toMapTheme(value) })),
+          );
       } },
       { name: 'Default zoom', render: (setting) => {
         setting
@@ -389,4 +407,9 @@ function toOrder(value: string): StoryOrder | undefined {
 
 function toNoteDisplay(value: string): StoryNoteDisplay | undefined {
   return value === 'basic' || value === 'link' || value === 'full' ? value : undefined;
+}
+
+function toMapTheme(value: string): StoryMapTheme | undefined {
+  return value === 'light' || value === 'dark' || value === 'vintage' || value === 'cyber' || value === 'atlas'
+    ? value : undefined;
 }

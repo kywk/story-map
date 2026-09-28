@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseStoryMapSourceObject } from '@story-map/story-map-core';
 import { toSourceDefaults, type StoryMapPluginSettings } from './settings-data.js';
 
 describe('toSourceDefaults', () => {
@@ -11,6 +12,7 @@ describe('toSourceDefaults', () => {
       order: 'desc',
       dateField: ' visited ',
       noteDisplay: 'full',
+      mapTheme: 'vintage',
       mapZoom: 5,
       mapMinZoom: 2,
       mapMaxZoom: 18,
@@ -24,6 +26,7 @@ describe('toSourceDefaults', () => {
       dateField: 'visited',
       noteDisplay: 'full',
       map: {
+        theme: 'vintage',
         zoom: 5,
         minZoom: 2,
         maxZoom: 18,
@@ -42,5 +45,12 @@ describe('toSourceDefaults', () => {
     };
 
     expect(toSourceDefaults(settings)).toEqual({});
+  });
+
+  it('lets the document theme override the plugin default', () => {
+    const defaults = toSourceDefaults({ mapTheme: 'cyber' });
+    expect(parseStoryMapSourceObject({}, defaults).map.theme).toBe('cyber');
+    expect(parseStoryMapSourceObject({ map: { theme: 'atlas' } }, defaults).map.theme).toBe('atlas');
+    expect(parseStoryMapSourceObject({}).map.theme).toBe('light');
   });
 });

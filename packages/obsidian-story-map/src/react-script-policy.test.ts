@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { build } from 'esbuild';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { assertNoScriptCreation, disableReactScripts, reactScriptPolicy } from '../build/react-script-policy.mjs';
+import { assertNoScriptCreation, disableReactScripts, reactScriptPolicy } from '../react-script-policy.mjs';
 
 type Runtime = Pick<typeof import('react-dom/client'), 'createRoot'>
   & Pick<typeof import('react-dom'), 'flushSync' | 'preinit' | 'preinitModule'>
