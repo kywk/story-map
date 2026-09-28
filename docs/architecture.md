@@ -174,6 +174,10 @@ Key invariants:
 - `esbuild.config.mjs` — bundles `src/main.tsx` to `dist/main.js` (CJS) and copies
   CSS/manifest/versions. `obsidian`, `electron` and Node built-ins stay external: the
   desktop-only local-agent layer requires them at runtime.
+- `obsidian.css` imports the renderer stylesheet and adds the Obsidian-native theme bridge:
+  the neutral `light`/`dark` presets inherit Obsidian CSS variables and the
+  `theme-dark`/`theme-light` tile filter, while `vintage`/`cyber`/`atlas` and explicit
+  `--story-map-*` overrides keep their own colors.
 
 ### `@story-map/remark-story-map`
 

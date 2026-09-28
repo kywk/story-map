@@ -506,6 +506,15 @@ Docusaurus/Infima variables are not hard-coded inside the generic React package.
 light/dark tile provider switching is not required; the selected built-in preset styles
 the map tiles, markers, path, controls, and StoryMap-owned story surface together.
 
+The Obsidian host is the inverse case: its plugin stylesheet bridges the neutral `light` and
+`dark` presets onto Obsidian's own theme variables (`--background-primary`, `--text-normal`,
+`--text-muted`, `--background-modifier-border`, `--interactive-accent`, and the
+marker/path accents) and follows Obsidian's `theme-dark`/`theme-light` class for the neutral
+tile filter. Switching Obsidian light/dark or a custom community theme therefore restyles
+the StoryMap without per-document config. The expressive `vintage`, `cyber`, and `atlas`
+presets keep their authored palettes, and an explicit host `--story-map-*` override still
+takes precedence.
+
 ## 12. React API
 
 ```tsx

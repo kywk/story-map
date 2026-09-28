@@ -76,7 +76,10 @@ hygiene").
   or leaked React roots.
 - Built-in `map.theme` values are `light`, `dark`, `vintage`, `cyber`, and `atlas`.
   The renderer styles map and StoryMap chrome together; inherited `--story-map-*`
-  variables are explicit host overrides. The Docusaurus Infima bridge is opt-in.
+  variables are explicit host overrides. The Docusaurus Infima bridge is opt-in. In the
+  Obsidian host the neutral `light`/`dark` presets bridge to native Obsidian CSS variables
+  and the `theme-dark`/`theme-light` tile filter, while the expressive presets keep their
+  authored palettes.
 - `layout` is document-only: `card` (default) or `full`. The renderer owns both layouts;
   Obsidian and Remark pass the canonical config through.
 
