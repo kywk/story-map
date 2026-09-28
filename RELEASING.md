@@ -1,16 +1,15 @@
 # Releasing
 
 The three npm libraries release together; the bundled Obsidian plugin releases independently.
-All three npm libraries are published at `0.2.1` on `latest` with GitHub OIDC provenance, and
-the Obsidian plugin is released at `0.2.1` on GitHub. Plugin `0.2.1` raises the minimum app
-version to `1.8.7` for the `loadLocalStorage`/`saveLocalStorage`/`getLanguage` APIs; `0.2.0`
+All three npm libraries are published at `0.3.0` on `latest` with GitHub OIDC provenance, and
+the Obsidian plugin is released at `0.3.0` on GitHub. Plugin `0.3.0` retains minimum app
+version `1.8.7` for the `loadLocalStorage`/`saveLocalStorage`/`getLanguage` APIs; `0.2.0`
 declared `1.8.0` incorrectly and should not be submitted.
 Published versions are immutable; choose a new version for the next release.
 The plugin is available in the official community directory.
 
-The current branch prepares **0.3.0** for all three npm libraries and the Obsidian
-plugin. This is not a publication claim. See [0.3.0 release notes](docs/releases/0.3.0.md)
-for changes, known limitations and validation status.
+See [0.3.0 release notes](docs/releases/0.3.0.md) for changes, known limitations and
+validation evidence.
 
 ## npm account setup
 
@@ -66,7 +65,8 @@ Do not create placeholder packages or add a token fallback to this workflow.
 
 All three library versions must match; private root, example and Obsidian packages are
 excluded from the explicit release allowlist. Update the three package versions together
-for later releases, then refresh the lockfile. The manifests now match the prepared `0.3.0` release. Private root and Obsidian versions remain independent.
+for later releases, then refresh the lockfile. The three packages are currently at `0.3.0`.
+Private root and Obsidian versions remain independent.
 
 ```bash
 pnpm install
@@ -107,7 +107,7 @@ not proven by local checks. The workflow does not create an Obsidian release.
 
 ## Obsidian community release
 
-The desktop plugin is **Geo Story Map**, ID `geo-story-map`, prepared version `0.3.0`,
+The desktop plugin is **Geo Story Map**, ID `geo-story-map`, current version `0.3.0`,
 minimum Obsidian `1.8.7`. Its versions are independent of the npm libraries.
 It is published in the [Obsidian community directory](https://community.obsidian.md/plugins/geo-story-map).
 The previous candidate `story-map` is already used by an unrelated community plugin.

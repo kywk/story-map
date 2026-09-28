@@ -3,11 +3,11 @@
 Geo Story Map is published in the
 [Obsidian community directory](https://community.obsidian.md/plugins/geo-story-map).
 Install it through **Settings → Community plugins → Browse → Geo Story Map**, then enable it.
-The [public 0.2.1 release](https://github.com/kywk/story-map/releases/tag/0.2.1) provides
-the previous plugin assets. The current branch prepares **0.3.0**; see the
-[release notes](releases/0.3.0.md). Preparation does not publish a new plugin version.
+The [public 0.3.0 release](https://github.com/kywk/story-map/releases/tag/0.3.0) provides
+the current plugin assets. See the [release notes](releases/0.3.0.md) for changes and
+validation evidence.
 
-Plugin: **Geo Story Map**, ID `geo-story-map`, prepared version `0.3.0`. Desktop only; minimum
+Plugin: **Geo Story Map**, ID `geo-story-map`, current version `0.3.0`. Desktop only; minimum
 Obsidian `1.8.7`. The device-local agent settings and locale detection use
 `App.loadLocalStorage`, `App.saveLocalStorage` and `getLanguage`, all introduced in 1.8.7.
 The earlier 1.8.0 compatibility checks covered opening, Markdown switching, split-pane
@@ -30,7 +30,7 @@ copies them into `packages/obsidian-story-map/dist/`. It also bundles JavaScript
 and generates `THIRD_PARTY_NOTICES.txt` from the actual bundled dependency licenses.
 The scoped view-state wrapper becomes inert on disable and preserves later wrappers.
 
-The GitHub tag must exactly equal the plugin version, **`0.3.0`**, without `v` or
+For version 0.3.0, the GitHub tag is exactly **`0.3.0`**, without `v` or
 `npm-v`. Attach only `main.js`, `manifest.json` and `styles.css`.
 Do not attach a repository ZIP as a replacement for these files. Obsidian downloads
 these three automatically. Full dependency notices are appended to `main.js`; the
