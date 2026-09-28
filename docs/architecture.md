@@ -85,7 +85,8 @@ Adapters differ only in *how* they resolve the source:
 Exported from `src/index.ts`.
 
 - `types.ts` — `StoryMapConfig`, `StoryMapSourceConfig`, `StorySlide`, `StoryLocation`,
-  `StoryMedia`, `StoryMapOptions`, `StoryMapSourceDefaults`, `StoryOrder`,
+  `StoryMedia`, `StoryMapOptions`, `StoryMapSourceDefaults`, `StoryMapTheme`,
+  `StoryMapLayoutOptions`, `StoryMapLayoutMode`, `StoryMapCardLayout`, `StoryMapFullLayout`, `StoryOrder`,
   `StoryNoteDisplay`, and `DEFAULT_STORY_ORDER` / `DEFAULT_DATE_FIELD` /
   `DEFAULT_NOTE_DISPLAY`.
 - `schema.ts` — Zod `storyMapSchema`, `storyMapSourceSchema`, `storySlideSchema` (ranges,
@@ -126,8 +127,9 @@ Key invariants:
 
 - Leaflet is loaded with `await import('leaflet')` inside the mount effect, so the package
   is SSR-import-safe.
-- The map is rebuilt only when `story` changes; changing slides calls `flyTo` and restyles
-  markers without recreating the map.
+- `MapCanvas.tsx` owns one stable Leaflet map. Config updates refresh layers; slide changes
+  call `flyTo` and restyle markers without recreating the map. `StoryMap.tsx` owns content,
+  navigation and the card/full presentation overlay.
 - `ResizeObserver` calls `invalidateSize()` on the map container.
 - Slide-title link behavior (`SlideTitle`):
   - `notePath` absent -> plain heading;
@@ -135,7 +137,10 @@ Key invariants:
   - `notePath` present without callbacks -> normal `<a href>` (Docusaurus).
 - The renderer owns semantic `--story-map-*` CSS variables with private fallbacks; hosts
   override them on an ancestor (for example `.story-map-host`). `react-story-map` never
-  imports Infima or Docusaurus APIs.
+  imports Infima or Docusaurus APIs. `styles.css` supplies five coordinated presets for
+  tile filters, vector layers, controls, and story surfaces. Card alignment/ratios and
+  full side/content ratio affect only the presentation overlay; mobile full mode uses a
+  vertical fade.
 
 ### `@story-map/obsidian-story-map`
 
@@ -228,11 +233,16 @@ duplicate the Obsidian settings UI.
 | `dateField` | `date-created` | yes |
 | `noteDisplay` | `link` | yes |
 | `map.center` | — | no (document only) |
+| `map.theme` | `light` | yes |
 | `map.zoom` | `6` | yes |
 | `map.minZoom`, `map.maxZoom` | — | yes |
 | `map.tileUrl` | OpenStreetMap standard | yes |
 | `map.attribution` | `© OpenStreetMap contributors` | yes |
 | `map.showPath` | `true` | yes |
+| `layout.mode` | `card` | no (document only) |
+| `layout.card.align` | `left` | no (document only) |
+| `layout.card.widthRatio`, `heightRatio` | — (`0.20..0.80`, `0.20..0.95`) | no (document only) |
+| `layout.full.side`, `contentRatio` | `left`, `0.50` (`0.30..0.70`) | no (document only) |
 | `slides` | — | no (document only) |
 
 When adding a defaultable key: add it to `story-map-core` schema + `applySourceDefaults`,
@@ -276,8 +286,9 @@ story-map fence
 - The browser client is registered as a Docusaurus client module (see
   `examples/docusaurus/story-map-client-plugin.cjs`) and handles SPA insertion/removal
   without duplicate mounts or leaked React roots.
-- Theme adaptation lives in a host CSS bridge (`examples/docusaurus/story-map-theme.css`)
-  that maps Infima variables onto the renderer's `--story-map-*` variables.
+- The host CSS bridge (`examples/docusaurus/story-map-theme.css`) maps Infima variables
+  onto renderer semantic variables only when `.story-map-use-infima-colors` is applied.
+  Built-in themes remain coherent by default.
 - A full-page view (Open as Story Map, with a Markdown toggle) is host UI, not a package
   option: it targets Docusaurus theme DOM/sidebar, the route lifecycle, and host CSS. The
   transform only stamps `data-story-map-document="true"`; see
@@ -318,7 +329,7 @@ remain unchanged. The build gathers full licenses from actual bundled dependency
 writes a notice file and appends the same notices as comments to `main.js` for automatic
 Obsidian installs. `scripts/check-obsidian-release.mjs` validates metadata and a bundled
 CommonJS import with only Obsidian external.
-The Obsidian-only `build/react-script-policy.mjs` disables React DOM's unused script
+The Obsidian-only `react-script-policy.mjs` disables React DOM's unused script
 preinit/resource and script-rendering paths with an explicit error. It validates the
 upstream source shape and rejects script creation in the final bundle; npm hosts retain
 standard React behavior. DOM tests cover normal rendering and blocked script operations.
@@ -341,7 +352,7 @@ partial release retry. Account-side Trusted Publishers must be configured separa
 | --- | --- |
 | `scripts/release-npm.test.mjs` | tag mismatch, dependency publication order, partial retry, integrity conflicts and registry errors with a fake npm executable |
 | `packages/story-map-core/src/parser.test.ts` | parsing, normalization, defaults, ordering, fence extraction, helpers |
-| `packages/react-story-map/src/StoryMap.test.tsx` | slide-title rendering: plain heading, browser-link fallback, callback anchor |
+| `packages/react-story-map/src/StoryMap.test.tsx` | slide-title rendering, SSR theme/layout markup, map/presentation order |
 | `packages/obsidian-story-map/src/resolver.test.ts` | explicit slides, folder discovery, tag filtering, note display, media resolution |
 | `packages/obsidian-story-map/src/settings-data.test.ts` | settings → source defaults mapping |
 | `packages/obsidian-story-map/src/agents.test.ts` | argument parsing, per-agent output parsing, executable detection |
@@ -358,7 +369,7 @@ The examples and the landing site have no automated tests; verify them manually.
 | Change | Touch |
 | --- | --- |
 | Schema/defaults/normalization | `story-map-core` (`schema.ts`, `parser.ts`, `types.ts`) + `parser.test.ts` |
-| Rendering, navigation, markers, media, note links | `react-story-map/src/StoryMap.tsx`, `styles.css`, `StoryMap.test.tsx` |
+| Rendering, navigation, markers, media, note links | `react-story-map/src/MapCanvas.tsx`, `StoryMap.tsx`, `styles.css`, `StoryMap.test.tsx` |
 | Obsidian view, commands, settings, detection | `obsidian-story-map/src/*` |
 | Local AI agent config and coordinate lookup | `obsidian-story-map/src/agents.ts`, `coordinates.ts`, `local-agents.ts`, `coordinate-lookup.ts` |
 | Obsidian note/media resolution | `obsidian-story-map/src/resolver.ts` |

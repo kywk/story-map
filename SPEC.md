@@ -45,9 +45,15 @@ includeTags: [travel, chile]
 excludeTags: [draft]
 
 map:
+  theme: vintage
   center: [-33.4489, -70.6693]
   zoom: 5
   showPath: true
+layout:
+  mode: full
+  full:
+    side: left
+    contentRatio: 0.5
 ```
 ````
 
@@ -127,7 +133,7 @@ Docusaurus URL policy, and theme bridging remain outside `react-story-map`.
 
 Owns types (`StoryMapConfig`, `StorySlide`, `StoryLocation`, `StoryMedia`), YAML
 parsing/validation, source normalization and defaults (`noteFolder`, `order`, `dateField`,
-`noteDisplay`), Leaflet-compatible key normalization, WikiLink reference parsing,
+`noteDisplay`, `map.theme`, document-owned `layout`), Leaflet-compatible key normalization, WikiLink reference parsing,
 frontmatter stripping, location/media coercion, and deterministic note date sorting. Must
 not import React, Leaflet, Obsidian, Docusaurus, or Node `fs`. Folder scanning, file
 metadata, route resolution, and real asset resolution belong to adapters.
@@ -137,7 +143,8 @@ metadata, route resolution, and real asset resolution belong to adapters.
 Owns the `<StoryMap />` component, Leaflet instance lifecycle, paged navigation, `flyTo`
 synchronization, markers and optional path, image/video/iframe media, Markdown text
 rendering, resize handling (`invalidateSize()`), minimal responsive CSS, generic
-note-title link rendering from a resolved `notePath`, and the semantic `--story-map-*` CSS
+note-title link rendering from a resolved `notePath`, five coordinated map/chrome theme
+presets, card/full presentation modes, and the semantic `--story-map-*` CSS
 variables. Must remain SSR-import-safe: Leaflet is dynamically imported inside client
 effects. Must not know what a Vault, WikiLink, frontmatter file, note folder, Obsidian
 workspace, or Docusaurus route is.
@@ -197,12 +204,19 @@ interface StoryMapSourceConfig {
 
   map: {
     center?: [number, number];
+    theme: 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas'; // default: 'light'
     zoom: number;
     minZoom?: number;
     maxZoom?: number;
     tileUrl: string;
     attribution: string;
     showPath: boolean;
+  };
+
+  layout: {
+    mode: 'card' | 'full'; // default: 'card'
+    card: { align: 'left' | 'center' | 'right'; widthRatio?: number; heightRatio?: number };
+    full: { side: 'left' | 'right'; contentRatio: number };
   };
 
   slides?: StorySlide[];
@@ -272,11 +286,21 @@ inside the body is not required.
 
 ### 6.4 Default precedence
 
+`map.theme` is a coordinated built-in visual preset independent of `tileUrl`. Its five
+values are `light`, `dark`, `vintage`, `cyber`, and `atlas`, with `light` as the built-in
+default. `layout` is document-owned: `card` preserves the existing floating card by
+default, while `full` places a scrollable story surface to the left or right over a
+full-bleed map with a progressive fade. Card alignment defaults to `left`; optional
+`widthRatio` accepts `0.20..0.80` and `heightRatio` accepts `0.20..0.95`. Full `side`
+defaults to `left` and `contentRatio` defaults to `0.50` within `0.30..0.70`. On narrow
+screens, full mode uses a vertical map/story transition. Inactive mode options remain in
+the normalized config and do not affect rendering.
+
 Obsidian resolves source values in order: document block -> plugin settings -> built-in
 defaults. Plugin settings expose defaults for `order`, `dateField`, `noteDisplay`, and the
-`map` keys `zoom`, `minZoom`, `maxZoom`, `tileUrl`, `attribution`, `showPath`. Per-story
+`map` keys `theme`, `zoom`, `minZoom`, `maxZoom`, `tileUrl`, `attribution`, `showPath`. Per-story
 values — `schema`, `id`, `title`, `noteFolder`, `includeTags`, `excludeTags`, `map.center`,
-`slides`, `height` — are document-only (`height` is forced to `100%` in the Obsidian
+`layout`, `slides`, `height` — are document-only (`height` is forced to `100%` in the Obsidian
 full-leaf host and remains
 meaningful in standalone/Docusaurus hosts). Remark uses document values plus built-in
 defaults; it does not duplicate the Obsidian settings UI. See `docs/architecture.md` for
@@ -292,12 +316,18 @@ interface StoryMapConfig {
   height: string;
   map: {
     center?: [number, number];
+    theme: 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
     zoom: number;
     minZoom?: number;
     maxZoom?: number;
     tileUrl: string;
     attribution: string;
     showPath: boolean;
+  };
+  layout: {
+    mode: 'card' | 'full';
+    card: { align: 'left' | 'center' | 'right'; widthRatio?: number; heightRatio?: number };
+    full: { side: 'left' | 'right'; contentRatio: number };
   };
   slides: StorySlide[];
 }
@@ -458,11 +488,12 @@ dependencies only when a host exists; Leaflet remains dynamically imported by
 
 ### 11.6 Theme bridge
 
-The generic renderer owns semantic `--story-map-*` CSS variables. A Docusaurus host
-stylesheet maps Infima variables onto them:
+The generic renderer owns five coordinated map/chrome themes and semantic
+`--story-map-*` CSS override variables. The Docusaurus host stylesheet offers an opt-in
+Infima bridge for a host that deliberately wants to override the selected preset:
 
 ```css
-.story-map-host {
+.story-map-host.story-map-use-infima-colors {
   --story-map-bg: var(--ifm-background-surface-color);
   --story-map-fg: var(--ifm-font-color-base);
   --story-map-muted: var(--ifm-color-emphasis-700);
@@ -471,9 +502,9 @@ stylesheet maps Infima variables onto them:
 }
 ```
 
-Docusaurus/Infima variables are not hard-coded inside the generic React package except as
-optional fallbacks. Dynamic light/dark tile provider switching is not required; the
-required result is readable, theme-compatible StoryMap chrome/panel content.
+Docusaurus/Infima variables are not hard-coded inside the generic React package. Dynamic
+light/dark tile provider switching is not required; the selected built-in preset styles
+the map tiles, markers, path, controls, and StoryMap-owned story surface together.
 
 ## 12. React API
 
@@ -524,7 +555,10 @@ Complete when all are true:
 - SPA navigation adds and removes StoryMap hosts without duplicate mounts or leaked React
   roots;
 - Leaflet is never initialized during Node/SSR build;
-- Docusaurus light/dark themes keep StoryMap UI readable through the host CSS bridge;
+- all five built-in themes style map and StoryMap-owned chrome coherently;
+- card alignment and optional ratios, full left/right placement and content ratio, and
+  narrow-screen vertical fallback render without remounting Leaflet;
+- a host can intentionally override semantic `--story-map-*` colors;
 - the target `kywk.github.io` integration reuses its existing route/slug resolver;
 - local-platform concerns stay outside `story-map-core` and `react-story-map`.
 

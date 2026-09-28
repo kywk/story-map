@@ -7,10 +7,15 @@ A small, reusable Leaflet-based StoryMap stack. One Markdown source and one stan
 - an Obsidian plugin (file-backed full-leaf view);
 - a Docusaurus site via a Remark build-time transform and browser client.
 
+Built-in map themes (`light`, `dark`, `vintage`, `cyber`, `atlas`) and document-owned
+`card`/`full` layouts render through the same shared component in all three hosts.
+The [design bundle](docs/plans/2026-09-28-map-theme-layout/README.md) records the milestone.
+
 ## Website
 
 A bilingual project site (English / 繁體中文) lives in `site/` and renders several live
-examples with the shared renderer. It is published to GitHub Pages from `main` by
+examples with theme, layout, alignment, and ratio controls on the shared renderer. It is
+published to GitHub Pages from `main` by
 `.github/workflows/pages.yml` at <https://kywk.github.io/story-map/>; run it locally with
 `pnpm --filter @story-map/site dev`.
 
@@ -90,9 +95,15 @@ story-map: true
 schema: storymap/v1
 title: Chile Trip
 map:
+  theme: vintage
   center: [-33.4489, -70.6693]
   zoom: 6
   showPath: true
+layout:
+  mode: full
+  full:
+    side: left
+    contentRatio: 0.5
 noteFolder: Travel/Chile/Places
 order: asc
 dateField: date-created

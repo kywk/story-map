@@ -43,9 +43,9 @@ hygiene").
   route and the renderer emits a normal browser link. `react-story-map` must not import
   Obsidian or Docusaurus APIs.
 - Defaultable `story-map` keys (Obsidian plugin settings): `order`, `dateField`,
-  `noteDisplay`, and `map.zoom`, `map.minZoom`, `map.maxZoom`, `map.tileUrl`,
+  `noteDisplay`, and `map.theme`, `map.zoom`, `map.minZoom`, `map.maxZoom`, `map.tileUrl`,
   `map.attribution`, `map.showPath`. Keys that vary per document — `schema`, `id`, `title`,
-  `noteFolder`, `includeTags`, `excludeTags`, `map.center`, `slides`, `height` — must stay
+  `noteFolder`, `includeTags`, `excludeTags`, `map.center`, `layout`, `slides`, `height` — must stay
   document-only and must not be added to plugin settings or defaults. Resolution order for
   defaultable keys is always:
   1. the key present in the document's `story-map` block;
@@ -74,9 +74,11 @@ hygiene").
   explicit slide media resolves relative to the StoryMap source document.
 - The browser client must handle Docusaurus SPA insertion/removal without duplicate mounts
   or leaked React roots.
-- Theme adaptation belongs in a host CSS bridge mapping Infima variables onto the
-  renderer's `--story-map-*` variables; do not hard-code Docusaurus variables in
-  `react-story-map` except as optional fallbacks.
+- Built-in `map.theme` values are `light`, `dark`, `vintage`, `cyber`, and `atlas`.
+  The renderer styles map and StoryMap chrome together; inherited `--story-map-*`
+  variables are explicit host overrides. The Docusaurus Infima bridge is opt-in.
+- `layout` is document-only: `card` (default) or `full`. The renderer owns both layouts;
+  Obsidian and Remark pass the canonical config through.
 
 ## Non-goals
 
@@ -87,6 +89,7 @@ Do not introduce unless explicitly requested:
 - visual editors, scroll-driven storytelling, a generic plugin framework;
 - premature abstraction for multiple map engines;
 - multiple `noteFolder` sources;
+- a generic public theme or layout registration API;
 - generic `sortBy`, grouping, or query syntax, or filtering beyond
   `includeTags`/`excludeTags`;
 - a generic route/slug framework;
@@ -162,6 +165,8 @@ Then manually smoke-test:
 7. source-relative and note-relative media;
 8. multiple StoryMaps on one page and clean SPA host removal;
 9. Docusaurus SSR/build never initializes Leaflet;
-10. Docusaurus light/dark theme bridge renders readable UI.
+10. five built-in themes in card/full modes, card alignment and ratios, full left/right
+    ratios, narrow-screen vertical fallback, and a stable Leaflet instance while switching;
+11. the Docusaurus Infima override bridge remains opt-in and readable when applied.
 
 Do not mark deferred features as implemented unless they are tested end to end.
