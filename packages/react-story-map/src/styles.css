@@ -193,7 +193,7 @@
   --story-map-surface: #16212c; --story-map-ink: #edf4f8;
   --story-map-subtle: #a8bcc7; --story-map-line: #415b68;
   --story-map-highlight: #6fd3e6;
-  --story-map-tile-filter: brightness(0.58) saturate(0.64) hue-rotate(165deg);
+  --story-map-tile-filter: invert(0.95) hue-rotate(195deg) saturate(0.5) brightness(1.0) contrast(0.95);
   --story-map-marker: #6fd3e6; --story-map-marker-border: #0f1a24;
   --story-map-marker-active: #f5b971; --story-map-path: #8ad7e6;
 }
@@ -202,7 +202,7 @@
     --story-map-surface: #16212c; --story-map-ink: #edf4f8;
     --story-map-subtle: #a8bcc7; --story-map-line: #415b68;
     --story-map-highlight: #6fd3e6;
-    --story-map-tile-filter: brightness(0.58) saturate(0.64) hue-rotate(165deg);
+    --story-map-tile-filter: invert(0.95) hue-rotate(195deg) saturate(0.5) brightness(1.0) contrast(0.95);
     --story-map-marker: #6fd3e6; --story-map-marker-border: #0f1a24;
     --story-map-marker-active: #f5b971; --story-map-path: #8ad7e6;
   }
@@ -219,7 +219,7 @@
   --story-map-surface: #101b2a; --story-map-ink: #e6fbff;
   --story-map-subtle: #9fc6d0; --story-map-line: #417b89;
   --story-map-highlight: #62eff3;
-  --story-map-tile-filter: brightness(0.44) saturate(1.2) hue-rotate(175deg) contrast(1.12);
+  --story-map-tile-filter: invert(1) hue-rotate(195deg) saturate(2.4) brightness(0.8) contrast(1.15);
   --story-map-marker: #62eff3; --story-map-marker-border: #122736;
   --story-map-marker-active: #f087c6; --story-map-path: #62eff3;
 }
@@ -227,7 +227,7 @@
   --story-map-surface: #ede9dc; --story-map-ink: #253b4c;
   --story-map-subtle: #5f6b6c; --story-map-line: #a7aaa0;
   --story-map-highlight: #8e3f47;
-  --story-map-tile-filter: sepia(0.28) saturate(0.6) hue-rotate(175deg) contrast(0.92);
+  --story-map-tile-filter: sepia(0.3) saturate(0.9) contrast(0.94) brightness(1.03);
   --story-map-marker: #304b60; --story-map-marker-border: #f3f0e5;
   --story-map-marker-active: #8e3f47; --story-map-path: #304b60;
 }

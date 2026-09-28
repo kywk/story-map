@@ -176,8 +176,9 @@ Key invariants:
   CSS/manifest/versions. `obsidian`, `electron` and Node built-ins stay external: the
   desktop-only local-agent layer requires them at runtime.
 - `obsidian.css` imports the renderer stylesheet and adds the Obsidian-native theme bridge:
-  the `auto` preset (the plugin default) inherits Obsidian CSS variables and the
-  `theme-dark`/`theme-light` tile filter, while `light`/`dark`/`vintage`/`cyber`/`atlas`
+  the `auto` preset (the plugin default) inherits Obsidian CSS variables, the
+  `theme-dark`/`theme-light` tile filter, and the theme background for the Leaflet
+  container, while `light`/`dark`/`vintage`/`cyber`/`atlas`
   and explicit `--story-map-*` overrides keep their own colors.
 
 ### `@story-map/remark-story-map`

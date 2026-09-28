@@ -44,13 +44,19 @@
 }
 
 /* Tile layers cannot read Obsidian color variables, so `auto` follows
- * Obsidian's dark/light mode classes for the cartography filter. */
+ * Obsidian's dark/light mode classes for the cartography filter. The tile
+ * container background (visible while tiles load and beyond tile edges at
+ * low zoom) follows the theme background instead of Leaflet's default gray. */
 body.theme-dark .story-map-view .story-map[data-map-theme='auto'] {
-  --story-map-tile-filter: brightness(0.58) saturate(0.64) hue-rotate(165deg);
+  --story-map-tile-filter: invert(0.95) hue-rotate(195deg) saturate(0.5) brightness(1.0) contrast(0.95);
 }
 
 body.theme-light .story-map-view .story-map[data-map-theme='auto'] {
   --story-map-tile-filter: none;
+}
+
+.story-map-view .story-map[data-map-theme='auto'] .leaflet-container {
+  background: var(--background-primary);
 }
 
 .story-map-host--error {
