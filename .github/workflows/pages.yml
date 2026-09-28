@@ -1,32 +1,25 @@
-name: Deploy landing site to GitHub Pages
+name: Validate project and deploy GitHub Pages
 
 on:
   push:
     branches:
       - main
-    paths:
-      - 'site/**'
-      - 'packages/story-map-core/**'
-      - 'packages/react-story-map/**'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - '.github/workflows/pages.yml'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -35,22 +28,23 @@ jobs:
           package-manager-cache: false
       - name: Install pnpm
         run: npm install --global pnpm@12.6.0
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - run: pnpm install --frozen-lockfile
-      - name: Build the site and its dependencies
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Build all packages and the site
         env:
           SITE_BASE: /${{ github.event.repository.name }}/
-        run: pnpm --filter @story-map/site... build
+        run: pnpm build
       - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
           path: site/dist
 
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -58,5 +52,9 @@ jobs:
       pages: write
       id-token: write
     steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - id: deployment
         uses: actions/deploy-pages@v4

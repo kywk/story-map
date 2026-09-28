@@ -83,11 +83,11 @@ const marathonSpots: Spot[] = [
     image: 'Tokyo_Marathon_2019_Runner_(32321717927).jpg',
     en: {
       title: 'Tokyo Marathon',
-      text: '**2 March 2025 · Tokyo, Japan**\n\nThe season opener. The course starts beneath the Tokyo Metropolitan Government Building in Shinjuku, the only Abbott World Marathon Major in Asia.',
+      text: '**2 March 2025 · Tokyo, Japan**\n\nThe season opener. The course starts beneath the Tokyo Metropolitan Government Building in Shinjuku, with runners setting off into the city.',
     },
     zh: {
       title: '東京馬拉松 · Tokyo Marathon',
-      text: '**2025-03-02 · 日本東京**\n\n年度首站。起點位於新宿的東京都廳前，是亞洲唯一的世界馬拉松大滿貫賽事。',
+      text: '**2025-03-02 · 日本東京**\n\n年度首站。起點位於新宿的東京都廳前，跑者由此展開穿越城市的旅程。',
     },
   },
   {

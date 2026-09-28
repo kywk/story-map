@@ -331,9 +331,17 @@ The landing page is a private workspace package (`@story-map/site`). It imports
 `story-map-core` and `react-story-map` through the workspace and renders the shared
 component for several live examples, so the normal `pnpm build` builds it too. Language is
 selected from `?lang=en|zh` (falling back to `navigator.language`) and reflected into the
-URL. `.github/workflows/pages.yml` builds `@story-map/site` with its dependencies and
-publishes `site/dist` through GitHub Actions Pages (`SITE_BASE` defaults to the repository
-name); no `gh-pages` branch is used.
+URL. `site/src/i18n.ts` owns both language dictionaries, feature copy, the settings
+reference, and FAQ; `App.tsx` composes the live demos, native playground controls, and
+copyable Markdown examples. The website prioritizes Obsidian authors and links to complete
+React and Remark integration guides. Its visual system is recorded in `../DESIGN.md`;
+renderer themes remain separate from website styling.
+
+`.github/workflows/pages.yml` runs frozen installation, type checking, tests, and the full
+workspace build on main pushes, PRs targeting main, and manual dispatch. Only a successful
+main build uploads `site/dist` and deploys through GitHub Actions Pages (`SITE_BASE` uses
+the repository name); no `gh-pages` branch is used. PR validation has read-only repository
+permissions; Pages and OIDC write permissions belong to the deploy job.
 
 Plugin artifacts land in `packages/obsidian-story-map/dist/` as `main.js`, `manifest.json`,
 `styles.css`, `versions.json`, and `THIRD_PARTY_NOTICES.txt`; install the JavaScript,

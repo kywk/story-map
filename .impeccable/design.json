@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T15:30:37.812274+00:00",
+  "title": "Design System: Geo Story Map Website",
+  "extensions": {
+    "colorMeta": {
+      "pine": {
+        "role": "primary",
+        "displayName": "Pine",
+        "tonalRamp": [
+          "oklch(15% 0.055 165)",
+          "oklch(26% 0.055 165)",
+          "oklch(38% 0.055 165)",
+          "oklch(49% 0.055 165)",
+          "oklch(61% 0.055 165)",
+          "oklch(72% 0.055 165)",
+          "oklch(84% 0.055 165)",
+          "oklch(95% 0.055 165)"
+        ]
+      },
+      "pine-deep": {
+        "role": "primary",
+        "displayName": "Deep Pine",
+        "tonalRamp": [
+          "oklch(15% 0.05 165)",
+          "oklch(26% 0.05 165)",
+          "oklch(38% 0.05 165)",
+          "oklch(49% 0.05 165)",
+          "oklch(61% 0.05 165)",
+          "oklch(72% 0.05 165)",
+          "oklch(84% 0.05 165)",
+          "oklch(95% 0.05 165)"
+        ]
+      },
+      "route": {
+        "role": "secondary",
+        "displayName": "Terracotta Route",
+        "tonalRamp": [
+          "oklch(15% 0.15 35)",
+          "oklch(26% 0.15 35)",
+          "oklch(38% 0.15 35)",
+          "oklch(49% 0.15 35)",
+          "oklch(61% 0.15 35)",
+          "oklch(72% 0.15 35)",
+          "oklch(84% 0.15 35)",
+          "oklch(95% 0.15 35)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "tonalRamp": [
+          "oklch(15% 0.015 85)",
+          "oklch(26% 0.015 85)",
+          "oklch(38% 0.015 85)",
+          "oklch(49% 0.015 85)",
+          "oklch(61% 0.015 85)",
+          "oklch(72% 0.015 85)",
+          "oklch(84% 0.015 85)",
+          "oklch(95% 0.015 85)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Light Paper",
+        "tonalRamp": [
+          "oklch(15% 0.01 85)",
+          "oklch(26% 0.01 85)",
+          "oklch(38% 0.01 85)",
+          "oklch(49% 0.01 85)",
+          "oklch(61% 0.01 85)",
+          "oklch(72% 0.01 85)",
+          "oklch(84% 0.01 85)",
+          "oklch(95% 0.01 85)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Pine Ink",
+        "tonalRamp": [
+          "oklch(15% 0.04 165)",
+          "oklch(26% 0.04 165)",
+          "oklch(38% 0.04 165)",
+          "oklch(49% 0.04 165)",
+          "oklch(61% 0.04 165)",
+          "oklch(72% 0.04 165)",
+          "oklch(84% 0.04 165)",
+          "oklch(95% 0.04 165)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "tonalRamp": [
+          "oklch(15% 0.025 155)",
+          "oklch(26% 0.025 155)",
+          "oklch(38% 0.025 155)",
+          "oklch(49% 0.025 155)",
+          "oklch(61% 0.025 155)",
+          "oklch(72% 0.025 155)",
+          "oklch(84% 0.025 155)",
+          "oklch(95% 0.025 155)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "tonalRamp": [
+          "oklch(15% 0.02 140)",
+          "oklch(26% 0.02 140)",
+          "oklch(38% 0.02 140)",
+          "oklch(49% 0.02 140)",
+          "oklch(61% 0.02 140)",
+          "oklch(72% 0.02 140)",
+          "oklch(84% 0.02 140)",
+          "oklch(95% 0.02 140)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Paper Divider",
+        "tonalRamp": [
+          "oklch(15% 0.02 120)",
+          "oklch(26% 0.02 120)",
+          "oklch(38% 0.02 120)",
+          "oklch(49% 0.02 120)",
+          "oklch(61% 0.02 120)",
+          "oklch(72% 0.02 120)",
+          "oklch(84% 0.02 120)",
+          "oklch(95% 0.02 120)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "English hero; zh-Hant uses its own size and line-height override."
+      },
+      "body": {
+        "displayName": "Reading serif",
+        "purpose": "Prose with local Chinese fallback families."
+      }
+    },
+    "motion": [
+      {
+        "name": "anchor-scroll",
+        "value": "smooth",
+        "purpose": "Anchor navigation; reduced motion switches to auto."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-desktop",
+        "value": "1100px"
+      },
+      {
+        "name": "stacked",
+        "value": "800px"
+      },
+      {
+        "name": "phone",
+        "value": "500px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "description": "Primary button from the website chrome.",
+      "html": "<a class=\"ds-primary\" href=\"#start\">Get started</a>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:13px 20px;border-radius:5px;background:var(--pine,#244e3f);color:var(--surface,#fffdf8);font:600 .93rem/1.4 var(--font-display,sans-serif);text-decoration:none}.ds-primary:hover{background:var(--pine-deep,#183d30)}.ds-primary:focus-visible{outline:3px solid var(--route,#b6472b);outline-offset:4px}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Copy button",
+      "kind": "button",
+      "description": "Copy button from the website chrome.",
+      "html": "<button class=\"ds-copy\">Copy configuration</button>",
+      "css": ".ds-copy{border:1px solid var(--line,#cbd0c3);color:var(--ink,#203d35);background:var(--paper,#f5f2ea);padding:8px 12px;border-radius:4px;font:500 .8rem var(--font-display,sans-serif);cursor:pointer}.ds-copy:hover{background:#e6ecdf}.ds-copy:focus-visible{outline:3px solid var(--route,#b6472b);outline-offset:4px}"
+    },
+    {
+      "name": "Theme select",
+      "kind": "input",
+      "description": "Theme select from the website chrome.",
+      "html": "<label>Theme <select class=\"ds-select\"><option>Light</option><option>Dark</option><option>Vintage</option></select></label>",
+      "css": ".ds-select{border:1px solid #98aa92;background:var(--surface,#fffdf8);color:var(--ink,#203d35);padding:8px 10px;border-radius:5px;min-height:40px;font:500 .85rem var(--font-display,sans-serif)}.ds-select:focus-visible{outline:3px solid var(--route,#b6472b);outline-offset:4px}"
+    },
+    {
+      "name": "Navigation link",
+      "kind": "nav",
+      "description": "Navigation link from the website chrome.",
+      "html": "<nav aria-label=\"Main\"><a class=\"ds-nav\" href=\"#examples\">Examples</a></nav>",
+      "css": ".ds-nav{color:var(--ink,#203d35);font:500 .9rem var(--font-display,sans-serif);text-decoration:none}.ds-nav:hover{color:var(--route,#b6472b)}.ds-nav:focus-visible{outline:3px solid var(--route,#b6472b);outline-offset:4px}"
+    },
+    {
+      "name": "Map frame",
+      "kind": "card",
+      "description": "Map frame from the website chrome.",
+      "html": "<figure class=\"ds-frame\"><figcaption class=\"ds-bar\">A geographic story</figcaption><div class=\"ds-preview\">Live map mounts here</div></figure>",
+      "css": ".ds-frame{overflow:hidden;border-radius:12px;border:1px solid var(--line,#cbd0c3);background:var(--surface,#fffdf8);color:var(--ink,#203d35);margin:0}.ds-bar{padding:12px 20px;font:500 .8rem/1.5 var(--font-display,sans-serif)}.ds-preview{padding:20px;font:18px/1.6 var(--font-body,serif)}.ds-frame:focus-visible{outline:3px solid var(--route,#b6472b);outline-offset:4px}",
+      "refersTo": "frame"
+    },
+    {
+      "name": "Language segment",
+      "kind": "button",
+      "description": "Language segment from the website chrome.",
+      "html": "<div class=\"ds-lang-group\" role=\"group\" aria-label=\"Language\"><button class=\"ds-lang\" aria-pressed=\"true\">EN</button><button class=\"ds-lang\" aria-pressed=\"false\">\u7e41\u4e2d</button></div>",
+      "css": ".ds-lang-group{display:inline-flex;border:1px solid var(--line,#cbd0c3);padding:3px;border-radius:6px}.ds-lang{min-height:36px;padding:5px 10px;border:0;border-radius:3px;background:transparent;color:var(--ink,#203d35);font:600 .8rem var(--font-display,sans-serif);cursor:pointer}.ds-lang[aria-pressed=\"true\"]{background:var(--ink,#203d35);color:var(--paper,#f5f2ea)}.ds-lang:focus-visible{outline:3px solid var(--route,#b6472b);outline-offset:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Editorial Travel Journal",
+    "overview": "Warm paper, pine ink, and a terracotta route accent frame geographic stories with an editorial reading rhythm. Sans-serif headings and controls sit beside serif prose; live maps provide the visual subject.\n\nThis record describes the introduction website in `site/`, extracted from `site/src/styles.css` and `site/src/App.tsx`. Embedded StoryMap renderer themes have their own implementation and are not website tokens.",
+    "keyCharacteristics": [
+      "Warm paper and restrained pine surfaces.",
+      "Sans-serif navigation with serif reading text.",
+      "Flat, bordered frames around real interactive maps."
+    ],
+    "rules": [],
+    "dos": [
+      "Do retain the paper, pine, and route hierarchy across website sections.",
+      "Do preserve bilingual line-height adjustments and visible keyboard focus.",
+      "Do use live StoryMap rendering as the map demonstration."
+    ],
+    "donts": [
+      "Don't treat embedded renderer themes as website palette variants.",
+      "Don't describe Google Fonts requests as self-hosted assets.",
+      "Don't replace the flat section structure with shadowed website cards."
+    ]
+  }
+}

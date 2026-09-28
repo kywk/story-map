@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StoryMap } from '@story-map/react-story-map';
 import type { StoryLocation, StorySlide, StoryMapTheme, StoryMapLayoutMode } from '@story-map/story-map-core';
-import { copy, initialLang, type Lang } from './i18n.js';
+import { copy, guideCopy, initialLang, type Lang } from './i18n.js';
 import { examples } from './stories.js';
 
 const REPO = 'https://github.com/kywk/story-map';
@@ -12,6 +12,8 @@ const LINKS = {
   spec: `${REPO}/blob/main/SPEC.md`,
   architecture: `${REPO}/blob/main/docs/architecture.md`,
   plugin: `${REPO}/blob/main/packages/obsidian-story-map/README.md`,
+  react: `${REPO}/blob/main/packages/react-story-map/README.md`,
+  remark: `${REPO}/blob/main/packages/remark-story-map/README.md`,
 };
 
 const documentSnippet = `---
@@ -34,10 +36,9 @@ map:
   zoom: 6
   showPath: true
 layout:
-  mode: full
-  full:
-    side: left
-    contentRatio: 0.5
+  mode: card
+  card:
+    align: left
 \`\`\``;
 
 const noteSnippet = `---
@@ -51,36 +52,39 @@ description: The journey begins here.
 cover: ./assets/santiago.jpg
 ---`;
 
-const npmSnippet = `npm install @story-map/story-map-core
-npm install @story-map/react-story-map`;
+const npmSnippet = `npm install @story-map/react-story-map \\
+  react@^19 react-dom@^19 leaflet@^1.9.4`;
 
-const docusaurusSnippet = `remarkStoryMap({
-  vaultRoot: 'vault',
-  assetBase: '/story-map/',
-  resolveNoteHref: (note) => routes[note],
-})`;
+const reactSnippet = `import { StoryMap } from '@story-map/react-story-map';
+import 'leaflet/dist/leaflet.css';
+import '@story-map/react-story-map/styles.css';
+
+// story: resolved StoryMapConfig
+<StoryMap story={story} />`;
+
+const docusaurusSnippet = `npm install @story-map/remark-story-map`;
+
+function Arrow() {
+  return <svg className="link-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 15 15 5M5 5h10v10" stroke="currentColor" strokeWidth="1.5" /></svg>;
+}
+
+function CopyButton({ text, lang }: { text: string; lang: Lang }) {
+  const [status, setStatus] = useState<'idle' | 'done' | 'error'>('idle');
+  useEffect(() => { setStatus('idle'); }, [text, lang]);
+  useEffect(() => {
+    if (status === 'idle') return;
+    const timer = window.setTimeout(() => setStatus('idle'), 3000);
+    return () => window.clearTimeout(timer);
+  }, [status]);
+  return <button className="copy-button" type="button" onClick={async () => {
+    try { await navigator.clipboard.writeText(text); setStatus('done'); }
+    catch { setStatus('error'); }
+  }}><span aria-live="polite">{guideCopy[lang].clipboard[status]}</span></button>;
+}
 
 interface HeroStop {
   index: number;
   location?: StoryLocation;
-}
-
-function Contours() {
-  const rings = [0, 1, 2, 3, 4, 5];
-  return (
-    <svg className="topo" viewBox="0 0 620 620" aria-hidden="true" focusable="false">
-      {rings.map((ring) => (
-        <ellipse
-          key={ring}
-          cx={310 + ring * 5}
-          cy={310 - ring * 4}
-          rx={78 + ring * 46}
-          ry={60 + ring * 40}
-          transform={`rotate(${-14 + ring * 2.5} 310 310)`}
-        />
-      ))}
-    </svg>
-  );
 }
 
 export default function App() {
@@ -96,7 +100,8 @@ export default function App() {
   const [heroStop, setHeroStop] = useState<HeroStop>({ index: 0 });
 
   const c = copy[lang];
-  const heroStory = examples[0]!.story[lang];
+  const g = guideCopy[lang];
+  const heroStory = examples[2]!.story[lang];
   const current = examples.find((item) => item.id === exampleId) ?? examples[1]!;
   const exampleStory = {
     ...current.story[lang],
@@ -142,7 +147,7 @@ export default function App() {
             <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="26" height="26" />
             <span>Geo Story Map</span>
           </a>
-          <nav className="nav__links" aria-label="Primary">
+          <nav className="nav__links" aria-label={g.primaryNav}>
             <a href="#overview">{c.nav.overview}</a>
             <a href="#examples">{c.nav.examples}</a>
             <a href="#syntax">{c.nav.syntax}</a>
@@ -154,7 +159,7 @@ export default function App() {
                 EN
               </button>
               <button type="button" aria-pressed={lang === 'zh'} onClick={() => setLang('zh')}>
-                中文
+                繁中
               </button>
             </div>
             <a className="nav__gh" href={LINKS.repo}>
@@ -166,74 +171,45 @@ export default function App() {
 
       <main id="main">
         <section className="hero" id="top">
-          <Contours />
           <div className="shell hero__inner">
             <div className="hero__copy">
-              <p className="hero__schema reveal">
-                <span className="dot" aria-hidden="true" />
-                <code>{c.hero.schema}</code>
-              </p>
-              <h1 className="reveal">{c.hero.title}</h1>
-              <p className="hero__lede reveal">{c.hero.lede}</p>
-              <div className="hero__actions reveal">
-                <a className="btn btn--primary" href={LINKS.release}>
-                  {c.hero.ctaPlugin}
-                </a>
-                <a className="btn" href="#start">
-                  {c.hero.ctaNpm}
-                </a>
-                <a className="btn btn--quiet" href={LINKS.spec}>
-                  {c.hero.ctaSpec}
-                </a>
+              <h1>{g.headline}<em>{g.headlineEnd}</em></h1>
+              <div className="hero__intro">
+                <p className="hero__lede">{c.hero.lede}</p>
+                <div className="hero__actions">
+                  <a className="btn btn--primary" href="#examples">{g.tryDemo}<Arrow /></a>
+                  <a className="text-link" href="#start">{c.hero.ctaPlugin}</a>
+                </div>
               </div>
-              <ul className="facts reveal">
-                {c.hero.facts.map((fact) => (
-                  <li key={fact.label}>
-                    <strong>{fact.value}</strong>
-                    <span>{fact.label}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
-
-            <div className="hero__visual reveal">
+            <div className="hero__visual">
               <div className="frame">
                 <div className="frame__bar">
                   <span className="frame__live">
-                    <i aria-hidden="true" />
-                    {c.hero.live}
+                    {c.hero.live} · {g.demoLabel}
                   </span>
-                  <span className="frame__coords">{heroCoords}</span>
+                  <span className="frame__coords">{heroStop.index + 1} / {heroStory.slides.length} · {heroCoords}</span>
                 </div>
                 <div className="frame__map">
                   <StoryMap story={heroStory} onSlideChange={handleHeroChange} />
                 </div>
-                <p className="frame__hint">{c.hero.liveHint}</p>
+                <p className="frame__hint"><span>{c.hero.liveHint}</span><span>{g.sourceOwned}</span></p>
               </div>
             </div>
           </div>
         </section>
 
         <section className="band" id="overview">
-          <div className="shell">
+          <div className="shell feature-layout">
             <header className="section-head">
-              <h2>{c.hosts.heading}</h2>
-              <p className="section-lede">{c.hosts.lede}</p>
+              <h2>{g.featuresHeading}</h2>
+              <p className="section-lede">{g.featuresLede}</p>
+              <a className="text-link" href={LINKS.plugin}>{c.start.links.plugin} <Arrow /></a>
             </header>
-            <ol className="flow" aria-label="Configuration flow">
-              {c.hosts.flow.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-            <div className="hosts">
-              {c.hosts.items.map((item) => (
-                <article className="host" key={item.name}>
-                  <h3>{item.name}</h3>
-                  <code className="host__pkg">{item.pkg}</code>
-                  <p>{item.body}</p>
-                  {item.note && <p className="host__note">{item.note}</p>}
-                </article>
-              ))}
+            <div className="features">
+              {g.features.map((item) => <article className="feature" key={item.title}>
+                <h3>{item.title}</h3><p>{item.body}</p>
+              </article>)}
             </div>
           </div>
         </section>
@@ -245,19 +221,18 @@ export default function App() {
               <p className="section-lede">{c.examples.lede}</p>
             </header>
             <div className="examples">
-              <div className="examples__list" role="tablist" aria-label={c.examples.switchLabel}>
+              <div className="examples__list" role="group" aria-label={c.examples.switchLabel}>
                 {examples.map((example) => {
                   const selected = example.id === current.id;
                   return (
                     <button
                       key={example.id}
                       type="button"
-                      role="tab"
-                      aria-selected={selected}
+                      aria-pressed={selected}
+                      aria-controls="example-preview"
                       className={`example${selected ? ' is-active' : ''}`}
                       onClick={() => setExampleId(example.id)}
                     >
-                      <span className="example__index">{example.index}</span>
                       <span className="example__text">
                         <span className="example__label">{example.label[lang]}</span>
                         <span className="example__region">{example.region[lang]}</span>
@@ -270,7 +245,7 @@ export default function App() {
                   );
                 })}
               </div>
-              <div className="examples__map" role="tabpanel">
+              <div className="examples__map" id="example-preview" role="region" aria-label={`${c.examples.switchLabel}: ${current.label[lang]}`}>
                 <div className="theme-playground" aria-label={lang === 'zh' ? '地圖主題與版型' : 'Map theme and layout'}>
                   <label>{lang === 'zh' ? '主題' : 'Theme'}
                     <select value={theme} onChange={(event) => setTheme(event.target.value as StoryMapTheme)}>
@@ -315,6 +290,7 @@ export default function App() {
                     </>
                   )}
                 </div>
+                <p className="demo-note">{g.demoNote}</p>
                 <div className="examples__canvas">
                   <StoryMap key={`${current.id}-${lang}`} story={exampleStory} />
                 </div>
@@ -333,7 +309,7 @@ export default function App() {
               <figure className="code">
                 <figcaption>
                   <span>{c.syntax.document.label}</span>
-                  <small>{c.syntax.document.caption}</small>
+                  <small>{c.syntax.document.caption}</small><CopyButton text={documentSnippet} lang={lang} />
                 </figcaption>
                 <pre>
                   <code>{documentSnippet}</code>
@@ -342,27 +318,37 @@ export default function App() {
               <figure className="code">
                 <figcaption>
                   <span>{c.syntax.note.label}</span>
-                  <small>{c.syntax.note.caption}</small>
+                  <small>{c.syntax.note.caption}</small><CopyButton text={noteSnippet} lang={lang} />
                 </figcaption>
                 <pre>
                   <code>{noteSnippet}</code>
                 </pre>
               </figure>
             </div>
-            <ul className="syntax__points">
-              {c.syntax.points.map((point) => (
-                <li key={point}>{point}</li>
-              ))}
-            </ul>
+            <div className="settings-reference">
+              <h3>{g.settingsHeading}</h3>
+              <p>{g.precedence}</p>
+              <p className="table-hint">{g.tableHint}</p>
+              <div className="table-scroll" role="region" aria-label={g.settingsHeading} tabIndex={0}>
+                <table><thead><tr>{g.columns.map((column) => <th key={column} scope="col">{column}</th>)}</tr></thead>
+                  <tbody>{g.settings.map(([key, value, meaning]) => <tr key={key}><th scope="row"><code>{key}</code></th><td><code>{value}</code></td><td>{meaning}</td></tr>)}</tbody>
+                </table>
+              </div>
+              <p className="settings-note">{g.documentOnly}</p>
+            </div>
+
           </div>
         </section>
 
-        <section className="band band--tint" id="start">
+        <section className="band band--dark" id="start">
           <div className="shell">
             <header className="section-head">
               <h2>{c.start.heading}</h2>
               <p className="section-lede">{c.start.lede}</p>
             </header>
+            <div className="host-summary">
+              {c.hosts.items.map((item) => <div key={item.name}><h3>{item.name}</h3><p>{item.body}</p><small>{item.note}</small></div>)}
+            </div>
             <div className="start">
               <div className="start__col">
                 <h3>{c.start.obsidian.heading}</h3>
@@ -371,6 +357,7 @@ export default function App() {
                     <li key={step}>{step}</li>
                   ))}
                 </ol>
+                <a className="btn btn--primary" href={LINKS.release}>{g.download}</a>
               </div>
               <div className="start__col">
                 <h3>{c.start.libraries.heading}</h3>
@@ -378,19 +365,28 @@ export default function App() {
                 <pre className="terminal">
                   <code>{npmSnippet}</code>
                 </pre>
+                <pre className="terminal"><code>{reactSnippet}</code></pre>
+                <a className="text-link" href={LINKS.react}>{g.reactGuide} <Arrow /></a>
                 <h3>{c.start.docusaurus.heading}</h3>
                 <p className="start__body">{c.start.docusaurus.body}</p>
                 <pre className="terminal">
                   <code>{docusaurusSnippet}</code>
                 </pre>
+                <a className="text-link" href={LINKS.remark}>{g.remarkGuide} <Arrow /></a>
               </div>
             </div>
-            <nav className="links" aria-label="Resources">
+            <nav className="links" aria-label={g.resources}>
               <a href={LINKS.spec}>{c.start.links.spec}</a>
               <a href={LINKS.architecture}>{c.start.links.architecture}</a>
               <a href={LINKS.plugin}>{c.start.links.plugin}</a>
               <a href={LINKS.repo}>{c.start.links.repository}</a>
             </nav>
+          </div>
+        </section>
+        <section className="band faq" id="questions">
+          <div className="shell feature-layout">
+            <header className="section-head"><h2>{g.faqHeading}</h2><p className="section-lede">{g.faqLede}</p></header>
+            <div>{g.faq.map((item) => <details key={item.question}><summary>{item.question}</summary><p>{item.answer}</p></details>)}</div>
           </div>
         </section>
       </main>
