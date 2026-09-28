@@ -9,7 +9,7 @@ on:
       tag:
         description: Existing plain-version release tag to build and attest
         required: true
-        default: '0.1.3'
+        default: '0.3.0'
 
 permissions:
   contents: read

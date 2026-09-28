@@ -15,6 +15,7 @@ Start here when you need to understand or change StoryMap.
 | [`docusaurus-full-page.md`](docusaurus-full-page.md) | Host-owned full-page StoryMap view example for Docusaurus (not a package option). |
 | [`obsidian-submission.md`](obsidian-submission.md) | Geo Story Map community listing, release assets and follow-up release checks. |
 | [`../RELEASING.md`](../RELEASING.md) | npm publishing, Trusted Publisher setup and Obsidian community releases. |
+| [`releases/0.3.0.md`](releases/0.3.0.md) | Prepared 0.3.0 release notes, upgrade guidance and validation status. |
 | [`history/`](history/) | Archived plans and background. Superseded, not authoritative. |
 
 Recommended reading order for a new agent: `README.md` -> `architecture.md` -> `SPEC.md` -> `AGENTS.md`.

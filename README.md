@@ -58,10 +58,10 @@ their specified hosts. The plugin reads notes and attachments inside your vault.
 
 | Package | Role | Distribution |
 | --- | --- | --- |
-| `@story-map/story-map-core` | Framework-agnostic schema, parser, and helpers | npm (0.2.1) |
-| `@story-map/react-story-map` | React + Leaflet renderer | npm (0.2.1) |
-| `@story-map/remark-story-map` | Remark build-time transform + browser client | npm (0.2.1) |
-| `@story-map/obsidian-story-map` | Geo Story Map Obsidian view and Vault resolver | Obsidian Community plugins / GitHub Release 0.2.1 |
+| `@story-map/story-map-core` | Framework-agnostic schema, parser, and helpers | npm |
+| `@story-map/react-story-map` | React + Leaflet renderer | npm |
+| `@story-map/remark-story-map` | Remark build-time transform + browser client | npm |
+| `@story-map/obsidian-story-map` | Geo Story Map Obsidian view and Vault resolver | Obsidian Community plugins / GitHub Releases |
 
 ## Quick start
 

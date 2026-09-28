@@ -1,6 +1,6 @@
 {
   "name": "@story-map/react-story-map",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "React and Leaflet renderer for the StoryMap v1 config format.",
   "license": "MIT",
   "repository": {

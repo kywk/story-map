@@ -1,7 +1,7 @@
 {
   "id": "geo-story-map",
   "name": "Geo Story Map",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "minAppVersion": "1.8.7",
   "description": "Turn Markdown notes into geographic stories with an interactive map and slides.",
   "author": "kywk",

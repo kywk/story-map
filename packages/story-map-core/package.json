@@ -1,6 +1,6 @@
 {
   "name": "@story-map/story-map-core",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Framework-agnostic schema, parser, and helpers for StoryMap v1.",
   "license": "MIT",
   "repository": {

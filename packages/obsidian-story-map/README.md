@@ -14,7 +14,7 @@ Open **Settings → Community plugins → Browse**, search for **Geo Story Map**
 [Obsidian community directory](https://community.obsidian.md/plugins/geo-story-map).
 
 For manual installation, download `main.js`, `manifest.json`, and `styles.css` from the
-[plugin release](https://github.com/kywk/story-map/releases/tag/0.2.1), place them in
+[plugin release](https://github.com/kywk/story-map/releases/latest), place them in
 `<Vault>/.obsidian/plugins/geo-story-map/`, then enable **Geo Story Map**. Dependency notices
 are included in `main.js`; local builds also provide a separate notice file (see [Build](#build)).
 
