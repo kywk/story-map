@@ -2,7 +2,7 @@ import {
   Notice, PluginSettingTab, Setting, type App, type ButtonComponent, type TextComponent,
   type SettingDefinitionItem, type SettingDefinitionRender,
 } from 'obsidian';
-import type { StoryMapTheme, StoryNoteDisplay, StoryOrder } from '@story-map/story-map-core';
+import type { StoryInitialSlide, StoryMapTheme, StoryNoteDisplay, StoryOrder } from '@story-map/story-map-core';
 import { parseArguments, type AgentConfig, type DetectedAgent } from './agents.js';
 import { t, translateMessage } from './i18n.js';
 import type { LocalAgents } from './local-agents.js';
@@ -25,6 +25,11 @@ const NOTE_DISPLAY_OPTIONS: Array<[value: string, label: string]> = [
   ['basic', 'Basic information only'],
   ['link', 'Title link with page preview (default)'],
   ['full', 'Full note body'],
+];
+
+const INITIAL_SLIDE_OPTIONS: Array<[value: string, label: string]> = [
+  ['first', 'First slide (default)'],
+  ['last', 'Last slide'],
 ];
 
 const MAP_THEME_OPTIONS: Array<[value: StoryMapTheme, label: string]> = [
@@ -117,6 +122,16 @@ export class StoryMapSettingTab extends PluginSettingTab {
               .addOptions(Object.fromEntries(NOTE_DISPLAY_OPTIONS))
               .setValue(this.plugin.settings.noteDisplay ?? 'link')
               .onChange((value) => this.patch({ noteDisplay: toNoteDisplay(value) })),
+          );
+      } },
+      { name: 'Default initial slide', render: (setting) => {
+        setting
+          .setDesc('Slide to display when opening the story map. Built-in default: first.')
+          .addDropdown((dropdown) =>
+            dropdown
+              .addOptions(Object.fromEntries(INITIAL_SLIDE_OPTIONS))
+              .setValue(this.plugin.settings.initialSlide === 'last' ? 'last' : 'first')
+              .onChange((value) => this.patch({ initialSlide: toInitialSlide(value) })),
           );
       } },
       { name: 'Map', render: (setting) => {
@@ -413,4 +428,8 @@ function toNoteDisplay(value: string): StoryNoteDisplay | undefined {
 function toMapTheme(value: string): StoryMapTheme | undefined {
   return value === 'auto' || value === 'light' || value === 'dark' || value === 'vintage' || value === 'cyber' || value === 'atlas'
     ? value : undefined;
+}
+
+function toInitialSlide(value: string): StoryInitialSlide | undefined {
+  return value === 'first' || value === 'last' ? value : undefined;
 }

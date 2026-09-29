@@ -163,6 +163,19 @@ describe('resolveObsidianStory folder discovery', () => {
     ]);
   });
 
+  it('resolves initialSlide to the last slide when configured with initialSlide: last', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({ noteFolder: 'Places', order: 'asc', initialSlide: 'last' });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+    expect(story.slides.map((slide) => slide.title)).toEqual([
+      'Santiago',
+      'Atacama',
+      'Undated',
+    ]);
+    expect(story.initialSlide).toBe(2);
+  });
+
   it('honors a custom dateField', async () => {
     const app = makeApp([
       note('Places/A.md', { 'story-map-note': true, title: 'A', visited: '2026-03-01' }),

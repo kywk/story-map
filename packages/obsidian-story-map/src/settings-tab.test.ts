@@ -77,7 +77,7 @@ describe('settings definitions and legacy rendering', () => {
     const { tab, container } = setup();
     const definitions = tab.getSettingDefinitions();
     expect(definitions.map((definition) => 'name' in definition ? definition.name : '')).toEqual([
-      'Defaults', 'Default order', 'Default date field', 'Default note display', 'Map', 'Default map theme',
+      'Defaults', 'Default order', 'Default date field', 'Default note display', 'Default initial slide', 'Map', 'Default map theme',
       'Default zoom', 'Default minimum zoom', 'Default maximum zoom', 'Default tile URL',
       'Default attribution', 'Default show path', 'Restore defaults',
     ]);
@@ -107,6 +107,18 @@ describe('settings definitions and legacy rendering', () => {
     expect(plugin.saveSettings).toHaveBeenCalledOnce();
     container.rows.find((row) => row.name === 'Restore defaults')?.control?.click?.();
     expect(container.rows.find((row) => row.name === 'Default map theme')?.control?.value).toBe('auto');
+  });
+
+  it('persists the initial slide and restores the built-in selection', () => {
+    const { tab, plugin, container } = setup();
+    tab.display();
+    const slide = container.rows.find((row) => row.name === 'Default initial slide');
+    expect(slide?.control?.value).toBe('first');
+    slide?.control?.change?.('last');
+    expect(plugin.settings).toMatchObject({ initialSlide: 'last' });
+    expect(plugin.saveSettings).toHaveBeenCalledOnce();
+    container.rows.find((row) => row.name === 'Restore defaults')?.control?.click?.();
+    expect(container.rows.find((row) => row.name === 'Default initial slide')?.control?.value).toBe('first');
   });
 
   it('redraws reset values without invoking newer host APIs', () => {

@@ -12,6 +12,7 @@ describe('toSourceDefaults', () => {
       order: 'desc',
       dateField: ' visited ',
       noteDisplay: 'full',
+      initialSlide: 'last',
       mapTheme: 'vintage',
       mapZoom: 5,
       mapMinZoom: 2,
@@ -25,6 +26,7 @@ describe('toSourceDefaults', () => {
       order: 'desc',
       dateField: 'visited',
       noteDisplay: 'full',
+      initialSlide: 'last',
       map: {
         theme: 'vintage',
         zoom: 5,

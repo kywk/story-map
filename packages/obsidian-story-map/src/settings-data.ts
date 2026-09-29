@@ -1,4 +1,5 @@
 import {
+  type StoryInitialSlide,
   type StoryMapSourceDefaults,
   type StoryMapTheme,
   type StoryNoteDisplay,
@@ -9,6 +10,7 @@ export interface StoryMapPluginSettings {
   order?: StoryOrder | undefined;
   dateField?: string | undefined;
   noteDisplay?: StoryNoteDisplay | undefined;
+  initialSlide?: StoryInitialSlide | undefined;
   mapTheme?: StoryMapTheme | undefined;
   mapZoom?: number | undefined;
   mapMinZoom?: number | undefined;
@@ -30,6 +32,7 @@ export function toSourceDefaults(settings: StoryMapPluginSettings): StoryMapSour
   const dateField = nonEmpty(settings.dateField);
   if (dateField !== undefined) defaults.dateField = dateField;
   if (settings.noteDisplay !== undefined) defaults.noteDisplay = settings.noteDisplay;
+  if (settings.initialSlide !== undefined) defaults.initialSlide = settings.initialSlide;
 
   const map: NonNullable<StoryMapSourceDefaults['map']> = {};
   if (settings.mapTheme !== undefined) map.theme = settings.mapTheme;
