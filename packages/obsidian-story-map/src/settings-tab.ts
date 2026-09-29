@@ -159,6 +159,17 @@ export class StoryMapSettingTab extends PluginSettingTab {
         setting
           .addText((text) => this.number(text, this.plugin.settings.mapMaxZoom, (value) => this.patch({ mapMaxZoom: value })));
       } },
+      { name: 'Default map opacity', render: (setting) => {
+        setting
+          .setDesc('Base map tile opacity (0.0 to 1.0). Built-in default: 1.0 (fully opaque).')
+          .addText((text) => {
+            text.inputEl.step = '0.05';
+            text.inputEl.min = '0';
+            text.inputEl.max = '1';
+            text.setPlaceholder('1.0');
+            this.number(text, this.plugin.settings.mapOpacity, (value) => this.patch({ mapOpacity: clampOpacity(value) }));
+          });
+      } },
       { name: 'Default tile URL', render: (setting) => {
         setting
           .setDesc('Built-in default: OpenStreetMap standard tiles.')
@@ -415,6 +426,11 @@ function parseNumber(value: string): number | undefined {
   if (!trimmed) return undefined;
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function clampOpacity(value: number | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  return Math.max(0, Math.min(1, value));
 }
 
 function toOrder(value: string): StoryOrder | undefined {

@@ -17,6 +17,7 @@ describe('toSourceDefaults', () => {
       mapZoom: 5,
       mapMinZoom: 2,
       mapMaxZoom: 18,
+      mapOpacity: 0.6,
       mapTileUrl: ' https://tiles.test/{z}/{x}/{y}.png ',
       mapAttribution: ' © Test ',
       mapShowPath: false,
@@ -32,6 +33,7 @@ describe('toSourceDefaults', () => {
         zoom: 5,
         minZoom: 2,
         maxZoom: 18,
+        opacity: 0.6,
         tileUrl: 'https://tiles.test/{z}/{x}/{y}.png',
         attribution: '© Test',
         showPath: false,
@@ -43,6 +45,7 @@ describe('toSourceDefaults', () => {
     const settings: StoryMapPluginSettings = {
       dateField: '   ',
       mapZoom: Number.NaN,
+      mapOpacity: Number.NaN,
       mapTileUrl: '  ',
     };
 
@@ -56,5 +59,12 @@ describe('toSourceDefaults', () => {
     expect(parseStoryMapSourceObject({}, cyberDefaults).map.theme).toBe('cyber');
     expect(parseStoryMapSourceObject({ map: { theme: 'atlas' } }, cyberDefaults).map.theme).toBe('atlas');
     expect(parseStoryMapSourceObject({}).map.theme).toBe('light');
+  });
+
+  it('lets the document opacity override the plugin default', () => {
+    const defaults = toSourceDefaults({ mapOpacity: 0.4 });
+    expect(parseStoryMapSourceObject({}, defaults).map.opacity).toBe(0.4);
+    expect(parseStoryMapSourceObject({ map: { opacity: 0.8 } }, defaults).map.opacity).toBe(0.8);
+    expect(parseStoryMapSourceObject({}).map.opacity).toBe(1);
   });
 });

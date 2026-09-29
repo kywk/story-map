@@ -76,7 +76,7 @@ layout:
 
 **Settings → Geo Story Map** provides defaults for keys a document's `story-map` block omits:
 `order`, `dateField`, `noteDisplay`, `initialSlide`, and the `map` keys `theme`, `zoom`, `minZoom`, `maxZoom`,
-`tileUrl`, `attribution`, and `showPath`.
+`opacity`, `tileUrl`, `attribution`, and `showPath`.
 
 Resolution order per key: document block → plugin setting → built-in default. Changing a
 setting re-renders open StoryMap views immediately. Per-story values — `schema`, `id`, `title`,

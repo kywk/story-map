@@ -15,6 +15,7 @@ export interface StoryMapPluginSettings {
   mapZoom?: number | undefined;
   mapMinZoom?: number | undefined;
   mapMaxZoom?: number | undefined;
+  mapOpacity?: number | undefined;
   mapTileUrl?: string | undefined;
   mapAttribution?: string | undefined;
   mapShowPath?: boolean | undefined;
@@ -39,6 +40,7 @@ export function toSourceDefaults(settings: StoryMapPluginSettings): StoryMapSour
   if (isFiniteNumber(settings.mapZoom)) map.zoom = settings.mapZoom;
   if (isFiniteNumber(settings.mapMinZoom)) map.minZoom = settings.mapMinZoom;
   if (isFiniteNumber(settings.mapMaxZoom)) map.maxZoom = settings.mapMaxZoom;
+  if (isFiniteNumber(settings.mapOpacity)) map.opacity = Math.max(0, Math.min(1, settings.mapOpacity));
   const tileUrl = nonEmpty(settings.mapTileUrl);
   if (tileUrl !== undefined) map.tileUrl = tileUrl;
   const attribution = nonEmpty(settings.mapAttribution);
