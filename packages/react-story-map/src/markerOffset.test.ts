@@ -41,6 +41,23 @@ describe('getMarkerFocus', () => {
     expect(getMarkerFocus(layout('full', 'left', 'left'), NARROW)).toEqual({ fx: 0.5, fy: 0.12 });
     expect(getMarkerFocus(layout('full', 'left', 'right'), NARROW)).toEqual({ fx: 0.5, fy: 0.12 });
   });
+
+  it('centers the marker in the remaining map width for timeline layouts', () => {
+    expect(getMarkerFocus(layout('timeline', 'left', 'left', 0.5), DESKTOP)).toEqual({ fx: 0.75, fy: 0.5 });
+    expect(getMarkerFocus(layout('timeline', 'left', 'right', 0.5), DESKTOP)).toEqual({ fx: 0.25, fy: 0.5 });
+    expect(getMarkerFocus(layout('timeline', 'left', 'left', 0.3), DESKTOP).fx).toBeCloseTo(0.65, 10);
+    expect(getMarkerFocus(layout('timeline', 'left', 'right', 0.7), DESKTOP).fx).toBeCloseTo(0.15, 10);
+  });
+
+  it('uses the top band for timeline layouts on narrow viewports', () => {
+    expect(getMarkerFocus(layout('timeline', 'left', 'left'), NARROW)).toEqual({ fx: 0.5, fy: 0.12 });
+    expect(getMarkerFocus(layout('timeline', 'left', 'right'), NARROW)).toEqual({ fx: 0.5, fy: 0.12 });
+  });
+
+  it('ignores card alignment for timeline layouts', () => {
+    expect(getMarkerFocus(layout('timeline', 'center', 'left', 0.5), DESKTOP)).toEqual({ fx: 0.75, fy: 0.5 });
+    expect(getMarkerFocus(layout('timeline', 'right', 'right', 0.5), DESKTOP)).toEqual({ fx: 0.25, fy: 0.5 });
+  });
 });
 
 describe('focusPixelOffset', () => {

@@ -19,15 +19,16 @@ export interface MarkerFocus {
  * - `card` + center align parks the marker at the top quarter (the bottom-centered
  *   card would otherwise hide it). On narrow viewports every card alignment becomes
  *   a bottom sheet, so the same rule applies there.
- * - `full` centers the marker in the remaining map width beside the story surface
- *   (left/right aware), or the top band in the narrow vertical fallback.
+ * - `full` and `timeline` center the marker in the remaining map width beside the
+ *   story surface (left/right aware), or the top band in the narrow vertical
+ *   fallback. `timeline` reuses the `full` options, so it needs no branch of its own.
  * - all other cases keep the marker centered.
  */
 export function getMarkerFocus(
   layout: StoryMapLayoutOptions,
   viewportWidth: number,
 ): MarkerFocus {
-  if (layout.mode === 'full') {
+  if (layout.mode === 'full' || layout.mode === 'timeline') {
     if (viewportWidth <= NARROW_VIEWPORT_PX) return { fx: 0.5, fy: 0.12 };
     const ratio = layout.full.contentRatio;
     return layout.full.side === 'left'

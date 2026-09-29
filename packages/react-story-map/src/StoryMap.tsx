@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { StoryMapConfig, StorySlide } from '@story-map/story-map-core';
 import { MapCanvas } from './MapCanvas.js';
+import { StoryTimeline } from './Timeline.js';
 
 export interface StoryMapProps {
   story: StoryMapConfig;
@@ -57,6 +58,7 @@ export function StoryMap({
 
   const layout = story.layout;
   const isFull = layout.mode === 'full';
+  const isTimeline = layout.mode === 'timeline';
   const panelOpacity = story.panelOpacity;
   const style = {
     height: story.height,
@@ -75,6 +77,9 @@ export function StoryMap({
       data-layout={layout.mode}
       data-card-align={layout.card.align}
       data-full-side={layout.full.side}
+      // Timeline has no option block of its own; it reuses `layout.full`, and this
+      // attribute keeps the timeline CSS independent of that internal reuse.
+      data-timeline-side={isTimeline ? layout.full.side : undefined}
       tabIndex={0}
       aria-label={story.title ?? 'Story map'}
       onKeyDown={(event) => {
@@ -83,28 +88,41 @@ export function StoryMap({
       }}
     >
       <MapCanvas story={story} activeIndex={activeIndex} />
-      <div className="story-map__presentation">
-        <div className="story-map__panel">
-        {story.title && <div className="story-map__story-title">{story.title}</div>}
-        <SlideTitle
-          slide={activeSlide}
+      {isTimeline ? (
+        <StoryTimeline
+          story={story}
+          activeIndex={activeIndex}
+          onGo={goTo}
           onNoteClick={onNoteClick}
           onNoteHover={onNoteHover}
           noteLinkClassName={noteLinkClassName}
         />
-        <StoryMediaView slide={activeSlide} />
-        {activeSlide.text && (
-          <div className="story-map__text">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{activeSlide.text}</ReactMarkdown>
+      ) : (
+        <>
+          <div className="story-map__presentation">
+            <div className="story-map__panel">
+            {story.title && <div className="story-map__story-title">{story.title}</div>}
+            <SlideTitle
+              slide={activeSlide}
+              onNoteClick={onNoteClick}
+              onNoteHover={onNoteHover}
+              noteLinkClassName={noteLinkClassName}
+            />
+            <StoryMediaView slide={activeSlide} />
+            {activeSlide.text && (
+              <div className="story-map__text">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{activeSlide.text}</ReactMarkdown>
+              </div>
+            )}
+            {!isFull && (
+              <StoryNav activeIndex={activeIndex} total={story.slides.length} compact={false} onGo={goTo} />
+            )}
+            </div>
           </div>
-        )}
-        {!isFull && (
-          <StoryNav activeIndex={activeIndex} total={story.slides.length} compact={false} onGo={goTo} />
-        )}
-        </div>
-      </div>
-      {isFull && (
-        <StoryNav activeIndex={activeIndex} total={story.slides.length} compact onGo={goTo} />
+          {isFull && (
+            <StoryNav activeIndex={activeIndex} total={story.slides.length} compact onGo={goTo} />
+          )}
+        </>
       )}
     </section>
   );
@@ -155,35 +173,75 @@ function SlideTitle({
   const notePath = slide.notePath;
   if (notePath === undefined) return <h2>{slide.title}</h2>;
 
-  const linkClassName = ['story-map__note-link', noteLinkClassName].filter(Boolean).join(' ');
+  return (
+    <h2>
+      <NoteLink
+        notePath={notePath}
+        onNoteClick={onNoteClick}
+        onNoteHover={onNoteHover}
+        noteLinkClassName={noteLinkClassName}
+      >
+        {slide.title}
+      </NoteLink>
+    </h2>
+  );
+}
+
+export interface NoteLinkProps {
+  notePath: string;
+  /** Extra visual class for the surface using the link; never replaces the shared base. */
+  className?: string | undefined;
+  noteLinkClassName?: string | undefined;
+  onNoteClick?: StoryMapProps['onNoteClick'] | undefined;
+  onNoteHover?: StoryMapProps['onNoteHover'] | undefined;
+  'aria-label'?: string | undefined;
+  children?: ReactNode;
+}
+
+/**
+ * The single note-anchor implementation, shared by the panel heading and the
+ * timeline note chip so the two surfaces cannot drift apart:
+ *
+ * - no host callbacks -> a normal `<a href>` (Docusaurus published route);
+ * - host callbacks -> the click default is prevented, `data-href` is emitted for
+ *   the host's hover-link registration, and the callbacks receive the native event
+ *   (Obsidian Page preview on hover, open in new tab on click).
+ */
+export function NoteLink({
+  notePath,
+  className,
+  noteLinkClassName,
+  onNoteClick,
+  onNoteHover,
+  'aria-label': ariaLabel,
+  children,
+}: NoteLinkProps) {
+  const linkClassName = ['story-map__note-link', className, noteLinkClassName].filter(Boolean).join(' ');
 
   if (onNoteClick === undefined && onNoteHover === undefined) {
     return (
-      <h2>
-        <a className={linkClassName} href={notePath}>
-          {slide.title}
-        </a>
-      </h2>
+      <a className={linkClassName} href={notePath} aria-label={ariaLabel}>
+        {children}
+      </a>
     );
   }
 
   return (
-    <h2>
-      <a
-        className={linkClassName}
-        href={notePath}
-        data-href={notePath}
-        onClick={(event) => {
-          event.preventDefault();
-          onNoteClick?.(notePath, event.nativeEvent);
-        }}
-        onMouseOver={(event) => {
-          onNoteHover?.(notePath, event.currentTarget, event.nativeEvent);
-        }}
-      >
-        {slide.title}
-      </a>
-    </h2>
+    <a
+      className={linkClassName}
+      href={notePath}
+      data-href={notePath}
+      aria-label={ariaLabel}
+      onClick={(event) => {
+        event.preventDefault();
+        onNoteClick?.(notePath, event.nativeEvent);
+      }}
+      onMouseOver={(event) => {
+        onNoteHover?.(notePath, event.currentTarget, event.nativeEvent);
+      }}
+    >
+      {children}
+    </a>
   );
 }
 

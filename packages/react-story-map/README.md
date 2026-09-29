@@ -80,14 +80,16 @@ and media URLs before rendering.
 | `initialSlide` | `number`, `0` | Zero-based initial slide index, clamped to the available slides. |
 | `className` | `string` | Additional class on the outer section. |
 | `onSlideChange` | `(index: number, slide: StorySlide) => void` | Called for the active slide, including initial rendering. |
-| `onNoteClick` | `(notePath: string, event: MouseEvent) => void` | Host navigation handler for a linked slide title. |
-| `onNoteHover` | `(notePath: string, targetEl: HTMLElement, event: MouseEvent) => void` | Host preview handler for a linked slide title. |
-| `noteLinkClassName` | `string` | Additional class on linked slide titles. |
+| `onNoteClick` | `(notePath: string, event: MouseEvent) => void` | Host navigation handler for a linked slide title or timeline note chip. |
+| `onNoteHover` | `(notePath: string, targetEl: HTMLElement, event: MouseEvent) => void` | Host preview handler for a linked slide title or timeline note chip. |
+| `noteLinkClassName` | `string` | Additional class on linked slide titles and timeline note chips. |
 
 Without note callbacks, a slide's `notePath` becomes a normal anchor `href`.
 Providing either note callback prevents default click navigation; provide
 `onNoteClick` as well if your host needs clicks to navigate. A title without
-`notePath` renders as plain text. Slide text supports Markdown and GitHub-flavored
+`notePath` renders as plain text. Both the panel heading and the timeline note chip
+build their anchor through one shared helper, so a host can never see different note-link
+behavior between the two surfaces. Slide text supports Markdown and GitHub-flavored
 Markdown; note WikiLinks and embeds must be resolved by the host if needed.
 
 `StoryMapProps`, `StoryMapConfig`, `StoryMapOptions`, `StoryMapTheme`,
@@ -108,16 +110,48 @@ Set `story.map.theme` to `auto`, `light`, `dark`, `vintage`, `cyber`, or `atlas`
 coordinates tiles, markers, path, controls, and StoryMap's content surface without
 changing the tile provider. `light` and `dark` are fixed palettes; `auto` follows the host
 (the Obsidian host maps it onto the native theme, other hosts use `prefers-color-scheme`).
-`story.layout.mode` selects `card` or `full`. Card supports
+`story.layout.mode` selects `card`, `full`, or `timeline`. Card supports
 `align: left | center | right` and optional `widthRatio` (`0.20..0.80`) and
 `heightRatio` (`0.20..0.95`). Full supports `side: left | right` and `contentRatio`
-(`0.30..0.70`); on narrow screens its fade becomes vertical.
+(`0.30..0.70`); on narrow screens its fade becomes vertical. Timeline reuses those same
+`full` options — there is no `layout.timeline` block — and on narrow screens it also
+becomes a vertical map band over a full-width list.
 
 Card renders Previous/Next buttons inside the panel. Full floats circular arrows at the
 left and right edges with a slide counter at the bottom center, so the whole note body
 stays scrollable without hunting for the controls. Both layouts keep the active marker
 clear of the overlay: a centered card (and any narrow viewport) parks it at the top
 quarter, and full centers it in the map area beside the article.
+
+### Timeline mode
+
+Timeline renders the map full-bleed with a scrollable story column beside it, and the list
+is the navigation: there are no Previous/Next controls. Clicking a row, or pressing the
+arrow keys on the StoryMap, switches slides, which makes the map `flyTo` the new marker;
+the active row scrolls into view. Every slide renders as a row, not only the active one:
+
+| Element | Class / attribute |
+| --- | --- |
+| Column over the map | `.story-map__timeline-column` inside `.story-map__presentation` |
+| Sticky story-title header | `.story-map__timeline-header` |
+| Entry list | `<ol class="story-map__timeline">` |
+| Entry | `<li class="story-map__timeline-item" data-active>` when active |
+| Date chip | `<time class="story-map__timeline-date" datetime="…">` |
+| Cover thumbnail | `<figure class="story-map__timeline-media">` (image media only) |
+| Entry title | `<h3 class="story-map__timeline-title"><button class="story-map__timeline-select" aria-current="true">` |
+| Description (two-line clamp) | `.story-map__timeline-text` |
+| Note link | `.story-map__timeline-note` |
+
+`slide.date` is optional epoch milliseconds; the date chip is omitted when a slide has no
+date. Dates format as `Apr 12, 2024` in a fixed `en-US`/UTC format, so server markup and
+browser hydration agree and a UTC-midnight date never shifts a day. A slide's `notePath`
+renders its own note chip with exactly the anchor semantics of the panel heading: a normal
+`href` without host callbacks, or a callback-driven link with `data-href` when `onNoteClick`
+or `onNoteHover` is provided. The chip is a sibling of the row's stretched select button and
+sits above it in `z-index`, so it never nests an interactive element inside a button. Only
+the existing semantic `--story-map-*` variables are used, so all six themes and the Obsidian
+`auto` bridge apply without change. The section carries `data-layout="timeline"` and
+`data-timeline-side={layout.full.side}`.
 
 These semantic CSS variables are advanced, explicit host overrides:
 

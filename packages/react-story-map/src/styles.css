@@ -343,6 +343,177 @@
   white-space: nowrap;
 }
 
+/* Timeline mode reuses the `full` presentation machinery (same overlay layer, same
+   side-aware fade, same --story-map-content-ratio column width) and turns the story
+   surface into a scrollable dated list. Only existing semantic --story-map-* variables
+   are used, so all six themes and the Obsidian `auto` bridge apply unchanged. */
+.story-map[data-layout='timeline'] .story-map__presentation {
+  background: linear-gradient(to right,
+    var(--story-map-panel-bg) 0,
+    var(--story-map-panel-bg) calc(var(--story-map-content-ratio) - 8%),
+    transparent calc(var(--story-map-content-ratio) + 18%));
+}
+.story-map[data-layout='timeline'][data-timeline-side='right'] .story-map__presentation {
+  background: linear-gradient(to left,
+    var(--story-map-panel-bg) 0,
+    var(--story-map-panel-bg) calc(var(--story-map-content-ratio) - 8%),
+    transparent calc(var(--story-map-content-ratio) + 18%));
+}
+/* The column is a flex shell: the header stays put and only the <ol> scrolls. */
+.story-map[data-layout='timeline'] .story-map__panel {
+  top: 0; bottom: 0; left: 0;
+  display: flex;
+  flex-direction: column;
+  width: var(--story-map-content-ratio);
+  max-height: none;
+  border: 0; border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: hidden;
+}
+.story-map[data-layout='timeline'][data-timeline-side='right'] .story-map__panel { left: auto; right: 0; }
+.story-map[data-layout='timeline'] .story-map__timeline-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: clamp(16px, 2.4vw, 32px) clamp(16px, 2.4vw, 32px) 10px;
+  border-bottom: 1px solid var(--story-map-border, var(--story-map-border-fallback));
+  background: var(--story-map-bg, var(--story-map-bg-fallback));
+}
+.story-map[data-layout='timeline'] .story-map__timeline {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: clamp(14px, 2vw, 24px) clamp(16px, 2.4vw, 32px) clamp(20px, 3vw, 36px);
+  overflow: auto;
+  list-style: none;
+}
+/* flow-root contains the floated thumbnail without creating a scroll container, so
+   the row element itself stays a valid scrollIntoView target. */
+.story-map[data-layout='timeline'] .story-map__timeline-item {
+  position: relative;
+  display: flow-root;
+  margin: 0 0 16px;
+  padding: 0 0 16px 26px;
+  border-left: 2px solid transparent;
+}
+/* The spine runs the full column and reaches the next row's node; the node is a
+   per-row ring drawn with ::after, aligned to the row's first line (the date chip
+   when present, otherwise the title). */
+.story-map[data-layout='timeline'] .story-map__timeline-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: -26px;
+  left: 5px;
+  width: 2px;
+  background: var(--story-map-border, var(--story-map-border-fallback));
+}
+.story-map[data-layout='timeline'] .story-map__timeline-item:last-child::before { bottom: auto; height: 0.7em; }
+.story-map[data-layout='timeline'] .story-map__timeline-item::after {
+  content: '';
+  position: absolute;
+  top: 0.25em;
+  left: 0;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--story-map-border, var(--story-map-border-fallback));
+  border-radius: 50%;
+  background: var(--story-map-bg, var(--story-map-bg-fallback));
+}
+.story-map[data-layout='timeline'] .story-map__timeline-item[data-active] {
+  border-left-color: var(--story-map-accent, var(--story-map-accent-fallback));
+  background: color-mix(in srgb, var(--story-map-accent, var(--story-map-accent-fallback)) 8%, transparent);
+  border-radius: 0 8px 8px 0;
+}
+.story-map[data-layout='timeline'] .story-map__timeline-item[data-active]::after {
+  border-color: var(--story-map-accent, var(--story-map-accent-fallback));
+  background: var(--story-map-accent, var(--story-map-accent-fallback));
+}
+.story-map[data-layout='timeline'] .story-map__timeline-date {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 2px 9px;
+  border: 1px solid var(--story-map-border, var(--story-map-border-fallback));
+  border-radius: 999px;
+  background: var(--story-map-bg, var(--story-map-bg-fallback));
+  color: var(--story-map-muted, var(--story-map-muted-fallback));
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.story-map[data-layout='timeline'] .story-map__timeline-media {
+  float: right;
+  margin: 0 0 8px 12px;
+  width: 64px;
+  height: 64px;
+}
+.story-map[data-layout='timeline'] .story-map__timeline-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.story-map[data-layout='timeline'] .story-map__timeline-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+.story-map[data-layout='timeline'] .story-map__timeline-select {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.story-map[data-layout='timeline'] .story-map__timeline-select:focus-visible {
+  outline: 2px solid var(--story-map-accent, var(--story-map-accent-fallback));
+  outline-offset: 2px;
+}
+/* Stretch the button over the whole row so the whole entry selects its slide. The
+   nearest positioned ancestor is the row, not the heading. */
+.story-map[data-layout='timeline'] .story-map__timeline-select::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.story-map[data-layout='timeline'] .story-map__timeline-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  color: var(--story-map-muted, var(--story-map-muted-fallback));
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.story-map[data-layout='timeline'] .story-map__timeline-text :is(strong, b, em, i) {
+  color: inherit;
+}
+.story-map[data-layout='timeline'] .story-map__timeline-text p { margin: 0; }
+/* Raised above the row-wide select button, which is a sibling, not a parent. */
+.story-map[data-layout='timeline'] .story-map__timeline-note {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 9px;
+  border: 1px solid var(--story-map-border, var(--story-map-border-fallback));
+  border-radius: 999px;
+  background: var(--story-map-bg, var(--story-map-bg-fallback));
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 @media (max-width: 640px) {
   .story-map[data-layout='card'] .story-map__panel,
   .story-map[data-layout='card'][data-card-align='center'] .story-map__panel,
@@ -378,5 +549,23 @@
   .story-map[data-layout='full'] .story-map__nav span {
     position: static;
     transform: none;
+  }
+  /* Narrow timeline mode is the same vertical transition as full: a map band on top
+     and the full-width list below it. */
+  .story-map[data-layout='timeline'] .story-map__presentation,
+  .story-map[data-layout='timeline'][data-timeline-side='right'] .story-map__presentation {
+    top: 24%;
+    background: linear-gradient(to bottom, transparent, var(--story-map-panel-bg) 26%);
+  }
+  .story-map[data-layout='timeline'] .story-map__panel,
+  .story-map[data-layout='timeline'][data-timeline-side='right'] .story-map__panel {
+    top: 20%; bottom: 0; left: 0; right: 0;
+    width: 100%;
+  }
+  .story-map[data-layout='timeline'] .story-map__timeline-header {
+    padding: 12px 16px 8px;
+  }
+  .story-map[data-layout='timeline'] .story-map__timeline {
+    padding: 12px 16px 20px;
   }
 }
