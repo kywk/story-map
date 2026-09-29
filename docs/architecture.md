@@ -244,6 +244,7 @@ duplicate the Obsidian settings UI.
 | `order` | `asc` | yes |
 | `dateField` | `date-created` | yes |
 | `noteDisplay` | `link` | yes |
+| `initialSlide` | `first` | yes |
 | `map.center` | — | no (document only) |
 | `map.theme` | `light` (Obsidian plugin default `auto`) | yes |
 | `map.zoom` | `6` | yes |

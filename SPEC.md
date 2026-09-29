@@ -200,6 +200,7 @@ interface StoryMapSourceConfig {
   order: 'asc' | 'desc';         // default: 'asc'
   dateField: string;             // default: 'date-created'
   noteDisplay: 'basic' | 'link' | 'full';  // default: 'link'
+  initialSlide: 'first' | 'last' | number; // default: 'first'
   includeTags?: string[];        // keep notes with any listed tag
   excludeTags?: string[];        // drop notes with any listed tag
 
@@ -304,7 +305,7 @@ screens, full mode uses a vertical map/story transition. Inactive mode options r
 the normalized config and do not affect rendering.
 
 Obsidian resolves source values in order: document block -> plugin settings -> built-in
-defaults. Plugin settings expose defaults for `order`, `dateField`, `noteDisplay`, and the
+defaults. Plugin settings expose defaults for `order`, `dateField`, `noteDisplay`, `initialSlide`, and the
 `map` keys `theme`, `zoom`, `minZoom`, `maxZoom`, `tileUrl`, `attribution`, `showPath`. Per-story
 values — `schema`, `id`, `title`, `noteFolder`, `includeTags`, `excludeTags`, `map.center`,
 `layout`, `slides`, `height` — are document-only (`height` is forced to `100%` in the Obsidian
@@ -321,6 +322,7 @@ interface StoryMapConfig {
   id?: string;
   title?: string;
   height: string;
+  initialSlide?: number;
   map: {
     center?: [number, number];
     theme: 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';

@@ -45,7 +45,7 @@ hygiene").
   route and the renderer emits a normal browser link. `react-story-map` must not import
   Obsidian or Docusaurus APIs.
 - Defaultable `story-map` keys (Obsidian plugin settings): `order`, `dateField`,
-  `noteDisplay`, and `map.theme`, `map.zoom`, `map.minZoom`, `map.maxZoom`, `map.tileUrl`,
+  `noteDisplay`, `initialSlide`, and `map.theme`, `map.zoom`, `map.minZoom`, `map.maxZoom`, `map.tileUrl`,
   `map.attribution`, `map.showPath`. Keys that vary per document — `schema`, `id`, `title`,
   `noteFolder`, `includeTags`, `excludeTags`, `map.center`, `layout`, `slides`, `height` — must stay
   document-only and must not be added to plugin settings or defaults. Resolution order for
