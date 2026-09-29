@@ -5,21 +5,32 @@ current code implements it.
 
 ## 1. Goal and scope
 
-Build a small, reusable StoryMap stack centered on one standard `StoryMapConfig` model.
-The product supports:
+Build a small, reusable map stack centered on one standard `StoryMapConfig` model for
+storytelling and one standard `GeoMapConfig` model for ordinary maps, both rendered by the
+same Leaflet runtime. The product supports:
 
 1. standalone React usage;
 2. an Obsidian file-backed full-leaf StoryMap view;
 3. Docusaurus/Remark publishing of the same Obsidian-oriented Markdown source;
 4. Leaflet map navigation synchronized with paged story slides;
-5. note discovery from one configured Vault folder and all of its subfolders.
+5. note discovery from one configured Vault folder and all of its subfolders;
+6. a generic GeoMap that renders markers, tile sources, and zoom visibility without any
+   story concept;
+7. documented/static source compatibility for legacy Obsidian `leaflet` fenced blocks, in
+   both Obsidian and Docusaurus/Remark, so existing content renders without edits and the
+   old Obsidian Leaflet plugin plus a separate Docusaurus Leaflet runtime can be retired.
 
 The Obsidian view is the behavioral reference for note discovery, ordering, inheritance,
 and `noteDisplay` semantics. The Docusaurus/Remark path implements the equivalent behavior
 and defers route/slug policy to the host site.
 
+Scope the compatibility promise honestly: this is source compatibility for the documented
+and actually-implemented key set, phased as P0/P1 static maps, P2 file layers, and P3
+image/drawing/mutable state. It is not a clone of every historical plugin integration, and
+a recognized key that is not implemented reports a diagnostic instead of being ignored.
+
 Stay intentionally small. Do not add a visual editor, scroll-driven storytelling, MapLibre,
-3D maps, GPX, GeoJSON editing, query languages, filtering/grouping beyond the documented
+3D maps, GPX/GeoJSON editing, query languages, filtering/grouping beyond the documented
 `includeTags`/`excludeTags` note filter, or a generic plugin framework.
 
 ## 2. Source document model
@@ -66,6 +77,34 @@ Multiple configuration blocks in one Obsidian StoryMap document are out of scope
 Remark transformer may mount multiple independent StoryMap hosts when multiple blocks occur
 on an ordinary Docusaurus page.
 
+### 2.1.1 Legacy `leaflet` document
+
+A `leaflet` fenced block is a second, independent input dialect. It renders an ordinary map
+with markers resolved from notes; it has no slides, no story layout, and no panel. It never
+requires a document to carry `story-map: true`, and it appears inline in ordinary Markdown.
+
+````markdown
+```leaflet
+id: chile-2509
+height: 600px
+lat: -33.0000
+long: -70.0000
+minZoom: 4
+maxZoom: 17
+defaultZoom: 5
+unit: meters
+scale: 1
+darkMode: true
+markerFolder: backpacker/2509 Chile/Chile
+```
+````
+
+The two dialects do not share a source schema. `leaflet` keeps historical key spelling
+(`lat`, `long`, `defaultZoom`, `minZoom`, `markerFolder`) because existing content uses it.
+A recognized key that this specification does not implement produces a diagnostic naming
+that key; it is never silently dropped. Authored `id` values may repeat across maps and must
+not collide at runtime — host instance identity is separate from the authored id.
+
 ### 2.2 StoryMap note
 
 A folder-discovered note is a normal Markdown file with `story-map-note: true` and reusable
@@ -95,7 +134,25 @@ Markdown frontmatter role flags stay kebab-case (`story-map: true`,
 `story-map-note: true`). A configured date field name is a value, not a StoryMap key; its
 default is `date-created`.
 
+The `leaflet` dialect keeps its historical key spelling, which is mostly the same words
+written differently (`lat`, `long`, `defaultZoom`, `minZoom`, `markerFolder`,
+`mapmarker`, `unit`, `scale`). Existing notes already use it, and Phase 1 must render them
+unchanged. Note frontmatter is shared between both dialects: `location`, `mapmarker`,
+`mapzoom`, `title`, and `description`/`summary` mean the same thing to either renderer.
+
 ## 4. Architecture
+
+Two dialects, two source schemas, one map runtime:
+
+```text
+story-map source --> StoryMapConfig --\
+                                          --> react-story-map: <StoryMap> and <GeoMap>
+leaflet source   --> GeoMapConfig -----/          ^
+                                                    |
+                                    StoryMap composes the shared GeoMap
+```
+
+Concretely:
 
 ```text
 Vault / Markdown / API
@@ -103,28 +160,35 @@ Vault / Markdown / API
         v
 platform adapter / resolver
         |
-        v
-@story-map/story-map-core          (schema, parser, helpers)
+        +--> @story-map/story-map-core (storymap/v1 schema, parser, helpers)
+        |              |
+        |              v
+        |        StoryMapConfig
         |
-        v
-standard StoryMapConfig
-        |
-        v
-@story-map/react-story-map         (React + Leaflet UI)
+        +--> @story-map/story-map-core (leaflet dialect parser, diagnostics)
+                       |
+                       v
+                 GeoMapConfig
+                       |
+                       v
+        @story-map/react-story-map  (shared Leaflet lifecycle)
+                       ^
+            StoryMap composes here
 ```
 
 Platform adapters:
 
 ```text
 Obsidian Vault ----> obsidian-story-map --\
-                                          ---> StoryMapConfig ---> react-story-map
-Docusaurus build --> remark-story-map ----/
-Standalone app ---------------------------/
+                                          ---> StoryMapConfig ---> <StoryMap>
+Docusaurus build --> remark-story-map ----/  \                          |
+Standalone app -------------------------/    \--> GeoMapConfig ------> <GeoMap>
 ```
 
-The Obsidian adapter renders `react-story-map` as a dedicated file-backed workspace view.
-Remark resolves the same source at build time, serializes only platform-neutral render
-data, and mounts the same renderer in the browser. Route resolution, filesystem access,
+The Obsidian adapter renders `react-story-map` as a dedicated file-backed workspace view for
+StoryMap, and registers an inline `leaflet` code-block processor for ordinary Markdown.
+Remark resolves both sources at build time, serializes only platform-neutral render data,
+and mounts the same renderer in the browser. Route resolution, filesystem access,
 Docusaurus URL policy, and theme bridging remain outside `react-story-map`.
 
 ## 5. Package responsibilities
@@ -138,6 +202,13 @@ frontmatter stripping, location/media coercion, and deterministic note date sort
 not import React, Leaflet, Obsidian, Docusaurus, or Node `fs`. Folder scanning, file
 metadata, route resolution, and real asset resolution belong to adapters.
 
+It additionally owns the GeoMap model and the `leaflet` dialect: `GeoMapConfig`,
+`GeoMapOptions`, `TileSource` / `TileSources`, `GeoMarker`, `MarkerTypeDefinition`,
+`GeoMapDiagnostic`, the dedicated `leaflet` parser (including historical repeated-key
+handling for repeatable keys), marker-type resolution helpers, and pure `mapzoom`
+coercion. The `leaflet` dialect is never validated by the `storymap/v1` Zod schema. The
+built-in tile source lives here as `DEFAULT_TILE_URL` / `DEFAULT_TILE_ATTRIBUTION`.
+
 ### `react-story-map`
 
 Owns the `<StoryMap />` component, Leaflet instance lifecycle, paged navigation, `flyTo`
@@ -149,6 +220,11 @@ semantic `--story-map-*` CSS
 variables. Must remain SSR-import-safe: Leaflet is dynamically imported inside client
 effects. Must not know what a Vault, WikiLink, frontmatter file, note folder, Obsidian
 workspace, or Docusaurus route is.
+
+It also owns the exported `<GeoMap />` primitive: one Leaflet instance per host, the shared
+tile-source lifecycle, generic markers with zoom visibility, generic tooltips, and
+coordinate interaction callbacks. `StoryMap` composes `GeoMap` rather than owning a
+separate Leaflet lifecycle, so a page never runs two map runtimes.
 
 Slide-title link behavior: if `slide.notePath` exists with host callbacks, callbacks may
 override navigation (Obsidian). If `slide.notePath` exists without callbacks, the renderer
@@ -164,6 +240,15 @@ resolution, `noteDisplay` handling, metadata and local media resolution, a setti
 defaults, and React mount/unmount lifecycle. It is the behavioral reference for note
 resolution and `noteDisplay`, except where browser navigation necessarily differs. It must not depend on the community Obsidian Leaflet
 plugin at runtime.
+
+It additionally owns the legacy `leaflet` path: a
+`registerMarkdownCodeBlockProcessor('leaflet', ...)` handler that renders `<GeoMap />`
+inside ordinary Markdown, recursive Vault-relative `markerFolder` resolution, note
+`location` / `mapmarker` / `mapzoom` extraction, note hover-preview and open-note
+callbacks, Shift-click coordinate copy, a versioned settings structure with migration from
+the current flat settings, and an optional importer for Obsidian Leaflet's saved settings.
+It does not depend on that plugin at runtime and does not recreate its mutable-marker store,
+config directory, or map-view persistence.
 
 The plugin targets desktop only. The declared minimum Obsidian version is 1.8.7, required
 by the `App.loadLocalStorage`/`App.saveLocalStorage` and `getLanguage` APIs used for
@@ -186,6 +271,11 @@ Build-time code never initializes Leaflet; the browser entry never uses Node API
 The package must not own Docusaurus slug policy. In the target `kywk.github.io`
 integration, `scripts/content-links.js` / `remark-slug-normalizer` remains the URL
 authority.
+
+It additionally transforms `leaflet` code nodes into map hosts, reusing `VaultIndex` for
+`markerFolder` resolution and the same host route hook for published note links. Each host
+carries an explicit `story` / `map` discriminator, and the single browser client mounts
+`<StoryMap />` or `<GeoMap />` accordingly, so a page boots exactly one Leaflet runtime.
 
 ## 6. Story source configuration v1
 
@@ -328,6 +418,109 @@ meaningful in standalone/Docusaurus hosts). Remark uses document values plus bui
 defaults; it does not duplicate the Obsidian settings UI. See `docs/architecture.md` for
 the full defaults table.
 
+### 6.5 Tile providers and credentials
+
+A map theme is visual presentation. A tile provider is the rendered map background. They
+are orthogonal: `theme: vintage` may sit on OpenStreetMap tiles, and `theme: dark` may sit
+on any provider. Provider selection is never encoded in a theme name, and a theme never
+silently replaces a configured `tileUrl`.
+
+The built-in tile source is:
+
+```text
+https://tile.openstreetmap.org/{z}/{x}/{y}.png
+```
+
+with visible attribution `© OpenStreetMap contributors`. This is the current
+OpenStreetMap-recommended standard endpoint, exported as `DEFAULT_TILE_URL` /
+`DEFAULT_TILE_ATTRIBUTION`. CARTO Basemaps is not the default because it now requires an
+API key. Tile providers remain configurable through the existing `map.tileUrl` /
+`map.attribution` keys and, for a light/dark pair, through Leaflet-compatibility settings
+that resolve before any built-in default.
+
+Markdown fences and generated HTML are public source and public output. A provider API key
+is therefore never a secret in a fenced block and is never serialized as if it were
+private; a key delivered to a browser is a public client credential that must be
+provider-restricted and configured by the host. If an imported or authored CARTO URL lacks
+a key parameter, the product warns rather than silently making it the default.
+
+## 6A. GeoMap configuration
+
+```ts
+interface GeoMapConfig {
+  schema: 'geomap/v1';
+  id?: string;                       // authored identity; may repeat across maps
+  height: string;
+  map: GeoMapOptions;
+  markers: GeoMarker[];
+  diagnostics?: GeoMapDiagnostic[];  // recognized-but-unimplemented keys
+}
+
+interface TileSource {
+  url: string;
+  attribution: string;
+  subdomains?: string | string[];
+  minZoom?: number;
+  maxZoom?: number;
+}
+
+interface TileSources {
+  light: TileSource;
+  dark?: TileSource;
+}
+
+interface GeoMapOptions {
+  center?: [number, number];
+  zoom: number;
+  minZoom?: number;
+  maxZoom?: number;
+  zoomDelta?: number;
+  theme: StoryMapTheme;
+  tiles: TileSources;
+  controls?: { noUI?: boolean; noScrollZoom?: boolean; recenter?: boolean; locked?: boolean };
+}
+
+interface GeoMarker {
+  id?: string;
+  type?: string;
+  location: { lat: number; lng: number };
+  title?: string;
+  description?: string;
+  notePath?: string;
+  minZoom?: number;
+  maxZoom?: number;
+  tooltip?: 'always' | 'hover' | 'never';
+}
+
+interface MarkerTypeDefinition {
+  id: string;
+  icon?: { kind: 'symbol' | 'image'; value: string };
+  color?: string;
+  tags?: string[];
+  minZoom?: number;
+  maxZoom?: number;
+}
+
+interface GeoMapDiagnostic {
+  level: 'warning' | 'error';
+  code: string;
+  key?: string;
+  message: string;
+}
+```
+
+`GeoMapOptions.tiles` is the internal canonical form. `storymap/v1` keeps its published
+`map.tileUrl` / `map.attribution` fields indefinitely and normalizes them into the light
+tile source, so published 0.3.x/0.4.x consumers keep working. Only fields required by the
+active compatibility phase are implemented; later layer fields stay out of the type until
+their phase is built rather than being stubbed.
+
+Marker type precedence for a note-derived marker is: explicit note `mapmarker`; first
+configured marker type whose associated tag matches the note; configured default marker
+type; built-in generic default. Marker types carry a portable symbol or image. Font
+Awesome is not part of the cross-platform contract, and an unknown type falls back visually
+while preserving the authored name.
+
 ## 7. Canonical render model
 
 ```ts
@@ -374,6 +567,11 @@ root-level Leaflet-like `lat`, `long`, `defaultZoom`, and `tileServer` normalize
 fields. A root-level `opacity`, or `map.opacity`, normalizes into `panelOpacity`; both are
 then removed, so `panelOpacity` always wins.
 
+`map.tileUrl` / `map.attribution` remain published `storymap/v1` fields and normalize into
+the light entry of `GeoMapOptions.tiles`; the renderer accepts either shape. `StoryMap`
+derives its map-facing marker and path representation from `slides` and renders the shared
+`GeoMap` underneath, so the same Leaflet instance serves both entry points.
+
 ## 8. Note metadata and Leaflet compatibility
 
 Recognized note frontmatter:
@@ -392,8 +590,10 @@ date-created: 2026-01-15
 ```
 
 - `location` is the primary coordinate source and is shared with Obsidian Leaflet;
-- `mapmarker` and `mapzoom` are collected for compatibility; custom marker icons and
-  advanced marker visibility are not required;
+- `mapmarker` names a marker type. An unknown value must still render through the default
+  type rather than failing; the authored name is preserved for diagnostics;
+- `mapzoom: [min, max]` normalizes into marker min/max zoom visibility. It is a real
+  GeoMap capability in P1, not merely collected metadata;
 - `description` or `summary` may provide slide text;
 - `cover`, `image`, or `media` may provide slide media;
 - with `noteDisplay: full`, the frontmatter-stripped note body becomes slide text;
@@ -427,7 +627,34 @@ Default-open is limited to detected `story-map: true` documents and uses a scope
 `WorkspaceLeaf.setViewState` wrapper. Blanket interception of unrelated Markdown files is
 out of scope.
 
-### 10.1 AI coordinate lookup
+### 10.1 Inline `leaflet` blocks
+
+The same plugin also renders a legacy `leaflet` fenced block inside ordinary Markdown
+reading view, through `registerMarkdownCodeBlockProcessor('leaflet', ...)`. This is
+independent of the StoryMap workspace view:
+
+- a `leaflet` block mounts `<GeoMap />` with the block's `height`, never the forced
+  `100%`, and never opens the full-leaf view;
+- `markerFolder` resolves as a Vault-relative folder including subfolders, recursively;
+- a discovered note becomes a marker when it has a valid `location`; notes without one are
+  skipped, not fatal;
+- note `mapmarker` selects a marker type through the documented precedence, and an unknown
+  type still renders;
+- `mapzoom`, when implemented in P1, becomes marker min/max zoom visibility;
+- marker titles link through the platform resolver: Page preview on hover and open in a new
+  tab on click, matching `noteDisplay: link`. The preview behavior is gated by the
+  interaction setting;
+- Shift-click on a marker copies `location: [lat, lng]` when that setting is enabled;
+- settings are a versioned structure migrated from the current flat settings, and an
+  optional importer copies durable Obsidian Leaflet settings (tiles, subdomains,
+  attribution, marker types, tooltip behavior, note preview, copy-on-click, unit system,
+  default center). It never imports mutable marker state, overlays, CSV data, map-view
+  state, or the old config directory;
+- the plugin has no runtime dependency on the community Obsidian Leaflet plugin;
+- a `leaflet` block with unreadable configuration reports an in-block error rather than
+  breaking the surrounding note, and diagnostics list recognized-but-unsupported keys.
+
+### 10.2 AI coordinate lookup
 
 The plugin adds a command-palette action `Find coordinates with AI`, available whenever a
 Markdown note is active. It prompts for a place name (Chinese and other languages are
@@ -465,7 +692,18 @@ For every `story-map` fenced block:
 7. emit a `.story-map-host[data-story-map-config]` placeholder, adding
    `data-story-map-document="true"` when the source document has `story-map: true`.
 
-No Leaflet map is created during the Node/SSR build.
+For every `leaflet` fenced block, the same transform:
+
+1. parses the block with the `leaflet` dialect parser, never the `storymap/v1` schema;
+2. resolves `markerFolder` through the same `VaultIndex`, recursively, when `vaultRoot`
+   exists;
+3. turns each eligible note into a `GeoMarker` with `location`, `title`, `mapmarker`, and a
+   published `notePath` from the host route resolver;
+4. serializes only the normalized `GeoMapConfig`, including any diagnostics;
+5. emits a `.story-map-host[data-story-map-config][data-story-map-kind="map"]` placeholder.
+   A story host carries `data-story-map-kind="story"`.
+
+No Leaflet map is created during the Node/SSR build, for either dialect.
 
 ### 11.2 Published note routes
 
@@ -512,6 +750,12 @@ Node APIs out of the browser bundle. It dynamically loads the renderer and clien
 dependencies only when a host exists; Leaflet remains dynamically imported by
 `react-story-map`.
 
+One client serves both dialects. It reads `data-story-map-kind` to decide between
+`<StoryMap story={...} />` and `<GeoMap map={...} />`, and the Leaflet module is loaded at
+most once for the page. A site may therefore delete its separate Leaflet bootstrap script
+and its own remark Leaflet plugin once its existing blocks pass the Phase 1 fixtures,
+without losing map behavior.
+
 ### 11.6 Theme bridge
 
 The generic renderer owns six map/chrome themes and semantic `--story-map-*` CSS override
@@ -551,6 +795,8 @@ still takes precedence.
   initialSlide={0}
   onSlideChange={(index, slide) => {}}
 />
+
+<GeoMap map={geoMap} />
 ```
 
 Behavior: Previous/Next buttons, Left/Right keyboard navigation, slide counter, active
@@ -560,6 +806,12 @@ marker per located slide, an optional path polyline, responsive resize handling,
 scroll mode. In `full` mode navigation floats over the container edges and the complete note
 body scrolls beneath it. In `timeline` mode the row list replaces Previous/Next: a row click,
 the arrow keys, or `initialSlide` select a slide, and the active row scrolls into view.
+
+`<GeoMap />` is the storyless entry point: `height`, tile sources, center/zoom, and generic
+markers with optional zoom visibility and tooltips. It has no slides, no panel, and no
+layout modes. It accepts the same platform-neutral note-link callbacks as `StoryMap` and
+falls back to a normal `href` when they are absent. Diagnostics passed on the config are the
+caller's to surface; the renderer stays free of host error UI.
 
 ## 13. Acceptance criteria
 
@@ -606,7 +858,29 @@ Complete when all are true:
 - the target `kywk.github.io` integration reuses its existing route/slug resolver;
 - local-platform concerns stay outside `story-map-core` and `react-story-map`.
 
+For the GeoMap and Leaflet compatibility work:
+
+- the built-in tile URL is `https://tile.openstreetmap.org/{z}/{x}/{y}.png` with visible
+  attribution, CARTO is not the default, and tile providers stay configurable;
+- `storymap/v1` and the published package APIs keep working unchanged;
+- a `leaflet` fenced block renders in an ordinary Obsidian Markdown view, with
+  `markerFolder` resolved recursively, and unrelated code blocks are unaffected;
+- an inline `leaflet` block in Obsidian and a `leaflet` node in Docusaurus produce the same
+  map: same center, zoom, tile source, markers, and titles;
+- the four current `kywk.github.io` fixtures — Chile, Egypt, Kuala Lumpur, Xinjiang —
+  render without source edits, including the repeated `chile-2509` id;
+- an unknown `mapmarker` renders through the default marker type, and a
+  recognized-but-unsupported key produces a diagnostic naming that key;
+- `unit` and `scale` are accepted as compatibility metadata without a parse error;
+- the browser client mounts `<StoryMap />` or `<GeoMap />` from the explicit discriminator,
+  and one page initializes Leaflet only once;
+- no Node API enters the browser bundle, and no Leaflet instance is created during SSR/build;
+- Obsidian settings migrate to the versioned structure without losing current defaults;
+- the compatibility matrix and `docs/architecture.md` describe implemented behavior only.
+
 ## 14. Deferred work
+
+StoryMap:
 
 - visual authoring/editor UI;
 - multiple `noteFolder` sources;
@@ -615,12 +889,24 @@ Complete when all are true:
 - scrollama/scrollytelling mode;
 - MapLibre adapter;
 - `CRS.Simple`/gigapixel mode;
-- GeoJSON/GPX;
-- advanced marker icon compatibility and Leaflet `mapzoom` visibility semantics;
-- marker popup parity with the older Docusaurus Leaflet plugin;
 - marker-click-to-slide navigation;
 - WikiLink/embed rendering inside `noteDisplay: full` Markdown body;
 - automated copying of every Vault asset into Docusaurus static output;
 - dynamic Docusaurus light/dark tile provider switching;
 - a generic Docusaurus plugin or route framework;
 - Markdown files outside the configured filesystem `vaultRoot`.
+
+Leaflet compatibility, by phase. Every key below is still recorded in the compatibility
+matrix and, where the parser recognizes it, produces a diagnostic naming it:
+
+- **P1 static maps** — `markerFile`, inline `marker`, `markerTag`, `filterTag`, `linksTo`,
+  `linksFrom`, `tileServer`, `tileSubdomains`, `osmLayer`, `zoomDelta`, `noUI`,
+  `noScrollZoom`, static `lock`, `width`, and Leaflet `mapzoom` marker visibility;
+- **P2 file layers** — GeoJSON and GeoJSON folders, GPX and GPX folders, GPX markers, tile
+  overlays, image overlays, `showAllMarkers`, `zoomFeatures`, and overlay shapes;
+- **P3 specialized** — image maps / `CRS.Simple` with `bounds`, `coordinates`,
+  `preserveAspect`, and `scale` transforms; measurement and `distanceMultiplier`; draw
+  mode; mutable marker persistence; CSV import/export;
+- **not portable** — the old plugin's custom config directory, map-view persistence, Font
+  Awesome layer composition, command markers, and Initiative Tracker integration, which stay
+  host concerns or are dropped.

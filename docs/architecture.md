@@ -6,6 +6,11 @@ see `../SPEC.md`; this document tracks the code as it exists today.
 Two platform paths are implemented: the Obsidian file-backed view (the behavioral
 reference) and the Docusaurus/Remark publishing path.
 
+Sections 1-13 describe the code as it stands. Section 14 describes the Leaflet
+compatibility work on the `feat/leaflet` branch and is explicitly marked as
+not-yet-implemented until the agents land; read the status line there before trusting any
+file name in it.
+
 ## 1. Repository layout
 
 ```text
@@ -461,6 +466,86 @@ Archived milestones live under `history/`:
   adapters' `date` threading.
 
 They are archival; the current contract is `SPEC.md` plus this document.
+
+## 14. Leaflet compatibility (in progress on `feat/leaflet`)
+
+**Status: target state, not yet implemented.** The file names below are the agreed
+allocation for the work described in
+`history/2026-09-29-leaflet-compatibility/`. Nothing in this section is true of `main`
+today; each item flips to actual when its agent lands and its tests pass. Until then,
+`docs/history/2026-09-29-leaflet-compatibility/compatibility-matrix.md` is the authority
+for which Leaflet keys actually work.
+
+### 14.1 Data flow
+
+```text
+story-map fence -> story-map-core storymap/v1 parser -> StoryMapConfig -\
+                                                                     -> <StoryMap>
+leaflet fence   -> story-map-core leaflet parser     -> GeoMapConfig ---/  -> <GeoMap>
+                                                                              ^
+                                                             both share one Leaflet lifecycle
+```
+
+Two dialects, two parsers, one runtime. The `leaflet` dialect never enters the
+`storymap/v1` Zod schema, and a non-story map is never encoded as Story slides.
+
+### 14.2 Parser split
+
+`story-map-core` keeps `schema.ts` / `parser.ts` exactly as they are for `storymap/v1`, and
+gains a separate `leaflet` parser that owns historical key spellings, historical repeated
+keys for repeatable keys, and the diagnostic list. Both live in the same package because
+both are pure source-to-config transforms with no platform dependency.
+
+### 14.3 Diagnostics
+
+A recognized `leaflet` key that is not implemented becomes a `GeoMapDiagnostic` naming the
+key, rather than being dropped. The Obsidian host surfaces diagnostics inline with the
+block; Remark serializes them into the host payload so the published page can show them.
+This is the mechanism that keeps the compatibility matrix honest: a key cannot quietly
+regress into "ignored".
+
+### 14.4 Renderer
+
+`react-story-map` extracts the Leaflet lifecycle currently in `MapCanvas.tsx` into a
+`<GeoMap />` component owning one map instance, the tile-source layer, generic markers,
+marker zoom visibility, tooltips, and the shared `ResizeObserver` / `invalidateSize()`
+behavior. `MapCanvas` stays as the StoryMap-specific layer above it: active-slide styling
+and the layout-aware `focusTarget` offset. Config or layout changes refresh layers and
+never recreate the map.
+
+### 14.5 Obsidian inline fence
+
+`obsidian-story-map` gains a `registerMarkdownCodeBlockProcessor('leaflet', ...)` handler
+that mounts `<GeoMap />` in ordinary reading view, plus a `markerFolder` resolver over
+Vault metadata that produces markers and note-link/preview callbacks. It is independent of
+the full-leaf `TextFileView`, uses the block's own `height`, and leaves unrelated code
+blocks alone. Settings move to a versioned structure with `story`, `map`, `markers`,
+`interaction`, and `leafletCompatibility` sections, migrated from the current flat shape;
+device-local AI agent settings keep using `app.saveLocalStorage`.
+
+### 14.6 Remark discriminator
+
+`remark-story-map` transforms `leaflet` code nodes as well as `story-map` nodes, reusing
+`VaultIndex` for `markerFolder` and the host `resolveNoteHref` for published note links.
+Every host carries `data-story-map-kind="story" | "map"`, and the single browser client
+mounts the matching renderer. One client, one Leaflet module load, existing SPA
+mount/unmount behavior unchanged.
+
+### 14.7 Host boundaries
+
+Unchanged by this work: Docusaurus slug policy stays host-owned through
+`resolveNoteHref`; `react-story-map` imports no Obsidian, Docusaurus, or Node API and stays
+SSR-import-safe; the Remark browser entry stays free of Node APIs; no Leaflet instance is
+created during build.
+
+### 14.8 Credential policy
+
+Markdown fences and generated HTML are public source and public output, so a tile-provider
+API key is never a secret in a fenced block and is never serialized as if it were private.
+A browser-delivered key is a public client credential that must be provider-restricted and
+configured by the host. `docs/architecture.md` §6 records the built-in
+`https://tile.openstreetmap.org/{z}/{x}/{y}.png` source, already implemented on this
+branch; CARTO Basemaps is never a default because it now requires a key.
 
 Obsidian release automation lives in `.github/workflows/release-obsidian.yml`: it validates
 plain tags, builds/tests, attests the three release assets and publishes new releases.
