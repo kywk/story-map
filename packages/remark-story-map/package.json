@@ -1,6 +1,6 @@
 {
   "name": "@story-map/remark-story-map",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Remark transformer and browser client for publishing StoryMap blocks.",
   "license": "MIT",
   "repository": {

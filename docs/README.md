@@ -17,6 +17,7 @@ Start here when you need to understand or change StoryMap.
 | [`obsidian-submission.md`](obsidian-submission.md) | Geo Story Map community listing, release assets and follow-up release checks. |
 | [`../RELEASING.md`](../RELEASING.md) | npm publishing, Trusted Publisher setup and Obsidian community releases. |
 | [`releases/0.3.0.md`](releases/0.3.0.md) | 0.3.0 release notes, upgrade guidance and validation evidence. |
+| [`releases/0.4.0.md`](releases/0.4.0.md) | 0.4.0 release notes: timeline layout, `initialSlide`, `panelOpacity`, and the required-field upgrade. |
 | [`history/`](history/) | Archived plans and background. Superseded, not authoritative. |
 
 Recommended reading order for a new agent: `README.md` -> `architecture.md` -> `SPEC.md` -> `AGENTS.md`.

@@ -1,15 +1,25 @@
 # Releasing
 
 The three npm libraries release together; the bundled Obsidian plugin releases independently.
-All three npm libraries are published at `0.3.0` on `latest` with GitHub OIDC provenance, and
-the Obsidian plugin is released at `0.3.0` on GitHub. Plugin `0.3.0` retains minimum app
+All three npm libraries are published at `0.4.0` on `latest` with GitHub OIDC provenance, and
+the Obsidian plugin is released at `0.4.0` on GitHub. Plugin `0.4.0` retains minimum app
 version `1.8.7` for the `loadLocalStorage`/`saveLocalStorage`/`getLanguage` APIs; `0.2.0`
 declared `1.8.0` incorrectly and should not be submitted.
 Published versions are immutable; choose a new version for the next release.
 The plugin is available in the official community directory.
 
-See [0.3.0 release notes](docs/releases/0.3.0.md) for changes, known limitations and
-validation evidence.
+See [0.4.0 release notes](docs/releases/0.4.0.md) for changes, upgrade guidance and
+validation evidence, and [0.3.0 release notes](docs/releases/0.3.0.md) for the previous
+release.
+
+## Versioning policy
+
+A change that adds a required field to a public type, removes a public symbol, or
+otherwise breaks a consumer's build is a **minor** release, not a patch. Adding an
+optional field, a layout mode, or a defaultable configuration key is also minor. Patch
+releases are for fixes that keep every published type and behavior source-compatible.
+`0.3.0` added the required `map.theme` and `layout` fields; `0.4.0` added the required
+`panelOpacity` field.
 
 ## npm account setup
 
@@ -65,7 +75,7 @@ Do not create placeholder packages or add a token fallback to this workflow.
 
 All three library versions must match; private root, example and Obsidian packages are
 excluded from the explicit release allowlist. Update the three package versions together
-for later releases, then refresh the lockfile. The three packages are currently at `0.3.0`.
+for later releases, then refresh the lockfile. The three packages are currently at `0.4.0`.
 Private root and Obsidian versions remain independent.
 
 ```bash
@@ -107,7 +117,7 @@ not proven by local checks. The workflow does not create an Obsidian release.
 
 ## Obsidian community release
 
-The desktop plugin is **Geo Story Map**, ID `geo-story-map`, current version `0.3.0`,
+The desktop plugin is **Geo Story Map**, ID `geo-story-map`, current version `0.4.0`,
 minimum Obsidian `1.8.7`. Its versions are independent of the npm libraries.
 It is published in the [Obsidian community directory](https://community.obsidian.md/plugins/geo-story-map).
 The previous candidate `story-map` is already used by an unrelated community plugin.
