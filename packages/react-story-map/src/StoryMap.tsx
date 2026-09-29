@@ -17,14 +17,15 @@ export interface StoryMapProps {
 
 export function StoryMap({
   story,
-  initialSlide = 0,
+  initialSlide,
   className,
   onSlideChange,
   onNoteClick,
   onNoteHover,
   noteLinkClassName,
 }: StoryMapProps) {
-  const [rawActiveIndex, setActiveIndex] = useState(() => clamp(initialSlide, 0, story.slides.length - 1));
+  const resolvedInitial = initialSlide ?? story.initialSlide ?? 0;
+  const [rawActiveIndex, setActiveIndex] = useState(() => clamp(resolvedInitial, 0, story.slides.length - 1));
   const activeIndex = clamp(rawActiveIndex, 0, story.slides.length - 1);
   const activeSlide = story.slides[activeIndex];
 

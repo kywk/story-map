@@ -89,3 +89,27 @@ describe('StoryMap presentation', () => {
     expect(html.indexOf('story-map__nav')).toBeGreaterThan(html.indexOf('story-map__panel'));
   });
 });
+
+describe('StoryMap initial slide', () => {
+  it('respects initialSlide from story config', () => {
+    const story: StoryMapConfig = {
+      ...config({ title: 'First' }),
+      slides: [{ title: 'First' }, { title: 'Second' }, { title: 'Third' }],
+      initialSlide: 2,
+    };
+    const html = renderToStaticMarkup(<StoryMap story={story} />);
+    expect(html).toContain('Third');
+    expect(html).toContain('3 / 3');
+  });
+
+  it('lets initialSlide prop override story config initialSlide', () => {
+    const story: StoryMapConfig = {
+      ...config({ title: 'First' }),
+      slides: [{ title: 'First' }, { title: 'Second' }, { title: 'Third' }],
+      initialSlide: 2,
+    };
+    const html = renderToStaticMarkup(<StoryMap story={story} initialSlide={1} />);
+    expect(html).toContain('Second');
+    expect(html).toContain('2 / 3');
+  });
+});
