@@ -254,7 +254,7 @@ export default function App() {
                   </label>
                   <label>{lang === 'zh' ? '版型' : 'Layout'}
                     <select value={layoutMode} onChange={(event) => setLayoutMode(event.target.value as StoryMapLayoutMode)}>
-                      <option value="card">card</option><option value="full">full</option>
+                      <option value="card">card</option><option value="full">full</option><option value="timeline">timeline</option>
                     </select>
                   </label>
                   {layoutMode === 'card' ? (

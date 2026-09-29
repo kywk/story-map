@@ -16,6 +16,8 @@ interface Spot {
   lat: number;
   lng: number;
   zoom: number;
+  /** ISO `YYYY-MM-DD`, parsed as UTC midnight by `Date.parse` for the timeline layout. */
+  date?: string;
   image?: string;
   en: LocalizedText;
   zh: LocalizedText;
@@ -68,6 +70,7 @@ function buildStory(
         title: spot[lang].title,
         text: spot[lang].text,
         location: { lat: spot.lat, lng: spot.lng, zoom: spot.zoom },
+        ...(spot.date === undefined ? {} : { date: Date.parse(spot.date) }),
         ...(media ? { media } : {}),
       };
     }),
@@ -81,6 +84,7 @@ const marathonSpots: Spot[] = [
     lat: 35.6895,
     lng: 139.6917,
     zoom: 12,
+    date: '2025-03-02',
     image: 'Tokyo_Marathon_2019_Runner_(32321717927).jpg',
     en: {
       title: 'Tokyo Marathon',
@@ -95,6 +99,7 @@ const marathonSpots: Spot[] = [
     lat: 42.3601,
     lng: -71.0589,
     zoom: 12,
+    date: '2025-04-21',
     image: "Boston_Marathon_2019_Women's_pack.agr.jpg",
     en: {
       title: 'Boston Marathon',
@@ -109,6 +114,7 @@ const marathonSpots: Spot[] = [
     lat: 51.5074,
     lng: -0.1278,
     zoom: 12,
+    date: '2025-04-27',
     image: '2010_London_Marathon_II.jpg',
     en: {
       title: 'London Marathon',
@@ -123,6 +129,7 @@ const marathonSpots: Spot[] = [
     lat: -33.8688,
     lng: 151.2093,
     zoom: 12,
+    date: '2025-08-31',
     image: 'Sydney_Opera_House_and_Harbour_Bridge,_southeast_view_20230224_1.jpg',
     en: {
       title: 'Sydney Marathon',
@@ -137,6 +144,7 @@ const marathonSpots: Spot[] = [
     lat: 52.52,
     lng: 13.405,
     zoom: 12,
+    date: '2025-09-21',
     image: '1000_-_Ziel_Berlin_Marathon.jpg',
     en: {
       title: 'Berlin Marathon',
@@ -151,6 +159,7 @@ const marathonSpots: Spot[] = [
     lat: 41.8781,
     lng: -87.6298,
     zoom: 12,
+    date: '2025-10-12',
     image: 'Chicago_marathon_2019.jpg',
     en: {
       title: 'Chicago Marathon',
@@ -165,6 +174,7 @@ const marathonSpots: Spot[] = [
     lat: 40.7128,
     lng: -74.006,
     zoom: 12,
+    date: '2025-11-02',
     image: 'New_York_marathon_Verrazano_bridge.jpg',
     en: {
       title: 'New York City Marathon',
@@ -182,6 +192,7 @@ const chileSpots: Spot[] = [
     lat: -33.4489,
     lng: -70.6693,
     zoom: 12,
+    date: '2026-01-15',
     image: 'Santiago_de_Chile.jpg',
     en: {
       title: 'Santiago',
@@ -196,6 +207,7 @@ const chileSpots: Spot[] = [
     lat: -33.0472,
     lng: -71.6127,
     zoom: 13,
+    date: '2026-01-18',
     image: 'Valparaiso,_Chile.jpg',
     en: {
       title: 'Valparaíso',
@@ -210,6 +222,7 @@ const chileSpots: Spot[] = [
     lat: -22.9087,
     lng: -68.1997,
     zoom: 11,
+    date: '2026-01-24',
     image: 'Atacama_Desert.jpg',
     en: {
       title: 'Atacama Desert',
@@ -224,6 +237,7 @@ const chileSpots: Spot[] = [
     lat: -50.9423,
     lng: -73.4068,
     zoom: 10,
+    date: '2026-02-05',
     image: 'Torres_del_Paine,_Chile.jpg',
     en: {
       title: 'Torres del Paine',
@@ -241,6 +255,7 @@ const taiwanSpots: Spot[] = [
     lat: 25.033,
     lng: 121.5654,
     zoom: 12,
+    date: '2026-04-02',
     image: 'Taipei_101_2019.jpg',
     en: {
       title: 'Taipei',
@@ -255,6 +270,7 @@ const taiwanSpots: Spot[] = [
     lat: 24.1587,
     lng: 121.6219,
     zoom: 11,
+    date: '2026-04-03',
     image: 'Taroko_Gorge.jpg',
     en: {
       title: 'Taroko Gorge',
@@ -269,6 +285,7 @@ const taiwanSpots: Spot[] = [
     lat: 21.9458,
     lng: 120.7985,
     zoom: 11,
+    date: '2026-04-06',
     image: 'Kenting_National_Park.jpg',
     en: {
       title: 'Kenting',
