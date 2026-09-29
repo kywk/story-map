@@ -7,10 +7,10 @@ function config(slide: StorySlide): StoryMapConfig {
   return {
     schema: 'storymap/v1',
     height: '400px',
+    panelOpacity: 0.85,
     map: {
       theme: 'light',
       zoom: 3,
-      opacity: 1,
       tileUrl: 'https://tile.example/{z}/{x}/{y}.png',
       attribution: 'Example',
       showPath: false,
@@ -115,20 +115,19 @@ describe('StoryMap initial slide', () => {
   });
 });
 
-describe('StoryMap opacity', () => {
-  it('renders data-map-opacity and style variable when opacity is not 1', () => {
+describe('StoryMap panelOpacity', () => {
+  it('renders data-panel-opacity and style variable for panelOpacity', () => {
     const story = config({ title: 'Santiago' });
-    story.map.opacity = 0.5;
+    story.panelOpacity = 0.5;
     const html = renderToStaticMarkup(<StoryMap story={story} />);
-    expect(html).toContain('data-map-opacity="0.5"');
-    expect(html).toContain('--story-map-map-opacity:0.5');
+    expect(html).toContain('data-panel-opacity="0.5"');
+    expect(html).toContain('--story-map-panel-opacity:0.5');
   });
 
-  it('omits data-map-opacity and style variable when opacity is 1', () => {
+  it('renders default panelOpacity of 0.85 when unchanged', () => {
     const story = config({ title: 'Santiago' });
-    story.map.opacity = 1;
     const html = renderToStaticMarkup(<StoryMap story={story} />);
-    expect(html).not.toContain('data-map-opacity');
-    expect(html).not.toContain('--story-map-map-opacity');
+    expect(html).toContain('data-panel-opacity="0.85"');
+    expect(html).toContain('--story-map-panel-opacity:0.85');
   });
 });

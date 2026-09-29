@@ -36,10 +36,10 @@ const story: StoryMapConfig = {
   schema: 'storymap/v1',
   title: 'A walk through Taipei',
   height: '520px',
+  panelOpacity: 0.85,
   map: {
     theme: 'light',
     zoom: 14,
-    opacity: 1,
     tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
     showPath: true,

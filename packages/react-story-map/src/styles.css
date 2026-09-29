@@ -8,6 +8,11 @@
   --story-map-muted-fallback: var(--story-map-subtle, #6b7280);
   --story-map-border-fallback: var(--story-map-line, rgba(0, 0, 0, 0.14));
   --story-map-accent-fallback: var(--story-map-highlight, #2563eb);
+  --story-map-panel-bg: color-mix(
+    in srgb,
+    var(--story-map-bg, var(--story-map-bg-fallback)) calc(var(--story-map-panel-opacity, 0.85) * 100%),
+    transparent
+  );
 
   position: relative;
   width: 100%;
@@ -58,7 +63,7 @@
   padding: 16px;
   border: 1px solid var(--story-map-border, var(--story-map-border-fallback));
   border-radius: 10px;
-  background: color-mix(in srgb, var(--story-map-bg, var(--story-map-bg-fallback)) 94%, transparent);
+  background: var(--story-map-panel-bg);
   backdrop-filter: blur(6px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   pointer-events: auto;
@@ -267,14 +272,14 @@
 }
 .story-map[data-layout='full'] .story-map__presentation {
   background: linear-gradient(to right,
-    var(--story-map-bg, var(--story-map-surface)) 0,
-    var(--story-map-bg, var(--story-map-surface)) calc(var(--story-map-content-ratio) - 8%),
+    var(--story-map-panel-bg) 0,
+    var(--story-map-panel-bg) calc(var(--story-map-content-ratio) - 8%),
     transparent calc(var(--story-map-content-ratio) + 18%));
 }
 .story-map[data-layout='full'][data-full-side='right'] .story-map__presentation {
   background: linear-gradient(to left,
-    var(--story-map-bg, var(--story-map-surface)) 0,
-    var(--story-map-bg, var(--story-map-surface)) calc(var(--story-map-content-ratio) - 8%),
+    var(--story-map-panel-bg) 0,
+    var(--story-map-panel-bg) calc(var(--story-map-content-ratio) - 8%),
     transparent calc(var(--story-map-content-ratio) + 18%));
 }
 .story-map[data-layout='full'] .story-map__panel {
@@ -349,7 +354,7 @@
   .story-map[data-layout='full'] .story-map__presentation,
   .story-map[data-layout='full'][data-full-side='right'] .story-map__presentation {
     top: 24%;
-    background: linear-gradient(to bottom, transparent, var(--story-map-bg, var(--story-map-surface)) 26%);
+    background: linear-gradient(to bottom, transparent, var(--story-map-panel-bg) 26%);
   }
   .story-map[data-layout='full'] .story-map__panel,
   .story-map[data-layout='full'][data-full-side='right'] .story-map__panel {
