@@ -426,6 +426,7 @@ partial release retry. Account-side Trusted Publishers must be configured separa
 | `packages/obsidian-story-map/src/main.test.ts` | scoped routing, explicit Markdown mode and wrapper ownership on disable |
 | `packages/obsidian-story-map/src/settings-tab.test.ts` | definitions, legacy rendering, local-agent draft persistence |
 | `packages/remark-story-map/src/index.test.ts` | fence transform, document flag, `VaultIndex`, folder discovery, tag filtering, `noteDisplay`, source-relative media, scan exclusions, host route resolver, timeline slide dates and their serialization |
+| `packages/remark-story-map/src/parity.test.ts` | cross-host parity: one fixture resolved through both the Obsidian and Remark adapters, asserting identical selection, order, and slide dates, plus the shared `noteDisplay` carve-out |
 
 The examples and the landing site have no automated tests; verify them manually.
 
@@ -455,6 +456,8 @@ Archived milestones live under `history/`:
 - `history/2026-09-26-docusaurus-remark/` — Docusaurus/Remark milestone planning.
 - `history/2026-09-26-npm-release/` — approved npm release preparation and deferred Obsidian gates.
 - `history/2026-09-26-obsidian-community-release/` — Geo Story Map submission preparation.
+- `history/2026-09-30-timeline-layout/` — the `timeline` layout mode, `StorySlide.date`, and the
+  adapters' `date` threading.
 
 They are archival; the current contract is `SPEC.md` plus this document.
 

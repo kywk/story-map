@@ -1,9 +1,9 @@
-# Next implementation: timeline layout
+# Timeline layout
 
-Status: **planned, not implemented**. This directory is design history for an upcoming
-milestone. The current product contract remains [`SPEC.md`](../../../SPEC.md), the current
-working agreement remains [`AGENTS.md`](../../../AGENTS.md), and the current code map
-remains [`docs/architecture.md`](../../architecture.md).
+Status: **implemented**. This directory is design history for a shipped milestone. The current
+product contract remains [`SPEC.md`](../../../SPEC.md), the current working agreement remains
+[`AGENTS.md`](../../../AGENTS.md), and the current code map remains
+[`docs/architecture.md`](../../architecture.md).
 
 Documents in this directory:
 
