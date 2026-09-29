@@ -52,9 +52,9 @@ contents, then call `toStoryMapConfig(source, resolvedSlides)` to prepare render
 That conversion copies fields; it does not validate or resolve the supplied slides.
 
 Defaults have the following precedence: source value, supplied `StoryMapSourceDefaults`,
-then built-in default. Supplied defaults support `order`, `dateField`, `noteDisplay`, `initialSlide`, and
-map options other than `center`. `layout` is always document-owned; supplied defaults
-cannot override it.
+then built-in default. Supplied defaults support `order`, `dateField`, `noteDisplay`, `initialSlide`,
+`panelOpacity`, and map options other than `center`. `layout` is always document-owned; supplied
+defaults cannot override it.
 
 | Field | Built-in default |
 | --- | --- |
@@ -64,8 +64,8 @@ cannot override it.
 | `dateField` | `date-created` |
 | `noteDisplay` | `link` |
 | `initialSlide` | `first` |
+| `panelOpacity` | `0.85` |
 | `map.zoom` | `6` |
-| `map.opacity` | `1` |
 | `map.theme` | `light` |
 | `map.tileUrl` | `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png` |
 | `map.attribution` | `© OpenStreetMap contributors` |
@@ -75,7 +75,7 @@ cannot override it.
 | `layout.full.side` | `left` |
 | `layout.full.contentRatio` | `0.5` |
 
-`map.center`, `map.minZoom`, and `map.maxZoom` are optional. `map.opacity` accepts a number between `0.0` and `1.0` (built-in default `1`). All source keys use camelCase.
+`map.center`, `map.minZoom`, and `map.maxZoom` are optional. `panelOpacity` accepts a number between `0.0` and `1.0` (built-in default `0.85`). All source keys use camelCase.
 Themes are `auto`, `light`, `dark`, `vintage`, `cyber`, and `atlas` (built-in default
 `light`). Card layouts also accept
 `widthRatio` (`0.20..0.80`) and `heightRatio` (`0.20..0.95`); both are optional. Full

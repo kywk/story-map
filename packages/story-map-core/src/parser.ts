@@ -67,7 +67,11 @@ export function normalizeStoryMapInput(value: unknown): unknown {
 
   if (map.zoom === undefined && input.defaultZoom !== undefined) map.zoom = Number(input.defaultZoom);
   if (map.tileUrl === undefined && input.tileServer !== undefined) map.tileUrl = input.tileServer;
-  if (map.opacity === undefined && input.opacity !== undefined) map.opacity = input.opacity;
+  if (input.panelOpacity === undefined && input.opacity !== undefined) input.panelOpacity = input.opacity;
+  if (input.panelOpacity === undefined && map.opacity !== undefined) input.panelOpacity = map.opacity;
+
+  delete map.opacity;
+  delete input.opacity;
 
   input.map = map;
   if (Array.isArray(input.slides)) {
@@ -89,7 +93,6 @@ export function normalizeStoryMapInput(value: unknown): unknown {
   delete input.lng;
   delete input.defaultZoom;
   delete input.tileServer;
-  delete input.opacity;
 
   return input;
 }
@@ -136,6 +139,9 @@ export function applySourceDefaults(
   if (input.initialSlide === undefined && defaults.initialSlide !== undefined) {
     input.initialSlide = defaults.initialSlide;
   }
+  if (input.panelOpacity === undefined && defaults.panelOpacity !== undefined) {
+    input.panelOpacity = defaults.panelOpacity;
+  }
 
   const mapDefaults = defaults.map;
   if (mapDefaults) {
@@ -143,7 +149,6 @@ export function applySourceDefaults(
     if (map.zoom === undefined && mapDefaults.zoom !== undefined) map.zoom = mapDefaults.zoom;
     if (map.minZoom === undefined && mapDefaults.minZoom !== undefined) map.minZoom = mapDefaults.minZoom;
     if (map.maxZoom === undefined && mapDefaults.maxZoom !== undefined) map.maxZoom = mapDefaults.maxZoom;
-    if (map.opacity === undefined && mapDefaults.opacity !== undefined) map.opacity = mapDefaults.opacity;
     if (map.tileUrl === undefined && mapDefaults.tileUrl !== undefined) map.tileUrl = mapDefaults.tileUrl;
     if (map.attribution === undefined && mapDefaults.attribution !== undefined) {
       map.attribution = mapDefaults.attribution;
@@ -161,6 +166,7 @@ export function toStoryMapConfig(source: StoryMapSourceConfig, slides: StorySlid
   const config: StoryMapConfig = {
     schema: source.schema,
     height: source.height,
+    panelOpacity: source.panelOpacity,
     map: source.map,
     layout: source.layout,
     slides,

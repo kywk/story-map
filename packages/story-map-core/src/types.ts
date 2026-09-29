@@ -40,7 +40,7 @@ export const DEFAULT_INITIAL_SLIDE: StoryInitialSlide = 'first';
 
 export type StoryMapTheme = 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
 export const DEFAULT_MAP_THEME: StoryMapTheme = 'light';
-export const DEFAULT_MAP_OPACITY = 1;
+export const DEFAULT_PANEL_OPACITY = 0.85;
 
 export type StoryMapLayoutMode = 'card' | 'full';
 export const DEFAULT_LAYOUT_MODE: StoryMapLayoutMode = 'card';
@@ -70,7 +70,6 @@ export interface StoryMapOptions {
   zoom: number;
   minZoom?: number;
   maxZoom?: number;
-  opacity: number;
   theme: StoryMapTheme;
   tileUrl: string;
   attribution: string;
@@ -82,6 +81,7 @@ export interface StoryMapConfig {
   id?: string;
   title?: string;
   height: string;
+  panelOpacity: number;
   initialSlide?: number | undefined;
   map: StoryMapOptions;
   layout: StoryMapLayoutOptions;
@@ -93,6 +93,7 @@ export interface StoryMapSourceDefaults {
   dateField?: string | undefined;
   noteDisplay?: StoryNoteDisplay | undefined;
   initialSlide?: StoryInitialSlide | undefined;
+  panelOpacity?: number | undefined;
   map?: Partial<Omit<StoryMapOptions, 'center'>> | undefined;
 }
 
@@ -106,6 +107,7 @@ export interface StoryMapSourceConfig {
   dateField: string;
   noteDisplay: StoryNoteDisplay;
   initialSlide: StoryInitialSlide;
+  panelOpacity: number;
   includeTags?: string[];
   excludeTags?: string[];
   map: StoryMapOptions;

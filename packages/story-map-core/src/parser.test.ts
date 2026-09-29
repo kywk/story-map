@@ -129,8 +129,8 @@ describe('parseStoryMapObject', () => {
     const story = parseStoryMapObject({ slides: [{ title: 'One' }] });
 
     expect(story.schema).toBe('storymap/v1');
+    expect(story.panelOpacity).toBe(0.85);
     expect(story.map.zoom).toBe(6);
-    expect(story.map.opacity).toBe(1);
     expect(story.map.tileUrl).toContain('openstreetmap.org');
     expect(story.map.theme).toBe('light');
     expect(story.layout).toEqual({
@@ -141,31 +141,33 @@ describe('parseStoryMapObject', () => {
   });
 });
 
-describe('map.opacity', () => {
-  it('defaults opacity to 1', () => {
+describe('panelOpacity', () => {
+  it('defaults panelOpacity to 0.85', () => {
     const story = parseStoryMapObject({ slides: [{ title: 'One' }] });
-    expect(story.map.opacity).toBe(1);
+    expect(story.panelOpacity).toBe(0.85);
   });
 
   it('accepts numeric opacity between 0 and 1', () => {
-    expect(parseStoryMapObject({ map: { opacity: 0.5 }, slides: [{ title: 'One' }] }).map.opacity).toBe(0.5);
-    expect(parseStoryMapObject({ map: { opacity: 0 }, slides: [{ title: 'One' }] }).map.opacity).toBe(0);
-    expect(parseStoryMapObject({ map: { opacity: 1 }, slides: [{ title: 'One' }] }).map.opacity).toBe(1);
+    expect(parseStoryMapObject({ panelOpacity: 0.5, slides: [{ title: 'One' }] }).panelOpacity).toBe(0.5);
+    expect(parseStoryMapObject({ panelOpacity: 0, slides: [{ title: 'One' }] }).panelOpacity).toBe(0);
+    expect(parseStoryMapObject({ panelOpacity: 1, slides: [{ title: 'One' }] }).panelOpacity).toBe(1);
   });
 
   it('accepts string numbers and percentages', () => {
-    expect(parseStoryMapObject({ map: { opacity: '0.4' }, slides: [{ title: 'One' }] }).map.opacity).toBe(0.4);
-    expect(parseStoryMapObject({ map: { opacity: '50%' }, slides: [{ title: 'One' }] }).map.opacity).toBe(0.5);
+    expect(parseStoryMapObject({ panelOpacity: '0.4', slides: [{ title: 'One' }] }).panelOpacity).toBe(0.4);
+    expect(parseStoryMapObject({ panelOpacity: '50%', slides: [{ title: 'One' }] }).panelOpacity).toBe(0.5);
   });
 
-  it('normalizes root opacity into map.opacity', () => {
-    const story = parseStoryMapObject({ opacity: 0.3, slides: [{ title: 'One' }] });
-    expect(story.map.opacity).toBe(0.3);
+  it('normalizes root opacity and map.opacity into panelOpacity', () => {
+    const story1 = parseStoryMapObject({ opacity: 0.3, slides: [{ title: 'One' }] });
+    expect(story1.panelOpacity).toBe(0.3);
+    const story2 = parseStoryMapObject({ map: { opacity: 0.4 }, slides: [{ title: 'One' }] });
+    expect(story2.panelOpacity).toBe(0.4);
   });
 
   it('rejects opacity outside 0..1', () => {
-    expect(() => parseStoryMapObject({ map: { opacity: -0.1 }, slides: [{ title: 'One' }] })).toThrow();
-    expect(() => parseStoryMapObject({ map: { opacity: 1.1 }, slides: [{ title: 'One' }] })).toThrow();
+    expect(() => parseStoryMapObject({ panelOpacity: -0.1, slides: [{ title: 'One' }] })).toThrow();
+    expect(() => parseStoryMapObject({ panelOpacity: 1.1, slides: [{ title: 'One' }] })).toThrow();
   });
 });
 
@@ -466,7 +468,8 @@ describe('parseStoryMapSourceYaml defaults', () => {
     dateField: 'visited',
     noteDisplay: 'full' as const,
     initialSlide: 'last' as const,
-    map: { theme: 'dark' as const, zoom: 10, opacity: 0.6, showPath: false, tileUrl: 'https://tiles.test/{z}/{x}/{y}.png' },
+    panelOpacity: 0.7,
+    map: { theme: 'dark' as const, zoom: 10, showPath: false, tileUrl: 'https://tiles.test/{z}/{x}/{y}.png' },
   };
 
   it('fills keys a document omits', () => {
@@ -476,8 +479,8 @@ describe('parseStoryMapSourceYaml defaults', () => {
     expect(source.dateField).toBe('visited');
     expect(source.noteDisplay).toBe('full');
     expect(source.initialSlide).toBe('last');
+    expect(source.panelOpacity).toBe(0.7);
     expect(source.map.zoom).toBe(10);
-    expect(source.map.opacity).toBe(0.6);
     expect(source.map.theme).toBe('dark');
     expect(source.map.showPath).toBe(false);
     expect(source.map.tileUrl).toBe('https://tiles.test/{z}/{x}/{y}.png');
@@ -491,9 +494,9 @@ describe('parseStoryMapSourceYaml defaults', () => {
         'dateField: date-created',
         'noteDisplay: basic',
         'initialSlide: first',
+        'panelOpacity: 0.95',
         'map:',
         '  zoom: 4',
-        '  opacity: 0.2',
         '  theme: vintage',
         '  showPath: true',
       ].join('\n'),
@@ -504,8 +507,8 @@ describe('parseStoryMapSourceYaml defaults', () => {
     expect(source.dateField).toBe('date-created');
     expect(source.noteDisplay).toBe('basic');
     expect(source.initialSlide).toBe('first');
+    expect(source.panelOpacity).toBe(0.95);
     expect(source.map.zoom).toBe(4);
-    expect(source.map.opacity).toBe(0.2);
     expect(source.map.theme).toBe('vintage');
     expect(source.map.showPath).toBe(true);
   });
@@ -519,7 +522,7 @@ describe('parseStoryMapSourceYaml defaults', () => {
     expect(source.map.center).toEqual([1, 2]);
     expect(source.map.zoom).toBe(7);
     expect(source.map.tileUrl).toBe('https://doc.test/{z}/{x}/{y}.png');
-    expect(source.map.opacity).toBe(0.4);
+    expect(source.panelOpacity).toBe(0.4);
   });
 
   it('still applies code defaults when no defaults are provided', () => {
@@ -528,8 +531,8 @@ describe('parseStoryMapSourceYaml defaults', () => {
     expect(source.order).toBe('asc');
     expect(source.dateField).toBe('date-created');
     expect(source.noteDisplay).toBe('link');
+    expect(source.panelOpacity).toBe(0.85);
     expect(source.map.zoom).toBe(6);
-    expect(source.map.opacity).toBe(1);
     expect(source.map.theme).toBe('light');
     expect(source.layout.mode).toBe('card');
   });
@@ -561,9 +564,9 @@ describe('toStoryMapConfig', () => {
       schema: 'storymap/v1',
       title: 'Chile',
       height: '520px',
+      panelOpacity: 0.85,
       map: {
         zoom: 6,
-        opacity: 1,
         theme: 'light',
         tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         attribution: '© OpenStreetMap contributors',
