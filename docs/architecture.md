@@ -249,6 +249,7 @@ duplicate the Obsidian settings UI.
 | `map.theme` | `light` (Obsidian plugin default `auto`) | yes |
 | `map.zoom` | `6` | yes |
 | `map.minZoom`, `map.maxZoom` | — | yes |
+| `map.opacity` | `1` | yes |
 | `map.tileUrl` | OpenStreetMap standard | yes |
 | `map.attribution` | `© OpenStreetMap contributors` | yes |
 | `map.showPath` | `true` | yes |

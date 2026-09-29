@@ -210,6 +210,7 @@ interface StoryMapSourceConfig {
     zoom: number;
     minZoom?: number;
     maxZoom?: number;
+    opacity: number;               // default: 1 (range 0.0..1.0)
     tileUrl: string;
     attribution: string;
     showPath: boolean;
@@ -306,7 +307,7 @@ the normalized config and do not affect rendering.
 
 Obsidian resolves source values in order: document block -> plugin settings -> built-in
 defaults. Plugin settings expose defaults for `order`, `dateField`, `noteDisplay`, `initialSlide`, and the
-`map` keys `theme`, `zoom`, `minZoom`, `maxZoom`, `tileUrl`, `attribution`, `showPath`. Per-story
+`map` keys `theme`, `zoom`, `minZoom`, `maxZoom`, `opacity`, `tileUrl`, `attribution`, `showPath`. Per-story
 values — `schema`, `id`, `title`, `noteFolder`, `includeTags`, `excludeTags`, `map.center`,
 `layout`, `slides`, `height` — are document-only (`height` is forced to `100%` in the Obsidian
 full-leaf host and remains
@@ -329,6 +330,7 @@ interface StoryMapConfig {
     zoom: number;
     minZoom?: number;
     maxZoom?: number;
+    opacity: number;
     tileUrl: string;
     attribution: string;
     showPath: boolean;

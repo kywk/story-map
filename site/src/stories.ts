@@ -54,6 +54,7 @@ function buildStory(
       theme: 'light',
       center: map.center,
       zoom: map.zoom,
+      opacity: 1,
       ...(map.minZoom === undefined ? {} : { minZoom: map.minZoom }),
       ...(map.maxZoom === undefined ? {} : { maxZoom: map.maxZoom }),
       tileUrl: TILE_URL,
