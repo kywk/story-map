@@ -203,6 +203,7 @@ interface StoryMapSourceConfig {
   initialSlide: 'first' | 'last' | number; // default: 'first'
   includeTags?: string[];        // keep notes with any listed tag
   excludeTags?: string[];        // drop notes with any listed tag
+  panelOpacity: number;          // default: 0.85 (range 0.0..1.0), translucent card/article wash
 
   map: {
     center?: [number, number];
@@ -210,7 +211,6 @@ interface StoryMapSourceConfig {
     zoom: number;
     minZoom?: number;
     maxZoom?: number;
-    opacity: number;               // default: 1 (range 0.0..1.0)
     tileUrl: string;
     attribution: string;
     showPath: boolean;
@@ -306,8 +306,8 @@ screens, full mode uses a vertical map/story transition. Inactive mode options r
 the normalized config and do not affect rendering.
 
 Obsidian resolves source values in order: document block -> plugin settings -> built-in
-defaults. Plugin settings expose defaults for `order`, `dateField`, `noteDisplay`, `initialSlide`, and the
-`map` keys `theme`, `zoom`, `minZoom`, `maxZoom`, `opacity`, `tileUrl`, `attribution`, `showPath`. Per-story
+defaults. Plugin settings expose defaults for `order`, `dateField`, `noteDisplay`, `initialSlide`, `panelOpacity`, and the
+`map` keys `theme`, `zoom`, `minZoom`, `maxZoom`, `tileUrl`, `attribution`, `showPath`. Per-story
 values — `schema`, `id`, `title`, `noteFolder`, `includeTags`, `excludeTags`, `map.center`,
 `layout`, `slides`, `height` — are document-only (`height` is forced to `100%` in the Obsidian
 full-leaf host and remains
@@ -324,13 +324,13 @@ interface StoryMapConfig {
   title?: string;
   height: string;
   initialSlide?: number;
+  panelOpacity: number;
   map: {
     center?: [number, number];
     theme: 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
     zoom: number;
     minZoom?: number;
     maxZoom?: number;
-    opacity: number;
     tileUrl: string;
     attribution: string;
     showPath: boolean;

@@ -245,11 +245,11 @@ duplicate the Obsidian settings UI.
 | `dateField` | `date-created` | yes |
 | `noteDisplay` | `link` | yes |
 | `initialSlide` | `first` | yes |
+| `panelOpacity` | `0.85` | yes |
 | `map.center` | — | no (document only) |
 | `map.theme` | `light` (Obsidian plugin default `auto`) | yes |
 | `map.zoom` | `6` | yes |
 | `map.minZoom`, `map.maxZoom` | — | yes |
-| `map.opacity` | `1` | yes |
 | `map.tileUrl` | OpenStreetMap standard | yes |
 | `map.attribution` | `© OpenStreetMap contributors` | yes |
 | `map.showPath` | `true` | yes |

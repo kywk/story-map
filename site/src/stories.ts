@@ -50,11 +50,11 @@ function buildStory(
     schema: 'storymap/v1',
     title: title[lang],
     height: '100%',
+    panelOpacity: 0.85,
     map: {
       theme: 'light',
       center: map.center,
       zoom: map.zoom,
-      opacity: 1,
       ...(map.minZoom === undefined ? {} : { minZoom: map.minZoom }),
       ...(map.maxZoom === undefined ? {} : { maxZoom: map.maxZoom }),
       tileUrl: TILE_URL,
