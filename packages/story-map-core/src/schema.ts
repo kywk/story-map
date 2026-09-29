@@ -5,6 +5,7 @@ import {
   DEFAULT_FULL_SIDE,
   DEFAULT_INITIAL_SLIDE,
   DEFAULT_LAYOUT_MODE,
+  DEFAULT_MAP_OPACITY,
   DEFAULT_MAP_THEME,
 } from './types.js';
 
@@ -58,6 +59,19 @@ export const storyMapLayoutSchema = z.object({
   }),
 });
 
+export const mapOpacitySchema = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed.endsWith('%')) {
+      const num = parseFloat(trimmed.slice(0, -1));
+      if (!Number.isNaN(num)) return num / 100;
+    }
+    const num = parseFloat(trimmed);
+    if (!Number.isNaN(num)) return num;
+  }
+  return val;
+}, z.number().min(0).max(1));
+
 export const initialSlideSchema = z.preprocess((val) => {
   if (typeof val === 'string') {
     const trimmed = val.trim().toLowerCase();
@@ -81,12 +95,14 @@ const storyMapBaseSchema = z.object({
     zoom: z.number().min(0).max(24).default(6),
     minZoom: z.number().min(0).max(24).optional(),
     maxZoom: z.number().min(0).max(24).optional(),
+    opacity: mapOpacitySchema.default(DEFAULT_MAP_OPACITY),
     theme: z.enum(['auto', 'light', 'dark', 'vintage', 'cyber', 'atlas']).default(DEFAULT_MAP_THEME),
     tileUrl: z.string().min(1).default('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
     attribution: z.string().default('© OpenStreetMap contributors'),
     showPath: z.boolean().default(true),
   }).default({
     zoom: 6,
+    opacity: DEFAULT_MAP_OPACITY,
     theme: DEFAULT_MAP_THEME,
     tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',

@@ -65,6 +65,7 @@ cannot override it.
 | `noteDisplay` | `link` |
 | `initialSlide` | `first` |
 | `map.zoom` | `6` |
+| `map.opacity` | `1` |
 | `map.theme` | `light` |
 | `map.tileUrl` | `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png` |
 | `map.attribution` | `© OpenStreetMap contributors` |
@@ -74,7 +75,7 @@ cannot override it.
 | `layout.full.side` | `left` |
 | `layout.full.contentRatio` | `0.5` |
 
-`map.center`, `map.minZoom`, and `map.maxZoom` are optional. All source keys use camelCase.
+`map.center`, `map.minZoom`, and `map.maxZoom` are optional. `map.opacity` accepts a number between `0.0` and `1.0` (built-in default `1`). All source keys use camelCase.
 Themes are `auto`, `light`, `dark`, `vintage`, `cyber`, and `atlas` (built-in default
 `light`). Card layouts also accept
 `widthRatio` (`0.20..0.80`) and `heightRatio` (`0.20..0.95`); both are optional. Full

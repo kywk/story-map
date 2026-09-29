@@ -40,6 +40,7 @@ export const DEFAULT_INITIAL_SLIDE: StoryInitialSlide = 'first';
 
 export type StoryMapTheme = 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
 export const DEFAULT_MAP_THEME: StoryMapTheme = 'light';
+export const DEFAULT_MAP_OPACITY = 1;
 
 export type StoryMapLayoutMode = 'card' | 'full';
 export const DEFAULT_LAYOUT_MODE: StoryMapLayoutMode = 'card';
@@ -69,6 +70,7 @@ export interface StoryMapOptions {
   zoom: number;
   minZoom?: number;
   maxZoom?: number;
+  opacity: number;
   theme: StoryMapTheme;
   tileUrl: string;
   attribution: string;
