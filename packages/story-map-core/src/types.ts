@@ -35,6 +35,9 @@ export type StoryNoteDisplay = 'basic' | 'link' | 'full';
 
 export const DEFAULT_NOTE_DISPLAY: StoryNoteDisplay = 'link';
 
+export type StoryInitialSlide = 'first' | 'last' | number;
+export const DEFAULT_INITIAL_SLIDE: StoryInitialSlide = 'first';
+
 export type StoryMapTheme = 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
 export const DEFAULT_MAP_THEME: StoryMapTheme = 'light';
 
@@ -77,6 +80,7 @@ export interface StoryMapConfig {
   id?: string;
   title?: string;
   height: string;
+  initialSlide?: number | undefined;
   map: StoryMapOptions;
   layout: StoryMapLayoutOptions;
   slides: StorySlide[];
@@ -86,6 +90,7 @@ export interface StoryMapSourceDefaults {
   order?: StoryOrder | undefined;
   dateField?: string | undefined;
   noteDisplay?: StoryNoteDisplay | undefined;
+  initialSlide?: StoryInitialSlide | undefined;
   map?: Partial<Omit<StoryMapOptions, 'center'>> | undefined;
 }
 
@@ -98,6 +103,7 @@ export interface StoryMapSourceConfig {
   order: StoryOrder;
   dateField: string;
   noteDisplay: StoryNoteDisplay;
+  initialSlide: StoryInitialSlide;
   includeTags?: string[];
   excludeTags?: string[];
   map: StoryMapOptions;

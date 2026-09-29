@@ -52,7 +52,7 @@ contents, then call `toStoryMapConfig(source, resolvedSlides)` to prepare render
 That conversion copies fields; it does not validate or resolve the supplied slides.
 
 Defaults have the following precedence: source value, supplied `StoryMapSourceDefaults`,
-then built-in default. Supplied defaults support `order`, `dateField`, `noteDisplay`, and
+then built-in default. Supplied defaults support `order`, `dateField`, `noteDisplay`, `initialSlide`, and
 map options other than `center`. `layout` is always document-owned; supplied defaults
 cannot override it.
 
@@ -63,6 +63,7 @@ cannot override it.
 | `order` | `asc` |
 | `dateField` | `date-created` |
 | `noteDisplay` | `link` |
+| `initialSlide` | `first` |
 | `map.zoom` | `6` |
 | `map.theme` | `light` |
 | `map.tileUrl` | `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png` |

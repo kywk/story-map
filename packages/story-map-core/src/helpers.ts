@@ -1,4 +1,5 @@
 import type {
+  StoryInitialSlide,
   StoryLocation,
   StoryMapLayoutMode,
   StoryMedia,
@@ -253,4 +254,16 @@ function normalizeTagList(values?: readonly string[]): string[] {
     if (tag) tags.add(tag);
   }
   return [...tags];
+}
+
+export function resolveInitialSlideIndex(
+  initialSlide: StoryInitialSlide | undefined,
+  slideCount: number,
+): number {
+  if (slideCount <= 0) return 0;
+  if (initialSlide === 'last') return slideCount - 1;
+  if (typeof initialSlide === 'number') {
+    return Math.max(0, Math.min(initialSlide, slideCount - 1));
+  }
+  return 0;
 }

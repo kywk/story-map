@@ -1,6 +1,6 @@
 import { load } from 'js-yaml';
 import { storyMapSchema, storyMapSourceSchema } from './schema.js';
-import { coerceLocation, coerceMedia, validCoordinates } from './helpers.js';
+import { coerceLocation, coerceMedia, resolveInitialSlideIndex, validCoordinates } from './helpers.js';
 import type {
   StoryMapConfig,
   StoryMapSourceConfig,
@@ -69,7 +69,17 @@ export function normalizeStoryMapInput(value: unknown): unknown {
   if (map.tileUrl === undefined && input.tileServer !== undefined) map.tileUrl = input.tileServer;
 
   input.map = map;
-  if (Array.isArray(input.slides)) input.slides = input.slides.map(normalizeSlide);
+  if (Array.isArray(input.slides)) {
+    const rawSlides = input.slides;
+    input.slides = rawSlides.map(normalizeSlide);
+    if (input.initialSlide === 'first') {
+      input.initialSlide = 0;
+    } else if (input.initialSlide === 'last') {
+      input.initialSlide = Math.max(0, rawSlides.length - 1);
+    } else if (typeof input.initialSlide === 'string' && /^\d+$/.test(input.initialSlide.trim())) {
+      input.initialSlide = parseInt(input.initialSlide.trim(), 10);
+    }
+  }
   if (typeof input.includeTags === 'string') input.includeTags = coerceTagList(input.includeTags);
   if (typeof input.excludeTags === 'string') input.excludeTags = coerceTagList(input.excludeTags);
 
@@ -121,6 +131,9 @@ export function applySourceDefaults(
   if (input.noteDisplay === undefined && defaults.noteDisplay !== undefined) {
     input.noteDisplay = defaults.noteDisplay;
   }
+  if (input.initialSlide === undefined && defaults.initialSlide !== undefined) {
+    input.initialSlide = defaults.initialSlide;
+  }
 
   const mapDefaults = defaults.map;
   if (mapDefaults) {
@@ -151,6 +164,8 @@ export function toStoryMapConfig(source: StoryMapSourceConfig, slides: StorySlid
   };
   if (source.id !== undefined) config.id = source.id;
   if (source.title !== undefined) config.title = source.title;
+  const initialIndex = resolveInitialSlideIndex(source.initialSlide, slides.length);
+  if (initialIndex > 0) config.initialSlide = initialIndex;
   return config;
 }
 

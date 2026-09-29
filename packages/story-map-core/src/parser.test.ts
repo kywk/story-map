@@ -16,6 +16,7 @@ import {
   parseStoryMapSourceYaml,
   parseStoryMapYaml,
   parseWikiLinkRef,
+  resolveInitialSlideIndex,
   slideFromNoteFrontmatter,
   sortNoteDates,
   stripFrontmatter,
@@ -306,6 +307,18 @@ describe('parseStoryMapSourceYaml', () => {
     expect(() => parseStoryMapSourceYaml('noteDisplay: fancy')).toThrow();
   });
 
+  it('defaults initialSlide to first and accepts first, last, or numeric index', () => {
+    expect(parseStoryMapSourceYaml('title: Chile').initialSlide).toBe('first');
+    expect(parseStoryMapSourceYaml('initialSlide: first').initialSlide).toBe('first');
+    expect(parseStoryMapSourceYaml('initialSlide: last').initialSlide).toBe('last');
+    expect(parseStoryMapSourceYaml('initialSlide: 2').initialSlide).toBe(2);
+    expect(parseStoryMapSourceYaml('initialSlide: "0"').initialSlide).toBe(0);
+  });
+
+  it('rejects invalid initialSlide values', () => {
+    expect(() => parseStoryMapSourceYaml('initialSlide: middle')).toThrow();
+  });
+
   it('accepts an empty slides array', () => {
     const source = parseStoryMapSourceYaml('slides: []');
     expect(source.slides).toEqual([]);
@@ -423,6 +436,7 @@ describe('parseStoryMapSourceYaml defaults', () => {
     order: 'desc' as const,
     dateField: 'visited',
     noteDisplay: 'full' as const,
+    initialSlide: 'last' as const,
     map: { theme: 'dark' as const, zoom: 10, showPath: false, tileUrl: 'https://tiles.test/{z}/{x}/{y}.png' },
   };
 
@@ -432,6 +446,7 @@ describe('parseStoryMapSourceYaml defaults', () => {
     expect(source.order).toBe('desc');
     expect(source.dateField).toBe('visited');
     expect(source.noteDisplay).toBe('full');
+    expect(source.initialSlide).toBe('last');
     expect(source.map.zoom).toBe(10);
     expect(source.map.theme).toBe('dark');
     expect(source.map.showPath).toBe(false);
@@ -445,6 +460,7 @@ describe('parseStoryMapSourceYaml defaults', () => {
         'order: asc',
         'dateField: date-created',
         'noteDisplay: basic',
+        'initialSlide: first',
         'map:',
         '  zoom: 4',
         '  theme: vintage',
@@ -456,6 +472,7 @@ describe('parseStoryMapSourceYaml defaults', () => {
     expect(source.order).toBe('asc');
     expect(source.dateField).toBe('date-created');
     expect(source.noteDisplay).toBe('basic');
+    expect(source.initialSlide).toBe('first');
     expect(source.map.zoom).toBe(4);
     expect(source.map.theme).toBe('vintage');
     expect(source.map.showPath).toBe(true);
@@ -540,6 +557,44 @@ describe('toStoryMapConfig', () => {
       card: { align: 'left' },
       full: { side: 'right', contentRatio: 0.45 },
     });
+  });
+
+  it('resolves initialSlide to index in the canonical config', () => {
+    const sourceLast = parseStoryMapSourceObject({ initialSlide: 'last' });
+    const configLast = toStoryMapConfig(sourceLast, [
+      { title: 'A' },
+      { title: 'B' },
+      { title: 'C' },
+    ]);
+    expect(configLast.initialSlide).toBe(2);
+
+    const sourceNumeric = parseStoryMapSourceObject({ initialSlide: 1 });
+    const configNumeric = toStoryMapConfig(sourceNumeric, [
+      { title: 'A' },
+      { title: 'B' },
+      { title: 'C' },
+    ]);
+    expect(configNumeric.initialSlide).toBe(1);
+
+    const sourceFirst = parseStoryMapSourceObject({ initialSlide: 'first' });
+    const configFirst = toStoryMapConfig(sourceFirst, [
+      { title: 'A' },
+      { title: 'B' },
+    ]);
+    expect(configFirst.initialSlide).toBeUndefined();
+  });
+});
+
+describe('resolveInitialSlideIndex', () => {
+  it('resolves first, last, numeric, and out-of-bounds indices', () => {
+    expect(resolveInitialSlideIndex('first', 5)).toBe(0);
+    expect(resolveInitialSlideIndex('last', 5)).toBe(4);
+    expect(resolveInitialSlideIndex('last', 1)).toBe(0);
+    expect(resolveInitialSlideIndex('last', 0)).toBe(0);
+    expect(resolveInitialSlideIndex(2, 5)).toBe(2);
+    expect(resolveInitialSlideIndex(10, 5)).toBe(4);
+    expect(resolveInitialSlideIndex(-1, 5)).toBe(0);
+    expect(resolveInitialSlideIndex(undefined, 5)).toBe(0);
   });
 });
 

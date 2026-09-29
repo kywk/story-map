@@ -3,6 +3,7 @@ import {
   DEFAULT_CARD_ALIGN,
   DEFAULT_FULL_CONTENT_RATIO,
   DEFAULT_FULL_SIDE,
+  DEFAULT_INITIAL_SLIDE,
   DEFAULT_LAYOUT_MODE,
   DEFAULT_MAP_THEME,
 } from './types.js';
@@ -57,11 +58,21 @@ export const storyMapLayoutSchema = z.object({
   }),
 });
 
+export const initialSlideSchema = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    const trimmed = val.trim().toLowerCase();
+    if (trimmed === 'first' || trimmed === 'last') return trimmed;
+    if (/^\d+$/.test(trimmed)) return parseInt(trimmed, 10);
+  }
+  return val;
+}, z.union([z.enum(['first', 'last']), z.number().int().min(0)]));
+
 const storyMapBaseSchema = z.object({
   schema: z.literal('storymap/v1').default('storymap/v1'),
   id: z.string().optional(),
   title: z.string().optional(),
   height: z.string().default('520px'),
+  initialSlide: z.number().int().min(0).optional(),
   map: z.object({
     center: z.tuple([
       z.number().min(-90).max(90),
@@ -89,6 +100,7 @@ export const storyMapSourceSchema = storyMapBaseSchema.extend({
   order: z.enum(['asc', 'desc']).default('asc'),
   dateField: z.string().min(1).default('date-created'),
   noteDisplay: z.enum(['basic', 'link', 'full']).default('link'),
+  initialSlide: initialSlideSchema.default(DEFAULT_INITIAL_SLIDE),
   includeTags: z.array(z.string().min(1)).optional(),
   excludeTags: z.array(z.string().min(1)).optional(),
   slides: z.array(storySlideSchema).optional(),
