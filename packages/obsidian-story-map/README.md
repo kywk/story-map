@@ -70,24 +70,32 @@ layout:
 - `card` — a floating slide card over the map;
 - `full` — a scrollable story surface beside a full-bleed map;
 - `timeline` — a dated vertical list of every entry beside the map, using the same
-  `layout.full.side` and `layout.full.contentRatio` options as `full`.
+  `layout.full.side` and `layout.full.contentRatio` options as `full`. Each row shows a date
+  chip, a cover thumbnail, the title, a short description, and a note link.
 
 Each entry's date comes from the configured `dateField` frontmatter key, so a timeline and
 the default ordering always read the same value. An explicit slide may set its own
-`date` (for example `date: 2024-04-12`), which wins over the note's value.
+`date` (for example `date: 2024-04-12`), which wins over the note's value. Dates render as
+`Apr 12, 2024` in both Obsidian and a published site, and an unparseable `date` is a
+configuration error rather than a silent drop.
 
 `noteDisplay` applies as configured for `card` and `timeline`; the `full` layout always
-shows the complete note body, while a timeline keeps each note's title, cover, and date
-alongside the body when you set `noteDisplay: full`.
+shows the complete note body. A timeline renders every entry, so a row click switches slides
+and the active row stays visible — there are no Previous/Next buttons in that mode.
 
 ## Note display
 
-`noteDisplay` controls how a resolved note appears in the slide panel:
+`noteDisplay` controls how a resolved note appears:
 
 - `basic` — frontmatter basics only (`title`, `location`, `description`/`summary`, `cover`);
-- `link` — basics plus a title link: hovering shows the Obsidian page preview and clicking opens
-  the note in a new tab (default);
-- `full` — basics plus the note's Markdown body (frontmatter stripped) as slide text.
+- `link` — basics plus a note link: hovering shows the Obsidian page preview and clicking
+  opens the note in a new tab (default);
+- `full` — the note's Markdown body (frontmatter stripped) as slide text. The body carries
+  the content, so frontmatter title, cover, and date are dropped — except in a `timeline`,
+  which keeps them beside the body.
+
+Note links use the same anchor everywhere: the slide title in the card/full panel and the
+per-entry note chip in a timeline both trigger the page preview and the new-tab open.
 
 ## Plugin settings
 

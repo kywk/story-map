@@ -144,8 +144,8 @@ Owns the `<StoryMap />` component, Leaflet instance lifecycle, paged navigation,
 synchronization, markers and optional path, image/video/iframe media, Markdown text
 rendering, resize handling (`invalidateSize()`), minimal responsive CSS, generic
 note-title link rendering from a resolved `notePath`, six map/chrome theme
-presets (`auto` plus five fixed palettes), card/full presentation modes, and the semantic
-`--story-map-*` CSS
+presets (`auto` plus five fixed palettes), card/full/timeline presentation modes, and the
+semantic `--story-map-*` CSS
 variables. Must remain SSR-import-safe: Leaflet is dynamically imported inside client
 effects. Must not know what a Vault, WikiLink, frontmatter file, note folder, Obsidian
 workspace, or Docusaurus route is.
@@ -217,7 +217,7 @@ interface StoryMapSourceConfig {
   };
 
   layout: {
-    mode: 'card' | 'full'; // default: 'card'
+    mode: 'card' | 'full' | 'timeline'; // default: 'card'; timeline reuses the `full` options
     card: { align: 'left' | 'center' | 'right'; widthRatio?: number; heightRatio?: number };
     full: { side: 'left' | 'right'; contentRatio: number };
   };
@@ -250,7 +250,8 @@ When `slides` is absent or empty and `noteFolder` is set:
    least one listed tag;
 5. when `excludeTags` is non-empty, drop files whose frontmatter tags contain any listed
    tag;
-6. read the frontmatter field named by `dateField`;
+6. read the frontmatter field named by `dateField`, using that value both to order the
+   notes and to fill each slide's `date`;
 7. sort valid dates by `order`;
 8. produce one slide per included note.
 
@@ -283,12 +284,21 @@ Remark use the same frontmatter-only rule so both hosts select the same notes; i
   - Remark passes the published href from the host `resolveNoteHref`, or omits `notePath`
     when the host cannot resolve it, leaving the title unlinked (default);
 - `full` — the frontmatter-stripped note body as slide text, keeping the resolved
-  `slide.notePath` so the title stays linked. Frontmatter-derived title and media are dropped
-  (the body carries them); fields the story document set explicitly are kept. The `full`
-  layout always resolves notes this way regardless of the configured `noteDisplay`.
+  `slide.notePath` so the title stays linked. Frontmatter-derived title, media, and date are
+  dropped (the body carries them); fields the story document set explicitly are kept. Only
+  the `full` LAYOUT resolves notes this way regardless of the configured `noteDisplay`;
+  `card` and `timeline` use the configured mode. A `timeline` row is built from that same
+  slide, so `timeline` is also the one layout that keeps the note's title, cover, and date
+  next to the body.
 
 Rendering stays platform-neutral. Obsidian/Docusaurus-specific WikiLink or embed expansion
 inside the body is not required.
+
+Slide `date` values are epoch milliseconds. The parser coerces a `Date`, a finite `number`,
+and a `string` into that shape, and rejects a present but unparseable value as a parse
+error; an absent date stays absent. Folder-generated slides take the value from the same
+`dateField` frontmatter field used for ordering, and an explicit slide may author its own
+`date`, which wins. The timeline layout is the only consumer.
 
 ### 6.4 Default precedence
 
@@ -299,11 +309,14 @@ Obsidian plugin maps it onto Obsidian's own light/dark theme and colors, while o
 fall back to the OS/browser `prefers-color-scheme` light/dark palette. `light` and `dark`
 are fixed, host-independent palettes. `layout` is document-owned: `card` preserves the existing floating card by
 default, while `full` places a scrollable story surface to the left or right over a
-full-bleed map with a progressive fade. Card alignment defaults to `left`; optional
+full-bleed map with a progressive fade. `timeline` keeps that full-bleed map and column but
+renders every slide as one dated row, so the list itself is the navigation and there are no
+previous/next controls; it has no option block of its own and reads `layout.full.side` and
+`layout.full.contentRatio`. Card alignment defaults to `left`; optional
 `widthRatio` accepts `0.20..0.80` and `heightRatio` accepts `0.20..0.95`. Full `side`
 defaults to `left` and `contentRatio` defaults to `0.50` within `0.30..0.70`. On narrow
-screens, full mode uses a vertical map/story transition. Inactive mode options remain in
-the normalized config and do not affect rendering.
+screens, `full` and `timeline` modes use a vertical map/story transition. Inactive mode
+options remain in the normalized config and do not affect rendering.
 
 Obsidian resolves source values in order: document block -> plugin settings -> built-in
 defaults. Plugin settings expose defaults for `order`, `dateField`, `noteDisplay`, `initialSlide`, `panelOpacity`, and the
@@ -336,7 +349,7 @@ interface StoryMapConfig {
     showPath: boolean;
   };
   layout: {
-    mode: 'card' | 'full';
+    mode: 'card' | 'full' | 'timeline';
     card: { align: 'left' | 'center' | 'right'; widthRatio?: number; heightRatio?: number };
     full: { side: 'left' | 'right'; contentRatio: number };
   };
@@ -349,6 +362,7 @@ interface StorySlide {
   notePath?: string;   // adapter-resolved opaque or published reference for link display
   title?: string;
   text?: string;
+  date?: number;       // epoch ms; filled by adapters from `dateField`, or authored
   location?: { lat: number; lng: number; zoom?: number };
   media?: { type: 'image' | 'video' | 'iframe'; src: string; alt?: string; caption?: string };
   mapmarker?: string;
@@ -539,11 +553,12 @@ still takes precedence.
 ```
 
 Behavior: Previous/Next buttons, Left/Right keyboard navigation, slide counter, active
-slide `flyTo` that keeps the marker clear of the card/full overlay, a small circle marker
-per located slide, an optional path polyline, responsive resize handling, a normal `href`
-fallback for a resolved `slide.notePath` when platform callbacks are absent, and no scroll
-mode. In `full` mode navigation floats over the container edges and the complete note body
-scrolls beneath it.
+slide `flyTo` that keeps the marker clear of the card/full/timeline overlay, a small circle
+marker per located slide, an optional path polyline, responsive resize handling, a normal
+`href` fallback for a resolved `slide.notePath` when platform callbacks are absent, and no
+scroll mode. In `full` mode navigation floats over the container edges and the complete note
+body scrolls beneath it. In `timeline` mode the row list replaces Previous/Next: a row click,
+the arrow keys, or `initialSlide` select a slide, and the active row scrolls into view.
 
 ## 13. Acceptance criteria
 
@@ -582,6 +597,10 @@ Complete when all are true:
 - all built-in themes style map and StoryMap-owned chrome coherently;
 - card alignment and optional ratios, full left/right placement and content ratio, and
   narrow-screen vertical fallback render without remounting Leaflet;
+- the `timeline` layout renders every slide as a dated row whose click selects the slide, keeps
+  the active marker clear of the column, and reuses `layout.full` options with no new key;
+- Obsidian and Remark give a timeline the same slide dates, and a timeline honours the
+  configured `noteDisplay` while `card` and `full` keep their existing behavior;
 - a host can intentionally override semantic `--story-map-*` colors;
 - the target `kywk.github.io` integration reuses its existing route/slug resolver;
 - local-platform concerns stay outside `story-map-core` and `react-story-map`.

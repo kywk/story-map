@@ -89,8 +89,9 @@ A slide may carry a `date`, normalized to epoch milliseconds. The parser accepts
 timestamp (`2024-04-12`), an epoch number, a `Date`, or a string such as `'Apr 12, 2024'`
 and rejects a present but unparseable value with a `StoryMapParseError`. A slide without
 a `date` omits the key. Hosts fill `date` from the configured `dateField` for
-folder-discovered notes; an authored `date` wins over a note-derived one, and
-`noteDisplay: full` slides drop it along with the other frontmatter display fields.
+folder-discovered notes; an authored `date` wins over a note-derived one. A host that
+applies `locationOnlySlide` for `noteDisplay: full` drops `date` with the other frontmatter
+display fields, so the timeline carve-out (see `locationOnlySlide` below) matters.
 
 ## Other exports
 

@@ -37,9 +37,16 @@ hygiene").
 - Reuse Leaflet-compatible note metadata such as `location`, `mapmarker`, and `mapzoom`.
 - Note presentation is controlled by `noteDisplay: basic | link | full`, default `link`:
   `basic` uses frontmatter metadata only; `link` resolves a slide-title link; `full` uses
-  the frontmatter-stripped note body as slide text and drops frontmatter title/media.
-  The `full` layout always resolves notes as `full` regardless of the configured
+  the frontmatter-stripped note body as slide text and drops frontmatter title/media/date.
+  Only the `full` LAYOUT forces full note display regardless of the configured
   `noteDisplay`; that override lives in `story-map-core` and both adapters must use it.
+  `timeline` honors the configured `noteDisplay`, so both adapters keep the frontmatter
+  basics next to the body when the display is `full` and the layout is `timeline`
+  (`noteDisplay === 'full' && layoutMode !== 'timeline'`).
+- `StorySlide.date` is epoch-millisecond slide data, normalized by the core parser and filled
+  by both adapters from the existing `dateField` frontmatter value; an authored slide `date`
+  wins through `mergeResolvedSlide`. It is document data, never a plugin setting or a
+  defaultable key, and the timeline layout is its only consumer.
 - `link` is platform-specific only at navigation time: Obsidian supplies callbacks (Page
   preview on hover, open in new tab on click); Docusaurus resolves the final published
   route and the renderer emits a normal browser link. `react-story-map` must not import
@@ -83,8 +90,9 @@ hygiene").
   authored palettes. The renderer styles map and StoryMap chrome together; inherited
   `--story-map-*` variables are explicit host overrides. The Docusaurus Infima bridge is
   opt-in, and the Obsidian plugin defaults `map.theme` to `auto`.
-- `layout` is document-only: `card` (default) or `full`. The renderer owns both layouts;
-  Obsidian and Remark pass the canonical config through.
+- `layout` is document-only: `card` (default), `full`, or `timeline`. The renderer owns all
+  three modes; Obsidian and Remark pass the canonical config through. `timeline` reuses
+  `layout.full.side` and `layout.full.contentRatio`; there is no `layout.timeline` block.
 
 ## Non-goals
 
@@ -164,15 +172,23 @@ Then manually smoke-test:
 
 1. standalone React rendering;
 2. Obsidian full-leaf StoryMap view lifecycle and Markdown <-> StoryMap switching;
-3. recursive `noteFolder` discovery and `dateField` ordering in both directions;
-4. explicit slide ordering unaffected by folder settings;
+3. recursive `noteFolder` discovery and `dateField` ordering in both directions, with the
+   dates visible in a timeline;
+4. explicit slide ordering unaffected by folder settings, including an authored `date`;
 5. split-pane resize/Leaflet invalidation;
 6. Remark transform output, including `noteDisplay` basic/link/full;
 7. source-relative and note-relative media;
 8. multiple StoryMaps on one page and clean SPA host removal;
 9. Docusaurus SSR/build never initializes Leaflet;
-10. the built-in themes in card/full modes, card alignment and ratios, full left/right
-    ratios, narrow-screen vertical fallback, and a stable Leaflet instance while switching;
-11. the Docusaurus Infima override bridge remains opt-in and readable when applied.
+10. the built-in themes in card/full/timeline modes, card alignment and ratios, full
+    left/right ratios, the timeline column in both `side` values, narrow-screen vertical
+    fallback, and a stable Leaflet instance while switching;
+11. the Docusaurus Infima override bridge remains opt-in and readable when applied;
+12. timeline specifics: one row per slide with an `Apr 12, 2024`-style date chip (none for a
+    dateless slide), an image-only thumbnail, a two-line clamped description, and a note chip
+    that keeps Obsidian page preview and open-in-new-tab; a row click and the arrow keys both
+    `flyTo` the map; the active row auto-scrolls into view and its spine node fills; there are
+    no previous/next controls; and an authored unparseable `date` reports a readable
+    in-view configuration error.
 
 Do not mark deferred features as implemented unless they are tested end to end.

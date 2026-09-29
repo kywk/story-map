@@ -199,8 +199,8 @@ Note presentation is controlled by `noteDisplay`, which accepts:
 - `link` — frontmatter basics plus a host-resolved `notePath` when
   `resolveNoteHref` returns a string. This is the default.
 - `full` — the frontmatter-stripped note Markdown body as slide text. The
-  frontmatter-derived title and media are dropped because the body carries them,
-  and only `location` and `mapmarker` survive from the note.
+  frontmatter-derived title, media, and date are dropped because the body
+  carries them, and only `location` and `mapmarker` survive from the note.
 
 `layout.mode: full` forces `full` display regardless of the configured value.
 `timeline` is not forced: it honours the document's `noteDisplay`, and the

@@ -103,7 +103,15 @@ Key invariants:
 
 - `normalizeStoryMapInput` folds Leaflet-style root keys (`lat`/`long`/`lng`,
   `defaultZoom`, `tileServer`), `location: [lat, lng]` and comma-string locations, and
-  string media into the canonical shape before validation.
+  string media into the canonical shape before validation. It also coerces `slides[].date`
+  through `toTimestamp` (accepting `Date`, finite `number`, and `string`) into epoch
+  milliseconds, deletes the key when absent, and throws `StoryMapParseError` when a
+  present value is unparseable.
+- `effectiveNoteDisplay` forces `full` only for the `full` layout mode; `card` and
+  `timeline` return the configured value.
+- `locationOnlySlide` keeps only `location` and `mapmarker`; the adapters apply it for
+  `noteDisplay: full` outside a timeline so a timeline row keeps its date, title, and
+  cover.
 - `applySourceDefaults` only fills keys the document omitted; document values always win.
 - `mergeResolvedSlide` makes explicit slide values win over note frontmatter, except that
   `location` and `media` fall back to the resolved note value when the slide omits them.
@@ -130,15 +138,25 @@ Key invariants:
 - `MapCanvas.tsx` owns one stable Leaflet map. Config updates refresh layers; slide changes
   call `flyTo` and restyle markers without recreating the map. `flyTo` targets a
   layout-aware focus point (`markerOffset.ts`: centered cards and narrow viewports park
-  the marker at the top quarter; `full` centers it in the remaining map width beside
-  the story surface) so the overlay never covers the active marker. `StoryMap.tsx` owns content,
-  navigation and the card/full presentation overlay. `card` keeps text-button navigation inside
-  the panel; `full` floats circular prev/next arrows and a counter pill at the container
-  edges, layered above the presentation overlay (`z-index` 600 vs 500) so they stay visible
-  and clickable over the article half, and the whole Markdown body stays scrollable.
+  the marker at the top quarter; `full` and `timeline` center it in the remaining map width
+  beside the story surface) so the overlay never covers the active marker. `StoryMap.tsx`
+  owns content, navigation and the card/full/timeline presentation overlay. `card` keeps
+  text-button navigation inside the panel; `full` floats circular prev/next arrows and a
+  counter pill at the container edges, layered above the presentation overlay
+  (`z-index` 600 vs 500) so they stay visible and clickable over the article half, and the
+  whole Markdown body stays scrollable.
+- `timeline` renders `Timeline.tsx` (`StoryTimeline`) instead of the panel and `StoryNav`:
+  every slide becomes a row with a `<time>` date chip (omitted when `slide.date` is absent),
+  an image-only thumbnail, a title, a two-line clamped Markdown description, and a note chip.
+  The list is the navigation — a row click calls the same `goTo` as the arrow keys — and the
+  active row scrolls into view with `scrollIntoView({ block: 'nearest' })`. Dates are
+  formatted by `formatTimelineDate` with a fixed `en-US` + `timeZone: 'UTC'`
+  `Intl.DateTimeFormat` (`Apr 12, 2024`); there is no locale or formatting knob, so SSR
+  markup and hydration agree and a UTC-midnight date cannot shift a day.
 - `ResizeObserver` calls `invalidateSize()` on the map container.
-- Slide-title link behavior (`SlideTitle`):
-  - `notePath` absent -> plain heading;
+- Note-link behavior is one shared `NoteLink` in `StoryMap.tsx`, used by both the panel
+  heading (`SlideTitle`) and the timeline note chip:
+  - `notePath` absent -> plain heading or no chip;
   - `notePath` present with `onNoteClick`/`onNoteHover` -> callback-driven link (Obsidian);
   - `notePath` present without callbacks -> normal `<a href>` (Docusaurus).
 - The renderer owns semantic `--story-map-*` CSS variables with private fallbacks; hosts
@@ -147,7 +165,11 @@ Key invariants:
   an `auto` theme that falls back to `prefers-color-scheme`, and coordinated
   `vintage`/`cyber`/`atlas` presets for tile filters, vector layers, controls, and story
   surfaces. Card alignment/ratios and full side/content ratio affect only the presentation
-  overlay; mobile full mode uses a vertical fade.
+  overlay; mobile full mode uses a vertical fade. Timeline CSS is scoped under
+  `[data-layout='timeline']` and reuses the same semantic variables, so every built-in theme
+  applies with no new palette; the ≤640px fallback is the same vertical transition as `full`.
+  The section emits `data-layout` plus `data-timeline-side={layout.full.side}`, keeping the
+  CSS independent of timeline's internal reuse of `layout.full`.
 
 ### `@story-map/obsidian-story-map`
 
@@ -161,7 +183,9 @@ Key invariants:
   renders.
 - `resolver.ts` — `resolveObsidianStory(app, source, sourcePath)`: explicit slides vs.
   recursive `noteFolder` discovery, frontmatter inheritance, local media → resource URL,
-  `noteDisplay` handling.
+  `noteDisplay` handling. The `dateField` value read for ordering is also threaded onto
+  `slide.date` for both discovered and explicitly referenced notes, and the `full`-display
+  frontmatter strip is skipped when `source.layout.mode` is `timeline`.
 - `detect.ts` — `isStoryMapFile` reads `story-map: true` frontmatter.
 - `agents.ts` — framework-local CLI agent layer: `DEFAULT_AGENT_CONFIGS`
   (Codex/Claude/OpenCode/pi), quote-aware `parseArguments`, PATH detection, per-kind
@@ -198,7 +222,11 @@ Key invariants:
   `node_modules`/`build`/`dist`/`coverage`), indexes notes by relative path and basename,
   resolves explicit WikiLinks (ambiguous basenames throw) and folder discovery, applies
   `noteDisplay`, maps notes to published routes through `resolveNoteHref`, and rewrites
-  local media against `assetBase`.
+  local media against `assetBase`. It threads the same `dateField` value used for ordering
+  onto `slide.date` and applies the same timeline carve-out on the `full`-display strip as
+  the Obsidian adapter. `resolveStory` re-resolves `note:` references on an already
+  normalized config and takes an optional `dateField` (default `date-created`, since
+  `StoryMapConfig` does not carry it).
 - `client.tsx` — `mountStoryMaps` / `startStoryMapClient`: parses the encoded config,
   dynamically imports the renderer, mounts `<StoryMap />`, skips duplicate mounts, and
   unmounts roots whose host nodes left the DOM (Docusaurus SPA navigation). Safe to import
@@ -227,6 +255,9 @@ interface RemarkStoryMapOptions {
   stripped; nested tags match exactly. They are document-only and do not affect explicit
   slides.
 - Explicit `slides` keep their exact order; `noteFolder` is ignored when they exist.
+- `slides[].date` is epoch-millisecond slide data: the core parser normalizes it, both
+  adapters fill it from the configured `dateField`, and an authored value wins. It is
+  document data, not a setting.
 
 ## 6. Default resolution
 
@@ -253,7 +284,7 @@ duplicate the Obsidian settings UI.
 | `map.tileUrl` | OpenStreetMap standard | yes |
 | `map.attribution` | `© OpenStreetMap contributors` | yes |
 | `map.showPath` | `true` | yes |
-| `layout.mode` | `card` | no (document only) |
+| `layout.mode` | `card` (values: `card`, `full`, `timeline`) | no (document only) |
 | `layout.card.align` | `left` | no (document only) |
 | `layout.card.widthRatio`, `heightRatio` | — (`0.20..0.80`, `0.20..0.95`) | no (document only) |
 | `layout.full.side`, `contentRatio` | `left`, `0.50` (`0.30..0.70`) | no (document only) |
@@ -279,6 +310,12 @@ not re-implement defaulting in the view.
   layout always resolves notes this way (`effectiveNoteDisplay` in `story-map-core`),
   regardless of the configured `noteDisplay`. Slide prose keeps theme colors even when a
   host app paints bare `strong`/`em` globally.
+
+Two layout-sensitive details sit on top of that: `effectiveNoteDisplay` forces `full` only
+for the `full` layout, so `card` and `timeline` use the configured value; and both adapters
+apply the `locationOnlySlide` strip on `noteDisplay === 'full' && layoutMode !== 'timeline'`.
+Without the layout check a timeline row would lose its date, title, and thumbnail, because a
+row is built from the same slide. `card` and `full` output is unchanged by either rule.
 
 ## 8. Docusaurus publishing pipeline
 
@@ -378,16 +415,17 @@ partial release retry. Account-side Trusted Publishers must be configured separa
 | Location | Covers |
 | --- | --- |
 | `scripts/release-npm.test.mjs` | tag mismatch, dependency publication order, partial retry, integrity conflicts and registry errors with a fake npm executable |
-| `packages/story-map-core/src/parser.test.ts` | parsing, normalization, defaults, ordering, fence extraction, helpers |
-| `packages/react-story-map/src/StoryMap.test.tsx` | slide-title rendering, SSR theme/layout markup, map/presentation order |
-| `packages/obsidian-story-map/src/resolver.test.ts` | explicit slides, folder discovery, tag filtering, note display, media resolution |
+| `packages/story-map-core/src/parser.test.ts` | parsing, normalization, defaults, ordering, fence extraction, slide `date` coercion, `effectiveNoteDisplay`, helpers |
+| `packages/react-story-map/src/StoryMap.test.tsx` | slide-title rendering, SSR theme/layout markup, map/presentation order, timeline rows/date chips/active row/nav-free markup, shared note-link shape |
+| `packages/react-story-map/src/markerOffset.test.ts` | active-marker focus per layout mode, including the timeline reuse of the `full` options |
+| `packages/obsidian-story-map/src/resolver.test.ts` | explicit slides, folder discovery, tag filtering, note display, media resolution, slide `date` from `dateField`, the timeline note-display carve-out |
 | `packages/obsidian-story-map/src/settings-data.test.ts` | settings → source defaults mapping |
 | `packages/obsidian-story-map/src/agents.test.ts` | argument parsing, per-agent output parsing, executable detection |
 | `packages/obsidian-story-map/src/coordinates.test.ts` | coordinate prompt, candidate parsing/validation/dedupe, YAML line formatting |
 | `packages/obsidian-story-map/src/i18n.test.ts` | locale resolution, translation and message mapping |
 | `packages/obsidian-story-map/src/main.test.ts` | scoped routing, explicit Markdown mode and wrapper ownership on disable |
 | `packages/obsidian-story-map/src/settings-tab.test.ts` | definitions, legacy rendering, local-agent draft persistence |
-| `packages/remark-story-map/src/index.test.ts` | fence transform, document flag, `VaultIndex`, folder discovery, tag filtering, `noteDisplay`, source-relative media, scan exclusions, host route resolver |
+| `packages/remark-story-map/src/index.test.ts` | fence transform, document flag, `VaultIndex`, folder discovery, tag filtering, `noteDisplay`, source-relative media, scan exclusions, host route resolver, timeline slide dates and their serialization |
 
 The examples and the landing site have no automated tests; verify them manually.
 
@@ -397,6 +435,8 @@ The examples and the landing site have no automated tests; verify them manually.
 | --- | --- |
 | Schema/defaults/normalization | `story-map-core` (`schema.ts`, `parser.ts`, `types.ts`) + `parser.test.ts` |
 | Rendering, navigation, markers, media, note links | `react-story-map/src/MapCanvas.tsx`, `StoryMap.tsx`, `styles.css`, `StoryMap.test.tsx` |
+| Layout modes and the timeline row list | `react-story-map/src/Timeline.tsx`, `StoryMap.tsx`, `markerOffset.ts`, `styles.css` |
+| Slide `date` semantics (fill, coercion, precedence) | core `types.ts`/`parser.ts`/`helpers.ts` + both adapters (`resolver.ts`, `vault.ts`) |
 | Obsidian view, commands, settings, detection | `obsidian-story-map/src/*` |
 | Local AI agent config and coordinate lookup | `obsidian-story-map/src/agents.ts`, `coordinates.ts`, `local-agents.ts`, `coordinate-lookup.ts` |
 | Obsidian note/media resolution | `obsidian-story-map/src/resolver.ts` |
