@@ -2,7 +2,7 @@
 
 The three npm libraries release together; the bundled Obsidian plugin releases independently.
 All three npm libraries are published at `0.4.0` on `latest` with GitHub OIDC provenance, and
-the Obsidian plugin is released at `0.4.0` on GitHub. Plugin `0.4.0` retains minimum app
+the Obsidian plugin is released at `0.4.0` on GitHub with attested assets. Plugin `0.4.0` retains minimum app
 version `1.8.7` for the `loadLocalStorage`/`saveLocalStorage`/`getLanguage` APIs; `0.2.0`
 declared `1.8.0` incorrectly and should not be submitted.
 Published versions are immutable; choose a new version for the next release.
@@ -47,6 +47,10 @@ The owner confirmed all three publishers were saved, and GitHub OIDC publication
 succeeded in [run 36235091030](https://github.com/kywk/story-map/actions/runs/36235091030).
 Release `0.2.0` published all three libraries through the same workflow in
 [run 36356915761](https://github.com/kywk/story-map/actions/runs/36356915761).
+Releases `0.3.0` and `0.4.0` published all three libraries through the same workflow;
+see each release's notes for run links. npm can report a package as accepted for a few
+minutes before it appears in registry metadata, so confirm with a direct uncached
+lookup before declaring a publish failed.
 Do not push `npm-v0.1.0`: immutable versions cannot be replaced.
 
 The local npm account resolves to `kywk`, but trust-list queries returned HTTP 403 with
