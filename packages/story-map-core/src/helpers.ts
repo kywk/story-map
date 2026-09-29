@@ -101,7 +101,8 @@ export function validCoordinates(lat: number, lng: number): boolean {
 /**
  * Note display mode after layout is taken into account. The `full` layout always
  * shows the complete note body, so it resolves notes with `full` semantics no
- * matter which `noteDisplay` the document configured.
+ * matter which `noteDisplay` the document configured. Every other mode keeps the
+ * configured value, including `timeline`, which renders compact entries.
  */
 export function effectiveNoteDisplay(
   layoutMode: StoryMapLayoutMode,
@@ -112,8 +113,8 @@ export function effectiveNoteDisplay(
 
 /**
  * Frontmatter contribution for full-text slides. The slide shows the note body as-is,
- * so frontmatter-derived display fields (title, text, media) are dropped and never
- * duplicate body content; only the map location (plus the marker hint) survives.
+ * so frontmatter-derived display fields (title, text, media, date) are dropped and
+ * never duplicate body content; only the map location (plus the marker hint) survives.
  * Fields the story document set explicitly are merged back by the caller.
  */
 export function locationOnlySlide(resolved: Partial<StorySlide>): Partial<StorySlide> {

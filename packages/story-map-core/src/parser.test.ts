@@ -209,6 +209,33 @@ describe('theme and layout contract', () => {
       .toEqual({ mode: 'full', card: { align: 'left' }, full: { side: 'left', contentRatio: 0.5 } });
   });
 
+  it('parses the timeline mode and keeps the card and full option defaults', () => {
+    expect(parseStoryMapSourceYaml('layout:\n  mode: timeline').layout).toEqual({
+      mode: 'timeline',
+      card: { align: 'left' },
+      full: { side: 'left', contentRatio: 0.5 },
+    });
+  });
+
+  it('lets timeline reuse the full options instead of adding its own block', () => {
+    const story = parseStoryMapSourceYaml(
+      'layout:\n  mode: timeline\n  full:\n    side: right\n    contentRatio: 0.4',
+    );
+    expect(story.layout).toEqual({
+      mode: 'timeline',
+      card: { align: 'left' },
+      full: { side: 'right', contentRatio: 0.4 },
+    });
+  });
+
+  it('keeps the timeline layout document-owned when source defaults are supplied', () => {
+    const story = parseStoryMapSourceYaml('layout:\n  mode: timeline', {
+      order: 'desc',
+      noteDisplay: 'full',
+    });
+    expect(story.layout.mode).toBe('timeline');
+  });
+
   it.each([
     { card: { widthRatio: 0.19 } },
     { card: { widthRatio: 0.81 } },
@@ -230,6 +257,63 @@ describe('theme and layout contract', () => {
     }).layout;
     expect(layout.card).toEqual({ align: 'left', widthRatio: 0.20, heightRatio: 0.95 });
     expect(layout.full).toEqual({ side: 'left', contentRatio: 0.70 });
+  });
+});
+
+describe('slide dates', () => {
+  it('coerces a YAML timestamp, an epoch number, and a readable string to epoch ms', () => {
+    const source = parseStoryMapSourceYaml(
+      [
+        'slides:',
+        '  - title: Leaving home',
+        '    date: 2024-04-12',
+        '  - title: In transit',
+        '    date: 1712880000000',
+        '  - title: Arrival',
+        "    date: 'Apr 12, 2024'",
+      ].join('\n'),
+    );
+
+    expect(source.slides?.map((slide) => slide.date)).toEqual([
+      Date.UTC(2024, 3, 12),
+      1712880000000,
+      // `Apr 12, 2024` is not an ISO date, so `Date.parse` reads it as local time.
+      // Compare against the same coercion the parser must use.
+      toTimestamp('Apr 12, 2024'),
+    ]);
+  });
+
+  it('coerces a Date instance, as read from note frontmatter', () => {
+    const story = parseStoryMapObject({
+      slides: [{ title: 'Leaving home', date: new Date('2024-04-12T00:00:00.000Z') }],
+    });
+    expect(story.slides[0]?.date).toBe(Date.UTC(2024, 3, 12));
+  });
+
+  it('omits the key entirely when a slide has no date', () => {
+    const story = parseStoryMapObject({
+      slides: [{ title: 'One' }, { title: 'Two', location: [25.033, 121.5654] }],
+    });
+    expect(Object.keys(story.slides[0] ?? {})).toEqual(['title']);
+    expect(story.slides[1]?.date).toBeUndefined();
+  });
+
+  it('fails clearly on an unparseable slide date', () => {
+    const source = [
+      'slides:',
+      '  - title: One',
+      '  - title: Two',
+      "    date: 'not a date'",
+    ].join('\n');
+
+    expect(() => parseStoryMapYaml(source)).toThrow(StoryMapParseError);
+    expect(() => parseStoryMapYaml(source)).toThrow('slides[1].date is not a parseable date.');
+  });
+
+  it('rejects a date that is present but not a date value', () => {
+    for (const date of ['not a date', '', null, true, {}, []]) {
+      expect(() => parseStoryMapObject({ slides: [{ date }] })).toThrow(StoryMapParseError);
+    }
   });
 });
 
@@ -269,6 +353,15 @@ describe('mergeResolvedSlide', () => {
     expect(merged.title).toBe('Explicit');
     expect(merged.text).toBe('Inherited');
     expect(merged.location).toEqual({ lat: 1, lng: 2 });
+  });
+
+  it('keeps an authored slide date over a note-derived date', () => {
+    expect(mergeResolvedSlide({ date: 1 }, { date: 2 }).date).toBe(1);
+
+    const source = parseStoryMapSourceYaml('slides:\n  - date: 1712880000000\n    title: Leaving home');
+    const merged = mergeResolvedSlide(source.slides?.[0] ?? {}, { date: 2, text: 'Inherited' });
+    expect(merged.date).toBe(1712880000000);
+    expect(merged.text).toBe('Inherited');
   });
 });
 
@@ -441,6 +534,15 @@ describe('effectiveNoteDisplay', () => {
     expect(effectiveNoteDisplay('full', 'link')).toBe('full');
     expect(effectiveNoteDisplay('full', 'full')).toBe('full');
   });
+
+  it('keeps the configured mode for timeline layouts so entries stay compact', () => {
+    expect(effectiveNoteDisplay('timeline', 'basic')).toBe('basic');
+    expect(effectiveNoteDisplay('timeline', 'link')).toBe('link');
+    expect(effectiveNoteDisplay('timeline', 'full')).toBe('full');
+
+    const source = parseStoryMapSourceYaml('layout:\n  mode: timeline\nnoteDisplay: basic');
+    expect(effectiveNoteDisplay(source.layout.mode, source.noteDisplay)).toBe('basic');
+  });
 });
 
 describe('locationOnlySlide', () => {
@@ -455,6 +557,20 @@ describe('locationOnlySlide', () => {
         notePath: '/docs/santiago/',
       }),
     ).toEqual({ location: { lat: 1, lng: 2 }, mapmarker: 'city' });
+  });
+
+  it('drops the slide date along with the other frontmatter display fields', () => {
+    const stripped = locationOnlySlide({
+      title: 'Santiago',
+      date: 1712880000000,
+      text: 'Summary.',
+      location: { lat: 1, lng: 2 },
+      media: { type: 'image', src: 'cover.jpg' },
+      mapmarker: 'city',
+    });
+
+    expect(stripped).toEqual({ location: { lat: 1, lng: 2 }, mapmarker: 'city' });
+    expect('date' in stripped).toBe(false);
   });
 
   it('returns an empty slide when no location survives', () => {
@@ -595,6 +711,21 @@ describe('toStoryMapConfig', () => {
       card: { align: 'left' },
       full: { side: 'right', contentRatio: 0.45 },
     });
+  });
+
+  it('carries the timeline layout and slide dates into the render config', () => {
+    const source = parseStoryMapSourceObject({
+      layout: { mode: 'timeline', full: { side: 'right' } },
+      slides: [{ title: 'Leaving home', date: 1712880000000 }],
+    });
+    const config = toStoryMapConfig(source, source.slides ?? []);
+
+    expect(config.layout).toEqual({
+      mode: 'timeline',
+      card: { align: 'left' },
+      full: { side: 'right', contentRatio: 0.5 },
+    });
+    expect(config.slides[0]?.date).toBe(1712880000000);
   });
 
   it('resolves initialSlide to index in the canonical config', () => {

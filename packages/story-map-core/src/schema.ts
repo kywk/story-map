@@ -28,6 +28,7 @@ export const storySlideSchema = z.object({
   notePath: z.string().optional(),
   title: z.string().optional(),
   text: z.string().optional(),
+  date: z.number().int().optional(),
   location: locationSchema.optional(),
   media: mediaSchema.optional(),
   mapmarker: z.string().optional(),
@@ -51,7 +52,7 @@ const defaultLayout = {
 };
 
 export const storyMapLayoutSchema = z.object({
-  mode: z.enum(['card', 'full']).default(DEFAULT_LAYOUT_MODE),
+  mode: z.enum(['card', 'full', 'timeline']).default(DEFAULT_LAYOUT_MODE),
   card: cardLayoutSchema.default({ align: DEFAULT_CARD_ALIGN }),
   full: fullLayoutSchema.default({
     side: DEFAULT_FULL_SIDE,

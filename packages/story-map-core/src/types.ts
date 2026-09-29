@@ -21,6 +21,12 @@ export interface StorySlide {
   notePath?: string;
   title?: string;
   text?: string;
+  /**
+   * Optional entry date in epoch milliseconds, normalized by the parser from
+   * `Date`, `number`, and `string` sources. Consumed by the timeline layout;
+   * adapters fill it from the configured `dateField` for folder-discovered notes.
+   */
+  date?: number;
   location?: StoryLocation;
   media?: StoryMedia;
   mapmarker?: string;
@@ -42,7 +48,7 @@ export type StoryMapTheme = 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'a
 export const DEFAULT_MAP_THEME: StoryMapTheme = 'light';
 export const DEFAULT_PANEL_OPACITY = 0.85;
 
-export type StoryMapLayoutMode = 'card' | 'full';
+export type StoryMapLayoutMode = 'card' | 'full' | 'timeline';
 export const DEFAULT_LAYOUT_MODE: StoryMapLayoutMode = 'card';
 export const DEFAULT_CARD_ALIGN: StoryMapCardLayout['align'] = 'left';
 export const DEFAULT_FULL_SIDE: StoryMapFullLayout['side'] = 'left';

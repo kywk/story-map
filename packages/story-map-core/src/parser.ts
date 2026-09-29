@@ -1,6 +1,12 @@
 import { load } from 'js-yaml';
 import { storyMapSchema, storyMapSourceSchema } from './schema.js';
-import { coerceLocation, coerceMedia, resolveInitialSlideIndex, validCoordinates } from './helpers.js';
+import {
+  coerceLocation,
+  coerceMedia,
+  resolveInitialSlideIndex,
+  toTimestamp,
+  validCoordinates,
+} from './helpers.js';
 import type {
   StoryMapConfig,
   StoryMapSourceConfig,
@@ -25,6 +31,8 @@ function normalizeSlide(value: unknown, index: number): Record<string, unknown> 
   const hasLocation = slide.location !== undefined;
   const location = coerceLocation(slide.location, slide.zoom);
   const media = coerceMedia(slide.media);
+  const hasDate = slide.date !== undefined;
+  const date = hasDate ? toTimestamp(slide.date) : null;
 
   if (hasLocation && !location) {
     throw new StoryMapParseError(
@@ -32,8 +40,14 @@ function normalizeSlide(value: unknown, index: number): Record<string, unknown> 
     );
   }
 
+  if (hasDate && date === null) {
+    throw new StoryMapParseError(`slides[${index}].date is not a parseable date.`);
+  }
+
   if (location) slide.location = location;
   if (media) slide.media = media;
+  if (date !== null) slide.date = date;
+  else delete slide.date;
   delete slide.zoom;
 
   return slide;

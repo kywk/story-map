@@ -77,10 +77,20 @@ defaults cannot override it.
 
 `map.center`, `map.minZoom`, and `map.maxZoom` are optional. `panelOpacity` accepts a number between `0.0` and `1.0` (built-in default `0.85`). All source keys use camelCase.
 Themes are `auto`, `light`, `dark`, `vintage`, `cyber`, and `atlas` (built-in default
-`light`). Card layouts also accept
+`light`). Layout modes are `card` (built-in default), `full`, and `timeline`; `timeline`
+reuses the `full` side and content ratio rather than adding a mode of its own. Card layouts also accept
 `widthRatio` (`0.20..0.80`) and `heightRatio` (`0.20..0.95`); both are optional. Full
 layouts accept `contentRatio` (`0.30..0.70`). The canonical config contains both `card`
 and `full` groups, including defaults for the inactive mode.
+
+## Slide dates
+
+A slide may carry a `date`, normalized to epoch milliseconds. The parser accepts a YAML
+timestamp (`2024-04-12`), an epoch number, a `Date`, or a string such as `'Apr 12, 2024'`
+and rejects a present but unparseable value with a `StoryMapParseError`. A slide without
+a `date` omits the key. Hosts fill `date` from the configured `dateField` for
+folder-discovered notes; an authored `date` wins over a note-derived one, and
+`noteDisplay: full` slides drop it along with the other frontmatter display fields.
 
 ## Other exports
 
