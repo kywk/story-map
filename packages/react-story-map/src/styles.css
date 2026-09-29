@@ -394,16 +394,34 @@
 }
 /* flow-root contains the floated thumbnail without creating a scroll container, so
    the row element itself stays a valid scrollIntoView target. */
+/* The row is an explicit grid rather than a float: a floated thumbnail pushed the
+   heading below it and left a tall empty band beside the date chip. Grid places
+   the date and the heading together in the first column, the thumbnail beside
+   them, and lets the description and note chip span the full width underneath.
+   An absent thumbnail collapses the `media` column to zero, so a dateless,
+   coverless row costs no extra width. `align-content: start` keeps the rows
+   packed against the top instead of stretching to fill. */
 .story-map[data-layout='timeline'] .story-map__timeline-item {
   position: relative;
-  display: flow-root;
-  margin: 0 0 16px;
-  padding: 0 0 16px 26px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'date  media'
+    'title media'
+    'text  text'
+    'note  note';
+  /* The thumbnail only reserves the first two rows; the description and the note
+     chip span the full width below it, so a long excerpt is not squeezed into the
+     narrow left column beside a 64px image. */
+  align-content: start;
+  row-gap: 3px;
+  margin: 0 0 14px;
+  padding: 0 0 14px 26px;
   border-left: 2px solid transparent;
 }
 /* The spine runs the full column and reaches the next row's node; the node is a
-   per-row ring drawn with ::after, aligned to the row's first line (the date chip
-   when present, otherwise the title). */
+   per-row ring drawn with ::after, aligned to the row's top edge, which is the
+   date chip when present and the title otherwise. */
 .story-map[data-layout='timeline'] .story-map__timeline-item::before {
   content: '';
   position: absolute;
@@ -436,8 +454,10 @@
   background: var(--story-map-accent, var(--story-map-accent-fallback));
 }
 .story-map[data-layout='timeline'] .story-map__timeline-date {
+  grid-area: date;
+  justify-self: start;
   display: inline-block;
-  margin: 0 0 6px;
+  margin: 0;
   padding: 2px 9px;
   border: 1px solid var(--story-map-border, var(--story-map-border-fallback));
   border-radius: 999px;
@@ -447,8 +467,10 @@
   font-variant-numeric: tabular-nums;
 }
 .story-map[data-layout='timeline'] .story-map__timeline-media {
-  float: right;
-  margin: 0 0 8px 12px;
+  grid-area: media;
+  align-self: start;
+  justify-self: end;
+  margin: 0;
   width: 64px;
   height: 64px;
 }
@@ -459,20 +481,27 @@
   object-fit: cover;
   border-radius: 8px;
 }
+/* A long entry title truncates on one line with an ellipsis rather than pushing
+   the description and note chip down the row. */
 .story-map[data-layout='timeline'] .story-map__timeline-title {
-  margin: 0 0 4px;
+  grid-area: title;
+  min-width: 0;
+  margin: 0;
   font-size: 1rem;
   line-height: 1.35;
 }
 .story-map[data-layout='timeline'] .story-map__timeline-select {
   display: block;
   width: 100%;
+  overflow: hidden;
   padding: 0;
   border: 0;
   background: none;
   color: inherit;
   font: inherit;
   text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
 }
 .story-map[data-layout='timeline'] .story-map__timeline-select:focus-visible {
@@ -487,6 +516,7 @@
   inset: 0;
 }
 .story-map[data-layout='timeline'] .story-map__timeline-text {
+  grid-area: text;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -504,8 +534,10 @@
 .story-map[data-layout='timeline'] .story-map__timeline-note {
   position: relative;
   z-index: 1;
+  grid-area: note;
+  justify-self: start;
   display: inline-block;
-  margin-top: 8px;
+  margin: 3px 0 0;
   padding: 2px 9px;
   border: 1px solid var(--story-map-border, var(--story-map-border-fallback));
   border-radius: 999px;
@@ -567,5 +599,14 @@
   }
   .story-map[data-layout='timeline'] .story-map__timeline {
     padding: 12px 16px 20px;
+  }
+  /* Narrow timeline rows get a wider gutter because the column is the full
+     viewport width, so the 64px thumbnail leaves more room for the heading. */
+  .story-map[data-layout='timeline'] .story-map__timeline-item {
+    padding-left: 22px;
+  }
+  .story-map[data-layout='timeline'] .story-map__timeline-media {
+    width: 56px;
+    height: 56px;
   }
 }
