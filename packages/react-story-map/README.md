@@ -40,7 +40,7 @@ const story: StoryMapConfig = {
   map: {
     theme: 'light',
     zoom: 14,
-    tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '© OpenStreetMap contributors',
     showPath: true,
   },

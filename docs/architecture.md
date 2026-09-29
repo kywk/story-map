@@ -282,7 +282,7 @@ duplicate the Obsidian settings UI.
 | `map.theme` | `light` (Obsidian plugin default `auto`) | yes |
 | `map.zoom` | `6` | yes |
 | `map.minZoom`, `map.maxZoom` | — | yes |
-| `map.tileUrl` | OpenStreetMap standard | yes |
+| `map.tileUrl` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` (`DEFAULT_TILE_URL`) | yes |
 | `map.attribution` | `© OpenStreetMap contributors` | yes |
 | `map.showPath` | `true` | yes |
 | `layout.mode` | `card` (values: `card`, `full`, `timeline`) | no (document only) |

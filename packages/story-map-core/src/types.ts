@@ -46,6 +46,15 @@ export const DEFAULT_INITIAL_SLIDE: StoryInitialSlide = 'first';
 
 export type StoryMapTheme = 'auto' | 'light' | 'dark' | 'vintage' | 'cyber' | 'atlas';
 export const DEFAULT_MAP_THEME: StoryMapTheme = 'light';
+
+/**
+ * Built-in raster tile source. The OpenStreetMap tile usage policy asks applications
+ * to use the standard single-host endpoint rather than hard-coding a rotated
+ * `{s}.tile.openstreetmap.org` subdomain, so the shared default is the plain host.
+ * Attribution must stay visible: it is required by the same policy.
+ */
+export const DEFAULT_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+export const DEFAULT_TILE_ATTRIBUTION = '© OpenStreetMap contributors';
 export const DEFAULT_PANEL_OPACITY = 0.85;
 
 export type StoryMapLayoutMode = 'card' | 'full' | 'timeline';

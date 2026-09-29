@@ -20,7 +20,7 @@ are included in `main.js`; local builds also provide a separate notice file (see
 
 ## Network use
 
-Maps load tiles from OpenStreetMap (`https://{s}.tile.openstreetmap.org`) by default
+Maps load tiles from OpenStreetMap (`https://tile.openstreetmap.org`) by default
 to display geographic context. Tile requests disclose the requested map area and normal
 connection information to the tile provider. A custom `map.tileUrl` uses the configured
 provider instead. Remote slide images, videos, iframes and Markdown images connect to

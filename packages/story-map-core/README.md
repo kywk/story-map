@@ -67,7 +67,7 @@ defaults cannot override it.
 | `panelOpacity` | `0.85` |
 | `map.zoom` | `6` |
 | `map.theme` | `light` |
-| `map.tileUrl` | `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png` |
+| `map.tileUrl` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` |
 | `map.attribution` | `© OpenStreetMap contributors` |
 | `map.showPath` | `true` |
 | `layout.mode` | `card` |

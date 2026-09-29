@@ -7,6 +7,8 @@ import {
   DEFAULT_LAYOUT_MODE,
   DEFAULT_PANEL_OPACITY,
   DEFAULT_MAP_THEME,
+  DEFAULT_TILE_ATTRIBUTION,
+  DEFAULT_TILE_URL,
 } from './types.js';
 
 const locationSchema = z.object({
@@ -98,14 +100,14 @@ const storyMapBaseSchema = z.object({
     minZoom: z.number().min(0).max(24).optional(),
     maxZoom: z.number().min(0).max(24).optional(),
     theme: z.enum(['auto', 'light', 'dark', 'vintage', 'cyber', 'atlas']).default(DEFAULT_MAP_THEME),
-    tileUrl: z.string().min(1).default('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
-    attribution: z.string().default('© OpenStreetMap contributors'),
+    tileUrl: z.string().min(1).default(DEFAULT_TILE_URL),
+    attribution: z.string().default(DEFAULT_TILE_ATTRIBUTION),
     showPath: z.boolean().default(true),
   }).default({
     zoom: 6,
     theme: DEFAULT_MAP_THEME,
-    tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '© OpenStreetMap contributors',
+    tileUrl: DEFAULT_TILE_URL,
+    attribution: DEFAULT_TILE_ATTRIBUTION,
     showPath: true,
   }),
   layout: storyMapLayoutSchema.default(defaultLayout),

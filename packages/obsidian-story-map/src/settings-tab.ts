@@ -175,7 +175,7 @@ export class StoryMapSettingTab extends PluginSettingTab {
           .setDesc('Built-in default: OpenStreetMap standard tiles.')
           .addText((text) =>
             text
-              .setPlaceholder('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+              .setPlaceholder('https://tile.openstreetmap.org/{z}/{x}/{y}.png')
               .setValue(this.plugin.settings.mapTileUrl ?? '')
               .onChange((value) => this.patch({ mapTileUrl: trimOrUndefined(value) })),
           );

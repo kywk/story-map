@@ -131,7 +131,7 @@ describe('parseStoryMapObject', () => {
     expect(story.schema).toBe('storymap/v1');
     expect(story.panelOpacity).toBe(0.85);
     expect(story.map.zoom).toBe(6);
-    expect(story.map.tileUrl).toContain('openstreetmap.org');
+    expect(story.map.tileUrl).toBe('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
     expect(story.map.theme).toBe('light');
     expect(story.layout).toEqual({
       mode: 'card',
@@ -692,7 +692,7 @@ describe('toStoryMapConfig', () => {
       map: {
         zoom: 6,
         theme: 'light',
-        tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         attribution: '© OpenStreetMap contributors',
         showPath: true,
       },

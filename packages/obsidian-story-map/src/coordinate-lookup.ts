@@ -1,11 +1,17 @@
 import { Modal, Notice, type App, type TFile } from 'obsidian';
 import type { CircleMarker, Map as LeafletMap } from 'leaflet';
+import {
+  DEFAULT_TILE_ATTRIBUTION as CORE_TILE_ATTRIBUTION,
+  DEFAULT_TILE_URL as CORE_TILE_URL,
+} from '@story-map/story-map-core';
 import { formatLocationLine, type CoordinateCandidate } from './coordinates.js';
 import { t, translateMessage } from './i18n.js';
 import type StoryMapPlugin from './main.js';
 
-export const DEFAULT_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-export const DEFAULT_TILE_ATTRIBUTION = '© OpenStreetMap contributors';
+// The AI lookup mini-map reuses the shared built-in tile source so the picker and a
+// rendered map never disagree about which provider the plugin ships with.
+export const DEFAULT_TILE_URL = CORE_TILE_URL;
+export const DEFAULT_TILE_ATTRIBUTION = CORE_TILE_ATTRIBUTION;
 
 class LocationQueryModal extends Modal {
   private settled = false;
