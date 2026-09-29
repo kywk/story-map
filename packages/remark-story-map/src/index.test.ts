@@ -45,6 +45,16 @@ describe('remarkStoryMap', () => {
     expect(config.initialSlide).toBe(2);
   });
 
+  it('serializes map opacity for Docusaurus client hydration', () => {
+    const tree = storyMapTree('title: Demo\nmap:\n  opacity: 0.45\nslides:\n  - title: One\n');
+
+    remarkStoryMap()(tree);
+
+    const node = tree.children[0] as Html;
+    const config = readConfig(node);
+    expect((config.map as Record<string, unknown>).opacity).toBe(0.45);
+  });
+
   it('serializes the canonical theme and layout for each host independently', () => {
     const tree: Root = {
       type: 'root',
