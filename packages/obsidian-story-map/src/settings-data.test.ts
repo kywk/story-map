@@ -13,11 +13,11 @@ describe('toSourceDefaults', () => {
       dateField: ' visited ',
       noteDisplay: 'full',
       initialSlide: 'last',
+      panelOpacity: 0.6,
       mapTheme: 'vintage',
       mapZoom: 5,
       mapMinZoom: 2,
       mapMaxZoom: 18,
-      mapOpacity: 0.6,
       mapTileUrl: ' https://tiles.test/{z}/{x}/{y}.png ',
       mapAttribution: ' © Test ',
       mapShowPath: false,
@@ -28,12 +28,12 @@ describe('toSourceDefaults', () => {
       dateField: 'visited',
       noteDisplay: 'full',
       initialSlide: 'last',
+      panelOpacity: 0.6,
       map: {
         theme: 'vintage',
         zoom: 5,
         minZoom: 2,
         maxZoom: 18,
-        opacity: 0.6,
         tileUrl: 'https://tiles.test/{z}/{x}/{y}.png',
         attribution: '© Test',
         showPath: false,
@@ -45,7 +45,7 @@ describe('toSourceDefaults', () => {
     const settings: StoryMapPluginSettings = {
       dateField: '   ',
       mapZoom: Number.NaN,
-      mapOpacity: Number.NaN,
+      panelOpacity: Number.NaN,
       mapTileUrl: '  ',
     };
 
@@ -61,10 +61,15 @@ describe('toSourceDefaults', () => {
     expect(parseStoryMapSourceObject({}).map.theme).toBe('light');
   });
 
-  it('lets the document opacity override the plugin default', () => {
-    const defaults = toSourceDefaults({ mapOpacity: 0.4 });
-    expect(parseStoryMapSourceObject({}, defaults).map.opacity).toBe(0.4);
-    expect(parseStoryMapSourceObject({ map: { opacity: 0.8 } }, defaults).map.opacity).toBe(0.8);
-    expect(parseStoryMapSourceObject({}).map.opacity).toBe(1);
+  it('lets the document panel opacity override the plugin default', () => {
+    const defaults = toSourceDefaults({ panelOpacity: 0.4 });
+    expect(parseStoryMapSourceObject({}, defaults).panelOpacity).toBe(0.4);
+    expect(parseStoryMapSourceObject({ panelOpacity: 0.8 }, defaults).panelOpacity).toBe(0.8);
+    expect(parseStoryMapSourceObject({}).panelOpacity).toBe(0.85);
+  });
+
+  it('migrates legacy mapOpacity setting to panelOpacity default', () => {
+    const defaults = toSourceDefaults({ mapOpacity: 0.4 } as unknown as StoryMapPluginSettings);
+    expect(defaults.panelOpacity).toBe(0.4);
   });
 });

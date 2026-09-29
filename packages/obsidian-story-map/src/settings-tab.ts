@@ -134,6 +134,17 @@ export class StoryMapSettingTab extends PluginSettingTab {
               .onChange((value) => this.patch({ initialSlide: toInitialSlide(value) })),
           );
       } },
+      { name: 'Default panel opacity', render: (setting) => {
+        setting
+          .setDesc('Article / card panel background opacity (0.0 to 1.0). Allows the map to show through behind story text. Built-in default: 0.85.')
+          .addText((text) => {
+            text.inputEl.step = '0.05';
+            text.inputEl.min = '0';
+            text.inputEl.max = '1';
+            text.setPlaceholder('0.85');
+            this.number(text, this.plugin.settings.panelOpacity, (value) => this.patch({ panelOpacity: clampOpacity(value) }));
+          });
+      } },
       { name: 'Map', render: (setting) => {
         setting.setHeading();
       } },
@@ -158,17 +169,6 @@ export class StoryMapSettingTab extends PluginSettingTab {
       { name: 'Default maximum zoom', render: (setting) => {
         setting
           .addText((text) => this.number(text, this.plugin.settings.mapMaxZoom, (value) => this.patch({ mapMaxZoom: value })));
-      } },
-      { name: 'Default map opacity', render: (setting) => {
-        setting
-          .setDesc('Base map tile opacity (0.0 to 1.0). Built-in default: 1.0 (fully opaque).')
-          .addText((text) => {
-            text.inputEl.step = '0.05';
-            text.inputEl.min = '0';
-            text.inputEl.max = '1';
-            text.setPlaceholder('1.0');
-            this.number(text, this.plugin.settings.mapOpacity, (value) => this.patch({ mapOpacity: clampOpacity(value) }));
-          });
       } },
       { name: 'Default tile URL', render: (setting) => {
         setting

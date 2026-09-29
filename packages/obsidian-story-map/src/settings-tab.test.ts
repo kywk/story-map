@@ -77,8 +77,8 @@ describe('settings definitions and legacy rendering', () => {
     const { tab, container } = setup();
     const definitions = tab.getSettingDefinitions();
     expect(definitions.map((definition) => 'name' in definition ? definition.name : '')).toEqual([
-      'Defaults', 'Default order', 'Default date field', 'Default note display', 'Default initial slide', 'Map', 'Default map theme',
-      'Default zoom', 'Default minimum zoom', 'Default maximum zoom', 'Default map opacity', 'Default tile URL',
+      'Defaults', 'Default order', 'Default date field', 'Default note display', 'Default initial slide', 'Default panel opacity', 'Map', 'Default map theme',
+      'Default zoom', 'Default minimum zoom', 'Default maximum zoom', 'Default tile URL',
       'Default attribution', 'Default show path', 'Restore defaults',
     ]);
     expect(container.empty).not.toHaveBeenCalled();
@@ -109,18 +109,18 @@ describe('settings definitions and legacy rendering', () => {
     expect(container.rows.find((row) => row.name === 'Default map theme')?.control?.value).toBe('auto');
   });
 
-  it('persists map opacity and clamps to valid range', () => {
+  it('persists panel opacity and clamps to valid range', () => {
     const { tab, plugin, container } = setup();
     tab.display();
-    const opacity = container.rows.find((row) => row.name === 'Default map opacity');
+    const opacity = container.rows.find((row) => row.name === 'Default panel opacity');
     expect(opacity?.control?.value).toBe('');
     opacity?.control?.change?.('0.4');
-    expect(plugin.settings).toMatchObject({ mapOpacity: 0.4 });
+    expect(plugin.settings).toMatchObject({ panelOpacity: 0.4 });
     expect(plugin.saveSettings).toHaveBeenCalledOnce();
     opacity?.control?.change?.('1.5');
-    expect(plugin.settings).toMatchObject({ mapOpacity: 1 });
+    expect(plugin.settings).toMatchObject({ panelOpacity: 1 });
     container.rows.find((row) => row.name === 'Restore defaults')?.control?.click?.();
-    expect(container.rows.find((row) => row.name === 'Default map opacity')?.control?.value).toBe('');
+    expect(container.rows.find((row) => row.name === 'Default panel opacity')?.control?.value).toBe('');
   });
 
   it('persists the initial slide and restores the built-in selection', () => {
