@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import matter from 'gray-matter';
 import type { Code, Html, Root } from 'mdast';
-import { afterAll, describe, expect, it } from 'vitest';
-import { parseStoryMapSourceObject } from '@story-map/story-map-core';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { parseStoryMapSourceObject, toTimestamp } from '@story-map/story-map-core';
 import remarkStoryMap, { VaultIndex } from './index.js';
 
 function storyMapTree(value: string): Root {
@@ -282,6 +282,202 @@ describe('VaultIndex folder discovery', () => {
   });
 });
 
+describe('VaultIndex timeline dates', () => {
+  const vaultRoot = mkdtempSync(path.join(tmpdir(), 'storymap-timeline-'));
+  mkdirSync(path.join(vaultRoot, 'Places'), { recursive: true });
+  writeFileSync(
+    path.join(vaultRoot, 'Places', 'Santiago.md'),
+    [
+      '---',
+      'story-map-note: true',
+      'title: Santiago',
+      'date-created: 2026-01-15',
+      'date-visited: 2026-05-05',
+      'location: [-33.4489, -70.6693]',
+      'mapmarker: city',
+      'description: Frontmatter summary.',
+      'cover: ./santiago.jpg',
+      '---',
+      '',
+      '# Real body',
+      '',
+      'Full note text.',
+    ].join('\n'),
+  );
+  writeFileSync(
+    path.join(vaultRoot, 'Places', 'Valparaiso.md'),
+    [
+      '---',
+      'story-map-note: true',
+      'title: Valparaiso',
+      'date-created: 2026-02-20',
+      'date-visited: 2026-01-02',
+      'location: [-33.0472, -71.6127]',
+      '---',
+      '',
+      'Valparaiso body.',
+    ].join('\n'),
+  );
+  writeFileSync(
+    path.join(vaultRoot, 'Places', 'Broken.md'),
+    ['---', 'story-map-note: true', 'title: Broken', "date-created: sometime in spring", '---', '', 'Broken body.'].join('\n'),
+  );
+  writeFileSync(
+    path.join(vaultRoot, 'Places', 'Undated.md'),
+    ['---', 'story-map-note: true', 'title: Undated', '---', '', 'Undated body.'].join('\n'),
+  );
+
+  afterAll(() => rmSync(vaultRoot, { recursive: true, force: true }));
+
+  function vault(): VaultIndex {
+    return new VaultIndex({ vaultRoot, resolveNoteHref: (relativePath) => `/docs/${relativePath.toLowerCase()}/` });
+  }
+
+  it('carries the configured dateField value on every discovered slide', () => {
+    const story = vault().resolveSource(parseStoryMapSourceObject({ noteFolder: 'Places' }));
+
+    expect(story.slides.map((slide) => slide.date)).toEqual([
+      toTimestamp('2026-01-15'),
+      toTimestamp('2026-02-20'),
+      undefined,
+      undefined,
+    ]);
+    expect(story.slides[0]?.date).toBe(Date.parse('2026-01-15'));
+  });
+
+  it('dateField moves the key that feeds both ordering and date', () => {
+    const story = vault().resolveSource(
+      parseStoryMapSourceObject({ noteFolder: 'Places', dateField: 'date-visited' }),
+    );
+
+    expect(story.slides.map((slide) => slide.title)).toEqual([
+      'Valparaiso',
+      'Santiago',
+      'Broken',
+      'Undated',
+    ]);
+    expect(story.slides.map((slide) => slide.date)).toEqual([
+      toTimestamp('2026-01-02'),
+      toTimestamp('2026-05-05'),
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it('discovers a note whose dateField value is unparseable without a date', () => {
+    const story = vault().resolveSource(parseStoryMapSourceObject({ noteFolder: 'Places' }));
+
+    expect(story.slides.map((slide) => slide.title)).toEqual([
+      'Santiago',
+      'Valparaiso',
+      'Broken',
+      'Undated',
+    ]);
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+    expect(story.slides[2]?.date).toBeUndefined();
+    expect('date' in (story.slides[2] ?? {})).toBe(false);
+  });
+
+  it('lets an explicit slide date win over the referenced note date', () => {
+    const story = vault().resolveSource(
+      parseStoryMapSourceObject({
+        slides: [
+          { note: '[[Places/Santiago]]' },
+          { note: '[[Places/Santiago]]', date: Date.parse('2024-04-12') },
+        ],
+      }),
+    );
+
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+    expect(story.slides[1]?.date).toBe(Date.parse('2024-04-12'));
+    expect(story.slides[1]?.date).not.toBe(toTimestamp('2026-01-15'));
+  });
+
+  it('contributes the note date to an explicit note reference', () => {
+    const story = vault().resolveSource(
+      parseStoryMapSourceObject({ slides: [{ note: '[[Places/Santiago]]' }] }),
+    );
+
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+  });
+
+  it('honors dateField for explicit note references too', () => {
+    const story = vault().resolveSource(
+      parseStoryMapSourceObject({
+        dateField: 'date-visited',
+        slides: [{ note: '[[Places/Santiago]]' }],
+      }),
+    );
+
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-05-05'));
+  });
+
+  it('timeline mode with link display keeps description, cover, and notePath', () => {
+    const story = vault().resolveSource(
+      parseStoryMapSourceObject({
+        noteFolder: 'Places',
+        noteDisplay: 'link',
+        layout: { mode: 'timeline' },
+      }),
+    );
+
+    expect(story.layout.mode).toBe('timeline');
+    expect(story.slides[0]?.text).toBe('Frontmatter summary.');
+    expect(story.slides[0]?.media).toEqual({ type: 'image', src: './santiago.jpg' });
+    expect(story.slides[0]?.notePath).toBe('/docs/places/santiago/');
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+  });
+
+  it('timeline mode with full display keeps title, cover, date, and notePath beside the body', () => {
+    const story = vault().resolveSource(
+      parseStoryMapSourceObject({
+        noteFolder: 'Places',
+        noteDisplay: 'full',
+        layout: { mode: 'timeline' },
+      }),
+    );
+
+    expect(story.slides[0]?.title).toBe('Santiago');
+    expect(story.slides[0]?.media).toEqual({ type: 'image', src: './santiago.jpg' });
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+    expect(story.slides[0]?.notePath).toBe('/docs/places/santiago/');
+    expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
+  });
+
+  it('card mode with full display still strips the slide down to location', () => {
+    const story = vault().resolveSource(
+      parseStoryMapSourceObject({
+        noteFolder: 'Places',
+        noteDisplay: 'full',
+        layout: { mode: 'card' },
+      }),
+    );
+
+    expect(story.slides[0]?.location).toEqual({ lat: -33.4489, lng: -70.6693 });
+    expect(story.slides[0]?.mapmarker).toBe('city');
+    expect(story.slides[0]?.title).toBeUndefined();
+    expect(story.slides[0]?.media).toBeUndefined();
+    expect(story.slides[0]?.date).toBeUndefined();
+    expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
+    expect(story.slides[0]?.notePath).toBe('/docs/places/santiago/');
+  });
+
+  it('full layout mode with full display still strips the slide down to location', () => {
+    const story = vault().resolveSource(
+      parseStoryMapSourceObject({
+        noteFolder: 'Places',
+        noteDisplay: 'link',
+        layout: { mode: 'full' },
+      }),
+    );
+
+    expect(story.slides[0]?.location).toEqual({ lat: -33.4489, lng: -70.6693 });
+    expect(story.slides[0]?.title).toBeUndefined();
+    expect(story.slides[0]?.media).toBeUndefined();
+    expect(story.slides[0]?.date).toBeUndefined();
+  });
+});
+
 describe('VaultIndex tag filtering', () => {
   const vaultRoot = mkdtempSync(path.join(tmpdir(), 'storymap-tags-'));
   mkdirSync(path.join(vaultRoot, 'Places'));
@@ -518,6 +714,72 @@ describe('remarkStoryMap document flag', () => {
     remarkStoryMap()(tree, { path: '/vault/Doc.md', data: { frontMatter: {} } });
 
     expect((tree.children[0] as Html).value).not.toContain('data-story-map-document');
+  });
+});
+
+describe('remarkStoryMap timeline serialization', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'storymap-timeline-fence-'));
+
+  beforeAll(() => {
+    mkdirSync(path.join(root, 'Places'));
+    writeFileSync(
+      path.join(root, 'Places', 'Santiago.md'),
+      matter.stringify('Body text.', {
+        'story-map-note': true,
+        title: 'Santiago',
+        'date-created': '2026-01-15',
+        location: [-33.4489, -70.6693],
+        cover: './santiago.jpg',
+      }),
+    );
+  });
+
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  it('carries timeline layout and folder slide dates through the host attribute', () => {
+    const tree = storyMapTree(
+      ['layout:', '  mode: timeline', '  full:', '    side: right', 'noteFolder: Places', ''].join('\n'),
+    );
+
+    remarkStoryMap({
+      vaultRoot: root,
+      assetBase: '/assets',
+      resolveNoteHref: (relativePath) => `/docs/${relativePath.toLowerCase()}/`,
+    })(tree, { path: path.join(root, 'Stories', 'Trip.md') });
+
+    const config = readConfig(tree.children[0] as Html);
+    expect(config.layout).toEqual({
+      mode: 'timeline',
+      card: { align: 'left' },
+      full: { side: 'right', contentRatio: 0.5 },
+    });
+
+    const slides = config.slides as Array<Record<string, unknown>>;
+    expect(slides).toHaveLength(1);
+    expect(slides[0]?.title).toBe('Santiago');
+    expect(slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+    expect(slides[0]?.notePath).toBe('/docs/places/santiago/');
+    expect(slides[0]?.media).toEqual({ type: 'image', src: '/assets/Places/santiago.jpg' });
+  });
+
+  it('round-trips an authored timeline slide date through the host attribute', () => {
+    const tree = storyMapTree(
+      [
+        'layout:',
+        '  mode: timeline',
+        'slides:',
+        '  - title: Authored',
+        '    date: 2024-04-12',
+        '  - note: "[[Places/Santiago]]"',
+        '',
+      ].join('\n'),
+    );
+
+    remarkStoryMap({ vaultRoot: root })(tree);
+
+    const slides = (readConfig(tree.children[0] as Html).slides ?? []) as Array<Record<string, unknown>>;
+    expect(slides[0]?.date).toBe(Date.parse('2024-04-12'));
+    expect(slides[1]?.date).toBe(toTimestamp('2026-01-15'));
   });
 });
 

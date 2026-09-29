@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 import {
+  DEFAULT_DATE_FIELD,
   effectiveNoteDisplay,
   isPathInFolder,
   locationOnlySlide,
@@ -14,6 +15,7 @@ import {
   toStoryMapConfig,
   toTimestamp,
   type StoryMapConfig,
+  type StoryMapLayoutMode,
   type StoryMapSourceConfig,
   type StoryMedia,
   type StoryNoteDisplay,
@@ -47,13 +49,20 @@ export class VaultIndex {
     const noteDisplay = effectiveNoteDisplay(source.layout.mode, source.noteDisplay);
     const explicitSlides = source.slides ?? [];
     const slides = explicitSlides.length > 0
-      ? this.resolveExplicitSlides(explicitSlides, sourcePath, noteDisplay)
+      ? this.resolveExplicitSlides(
+          explicitSlides,
+          sourcePath,
+          noteDisplay,
+          source.layout.mode,
+          source.dateField,
+        )
       : source.noteFolder
         ? this.resolveFolder(
             source.noteFolder,
             source.dateField,
             source.order,
             noteDisplay,
+            source.layout.mode,
             source.includeTags,
             source.excludeTags,
           )
@@ -62,16 +71,37 @@ export class VaultIndex {
     return toStoryMapConfig(source, slides);
   }
 
-  resolveStory(story: StoryMapConfig, sourcePath?: string): StoryMapConfig {
-    return { ...story, slides: this.resolveExplicitSlides(story.slides, sourcePath, 'link') };
+  /**
+   * Re-resolves `note:` references on an already normalized config. `dateField`
+   * is not part of `StoryMapConfig`, so it defaults to the built-in
+   * `date-created`; pass the document's own value when it differs. Slides that
+   * already carry a `date` keep it, because an authored value always wins.
+   */
+  resolveStory(
+    story: StoryMapConfig,
+    sourcePath?: string,
+    dateField: string = DEFAULT_DATE_FIELD,
+  ): StoryMapConfig {
+    return {
+      ...story,
+      slides: this.resolveExplicitSlides(
+        story.slides,
+        sourcePath,
+        'link',
+        story.layout.mode,
+        dateField,
+      ),
+    };
   }
 
   private resolveExplicitSlides(
     slides: StorySlide[],
     sourcePath: string | undefined,
     noteDisplay: StoryNoteDisplay,
+    layoutMode: StoryMapLayoutMode,
+    dateField: string,
   ): StorySlide[] {
-    return slides.map((slide) => this.resolveSlide(slide, sourcePath, noteDisplay));
+    return slides.map((slide) => this.resolveSlide(slide, sourcePath, noteDisplay, layoutMode, dateField));
   }
 
   private resolveFolder(
@@ -79,6 +109,7 @@ export class VaultIndex {
     dateField: string,
     order: StoryMapSourceConfig['order'],
     noteDisplay: StoryNoteDisplay,
+    layoutMode: StoryMapLayoutMode,
     includeTags?: readonly string[],
     excludeTags?: readonly string[],
   ): StorySlide[] {
@@ -92,14 +123,21 @@ export class VaultIndex {
       .filter((entry) => entry.note.frontmatter['story-map-note'] === true)
       .filter((entry) => matchesTagFilter(entry.note.frontmatter, includeTags, excludeTags));
 
-    return sortNoteDates(entries, order).map((entry) => this.slideForNote(entry.note, noteDisplay));
+    return sortNoteDates(entries, order).map((entry) =>
+      this.slideForNote(entry.note, noteDisplay, layoutMode, entry.date),
+    );
   }
 
-  private slideForNote(note: IndexedNote, noteDisplay: StoryNoteDisplay): StorySlide {
+  private slideForNote(
+    note: IndexedNote,
+    noteDisplay: StoryNoteDisplay,
+    layoutMode: StoryMapLayoutMode,
+    date: number | null,
+  ): StorySlide {
     const frontmatterFields = slideFromNoteFrontmatter(note.frontmatter, path.basename(note.relativePath));
-    const slide: StorySlide = noteDisplay === 'full'
+    const slide: StorySlide = noteDisplay === 'full' && layoutMode !== 'timeline'
       ? locationOnlySlide(frontmatterFields)
-      : { ...frontmatterFields };
+      : { ...frontmatterFields, ...(date !== null ? { date } : {}) };
     const media = slide.media
       ? this.resolveMedia(slide.media, path.posix.dirname(note.relativePath))
       : undefined;
@@ -111,6 +149,8 @@ export class VaultIndex {
     slide: StorySlide,
     sourcePath: string | undefined,
     noteDisplay: StoryNoteDisplay,
+    layoutMode: StoryMapLayoutMode,
+    dateField: string,
   ): StorySlide {
     let resolved: Partial<StorySlide> = {};
     let note: IndexedNote | undefined;
@@ -119,7 +159,10 @@ export class VaultIndex {
       note = this.findIndexed(parseWikiLinkRef(slide.note));
       if (note) {
         const frontmatterFields = slideFromNoteFrontmatter(note.frontmatter, path.basename(note.relativePath));
-        resolved = noteDisplay === 'full' ? locationOnlySlide(frontmatterFields) : frontmatterFields;
+        const date = toTimestamp(note.frontmatter[dateField]);
+        resolved = noteDisplay === 'full' && layoutMode !== 'timeline'
+          ? locationOnlySlide(frontmatterFields)
+          : { ...frontmatterFields, ...(date !== null ? { date } : {}) };
       }
     }
 

@@ -81,7 +81,7 @@ When `vaultRoot` is omitted, fenced blocks are parsed and serialized, but no
 note or `noteFolder` resolution happens.
 
 The normalized `map.theme` (`auto`, `light`, `dark`, `vintage`, `cyber`, `atlas`) and
-document-owned `layout` (`card` or `full`) pass through to the shared renderer
+document-owned `layout` (`card`, `full`, or `timeline`) pass through to the shared renderer
 unchanged. Remark adds no theme palette or layout behavior of its own. `auto` falls back
 to `prefers-color-scheme` in the published site unless the host sets `--story-map-*`.
 
@@ -166,6 +166,31 @@ includeTags: [travel, chile]
 excludeTags: [draft]
 ```
 
+## Slide dates
+
+Every resolved slide carries an optional `date` (epoch milliseconds) read from
+the same `dateField` frontmatter value that drives ordering, so Obsidian and
+Remark render identical timelines. An explicit slide may author its own date,
+which always wins over the referenced note's value:
+
+```yaml
+layout:
+  mode: timeline
+slides:
+  - title: Leaving home
+    date: 2024-04-12
+  - note: "[[Trips/Santiago]]"
+```
+
+`date` is document data, not a plugin setting or a defaultable key. A note
+whose `dateField` value is missing or unparseable is still discovered and simply
+has no `date`.
+
+`noteDisplay: full` normally strips a slide down to `location` and `mapmarker`
+because the note body carries the content. `layout.mode: timeline` is the one
+exception: a timeline row needs its date, title, and cover, so a timeline keeps
+the frontmatter fields alongside the body text. `card` and `full` are unchanged.
+
 ## `noteDisplay`
 
 Note presentation is controlled by `noteDisplay`, which accepts:
@@ -173,8 +198,14 @@ Note presentation is controlled by `noteDisplay`, which accepts:
 - `basic` — frontmatter-derived content only.
 - `link` — frontmatter basics plus a host-resolved `notePath` when
   `resolveNoteHref` returns a string. This is the default.
-- `full` — frontmatter basics plus the frontmatter-stripped note Markdown body
-  as slide text.
+- `full` — the frontmatter-stripped note Markdown body as slide text. The
+  frontmatter-derived title and media are dropped because the body carries them,
+  and only `location` and `mapmarker` survive from the note.
+
+`layout.mode: full` forces `full` display regardless of the configured value.
+`timeline` is not forced: it honours the document's `noteDisplay`, and the
+`full`-display strip described above is skipped for a timeline so rows keep
+their date, title, and cover.
 
 `link` is platform-specific only at navigation time: Docusaurus resolves the
 published route and the renderer emits a normal browser link.
