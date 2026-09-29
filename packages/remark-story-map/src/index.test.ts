@@ -35,6 +35,16 @@ describe('remarkStoryMap', () => {
     expect((config.slides as Array<{ title: string }>)[0]?.title).toBe('One');
   });
 
+  it('serializes resolved initialSlide for Docusaurus client hydration', () => {
+    const tree = storyMapTree('title: Demo\ninitialSlide: last\nslides:\n  - title: One\n  - title: Two\n  - title: Three\n');
+
+    remarkStoryMap()(tree);
+
+    const node = tree.children[0] as Html;
+    const config = readConfig(node);
+    expect(config.initialSlide).toBe(2);
+  });
+
   it('serializes the canonical theme and layout for each host independently', () => {
     const tree: Root = {
       type: 'root',
