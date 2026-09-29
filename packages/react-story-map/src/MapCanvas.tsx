@@ -38,10 +38,13 @@ export function MapCanvas({ story, activeIndex }: MapCanvasProps) {
       tileRef.current = L.tileLayer(current.map.tileUrl, {
         attribution: current.map.attribution,
         className: 'story-map__tiles',
+        opacity: current.map.opacity,
         ...(current.map.minZoom === undefined ? {} : { minZoom: current.map.minZoom }),
         ...(current.map.maxZoom === undefined ? {} : { maxZoom: current.map.maxZoom }),
       }).addTo(map);
       tileKeyRef.current = tileKey;
+    } else {
+      tileRef.current?.setOpacity(current.map.opacity);
     }
 
     if (slidesRef.current === current.slides && showPathRef.current === current.map.showPath) {

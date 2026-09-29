@@ -62,6 +62,7 @@ export function StoryMap({
     ...(layout.card.widthRatio === undefined ? {} : { '--story-map-card-width': `${Math.round(layout.card.widthRatio * 10000) / 100}%` }),
     ...(layout.card.heightRatio === undefined ? {} : { '--story-map-card-height': `${Math.round(layout.card.heightRatio * 10000) / 100}%` }),
     '--story-map-content-ratio': `${Math.round(layout.full.contentRatio * 10000) / 100}%`,
+    ...(story.map.opacity !== undefined && story.map.opacity !== 1 ? { '--story-map-map-opacity': `${story.map.opacity}` } : {}),
   } as CSSProperties;
 
   return (
@@ -69,6 +70,7 @@ export function StoryMap({
       className={['story-map', className].filter(Boolean).join(' ')}
       style={style}
       data-map-theme={story.map.theme}
+      data-map-opacity={story.map.opacity !== undefined && story.map.opacity !== 1 ? story.map.opacity : undefined}
       data-layout={layout.mode}
       data-card-align={layout.card.align}
       data-full-side={layout.full.side}

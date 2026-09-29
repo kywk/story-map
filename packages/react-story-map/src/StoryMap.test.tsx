@@ -10,6 +10,7 @@ function config(slide: StorySlide): StoryMapConfig {
     map: {
       theme: 'light',
       zoom: 3,
+      opacity: 1,
       tileUrl: 'https://tile.example/{z}/{x}/{y}.png',
       attribution: 'Example',
       showPath: false,
@@ -111,5 +112,23 @@ describe('StoryMap initial slide', () => {
     const html = renderToStaticMarkup(<StoryMap story={story} initialSlide={1} />);
     expect(html).toContain('Second');
     expect(html).toContain('2 / 3');
+  });
+});
+
+describe('StoryMap opacity', () => {
+  it('renders data-map-opacity and style variable when opacity is not 1', () => {
+    const story = config({ title: 'Santiago' });
+    story.map.opacity = 0.5;
+    const html = renderToStaticMarkup(<StoryMap story={story} />);
+    expect(html).toContain('data-map-opacity="0.5"');
+    expect(html).toContain('--story-map-map-opacity:0.5');
+  });
+
+  it('omits data-map-opacity and style variable when opacity is 1', () => {
+    const story = config({ title: 'Santiago' });
+    story.map.opacity = 1;
+    const html = renderToStaticMarkup(<StoryMap story={story} />);
+    expect(html).not.toContain('data-map-opacity');
+    expect(html).not.toContain('--story-map-map-opacity');
   });
 });
