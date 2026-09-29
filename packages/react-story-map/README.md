@@ -119,9 +119,9 @@ becomes a vertical map band over a full-width list.
 
 Card renders Previous/Next buttons inside the panel. Full floats circular arrows at the
 left and right edges with a slide counter at the bottom center, so the whole note body
-stays scrollable without hunting for the controls. Both layouts keep the active marker
-clear of the overlay: a centered card (and any narrow viewport) parks it at the top
-quarter, and full centers it in the map area beside the article.
+stays scrollable without hunting for the controls. All three layouts keep the active
+marker clear of the overlay: a centered card (and any narrow viewport) parks it at the top
+quarter, and full and timeline center it in the map area beside the story surface.
 
 ### Timeline mode
 

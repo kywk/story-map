@@ -116,6 +116,12 @@ export function effectiveNoteDisplay(
  * so frontmatter-derived display fields (title, text, media, date) are dropped and
  * never duplicate body content; only the map location (plus the marker hint) survives.
  * Fields the story document set explicitly are merged back by the caller.
+ *
+ * A `timeline` row is a list entry, not a full-screen body, so a timeline that
+ * resolves notes as `full` deliberately keeps the frontmatter basics next to the
+ * body. Both adapters gate on `noteDisplay === 'full' && layoutMode !== 'timeline'`;
+ * the trade-off is that a timeline row can then show a title and cover that the body
+ * also mentions.
  */
 export function locationOnlySlide(resolved: Partial<StorySlide>): Partial<StorySlide> {
   const out: Partial<StorySlide> = {};

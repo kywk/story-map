@@ -229,11 +229,16 @@ describe('theme and layout contract', () => {
   });
 
   it('keeps the timeline layout document-owned when source defaults are supplied', () => {
+    // `layout` is document-only, so a caller-supplied defaults object carrying a
+    // competing layout must NOT override the document. Pass one that would win if
+    // `layout` were ever made defaultable.
     const story = parseStoryMapSourceYaml('layout:\n  mode: timeline', {
       order: 'desc',
       noteDisplay: 'full',
-    });
+      layout: { mode: 'card', card: { align: 'right' }, full: { side: 'left', contentRatio: 0.5 } },
+    } as StoryMapSourceDefaults);
     expect(story.layout.mode).toBe('timeline');
+    expect(story.layout.card.align).toBe('left');
   });
 
   it.each([
@@ -277,9 +282,12 @@ describe('slide dates', () => {
     expect(source.slides?.map((slide) => slide.date)).toEqual([
       Date.UTC(2024, 3, 12),
       1712880000000,
-      // `Apr 12, 2024` is not an ISO date, so `Date.parse` reads it as local time.
-      // Compare against the same coercion the parser must use.
-      toTimestamp('Apr 12, 2024'),
+      // `Apr 12, 2024` is not an ISO date, so `Date.parse` reads it as LOCAL time
+      // and the epoch legitimately varies by machine timezone. Pin it with a
+      // timezone-independent construction rather than a hard-coded literal, which
+      // would fail on any non-UTC CI box. This still asserts a concrete instant
+      // rather than round-tripping through `toTimestamp` itself.
+      new Date(2024, 3, 12).getTime(),
     ]);
   });
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { RefCallback } from 'react';
@@ -94,7 +94,7 @@ interface TimelineRowProps {
   noteLinkClassName?: string | undefined;
 }
 
-function TimelineRow({
+function TimelineRowImpl({
   slide,
   index,
   active,
@@ -134,10 +134,9 @@ function TimelineRow({
           type="button"
           className="story-map__timeline-select"
           aria-current={active ? 'true' : undefined}
-          aria-label={slide.title ? undefined : label}
           onClick={onSelect}
         >
-          {slide.title}
+          {slide.title ?? label}
         </button>
       </h3>
       {slide.text && (
@@ -160,3 +159,9 @@ function TimelineRow({
     </li>
   );
 }
+
+// Memoized because a timeline renders EVERY slide, and under `noteDisplay: full`
+// each row parses that note's whole body through ReactMarkdown. Without this, one
+// arrow-key press re-parsed all N bodies; `card` and `full` only ever render the
+// active slide, so they never had this cost.
+const TimelineRow = memo(TimelineRowImpl);

@@ -76,6 +76,10 @@ export class VaultIndex {
    * is not part of `StoryMapConfig`, so it defaults to the built-in
    * `date-created`; pass the document's own value when it differs. Slides that
    * already carry a `date` keep it, because an authored value always wins.
+   *
+   * `layoutMode` is threaded through for signature symmetry with `resolveSource`,
+   * but this path always resolves as `link`, so the `full`-display carve-out
+   * cannot apply here and the argument has no effect on the result.
    */
   resolveStory(
     story: StoryMapConfig,

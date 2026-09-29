@@ -462,7 +462,9 @@ describe('VaultIndex timeline dates', () => {
     expect(story.slides[0]?.notePath).toBe('/docs/places/santiago/');
   });
 
-  it('full layout mode with full display still strips the slide down to location', () => {
+  it('full layout mode strips to location even when the document asks for link', () => {
+    // Named for what it pins: the `full` LAYOUT forces full note display, overriding
+    // the document's `link`. A `timeline` layout must NOT behave this way.
     const story = vault().resolveSource(
       parseStoryMapSourceObject({
         noteFolder: 'Places',

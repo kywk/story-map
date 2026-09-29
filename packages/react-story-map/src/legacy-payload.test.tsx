@@ -6,18 +6,26 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
-import { parseStoryMapSourceYaml, toStoryMapConfig } from '@story-map/story-map-core';
+import {
+  parseStoryMapSourceYaml,
+  toStoryMapConfig,
+  type StoryMapConfig,
+} from '@story-map/story-map-core';
 import { StoryMap } from './StoryMap.js';
 
-// Exactly what the pre-change build emitted: mode card|full only, no slide.date,
-// no data-timeline-side. Captured from the `dd43fc9` tree.
-const PRE_CHANGE_PAYLOADS = [
+// What a build from BEFORE the timeline milestone emitted: `layout.mode` is
+// `card` | `full` only, slides carry no `date`, and nothing emits
+// `data-timeline-side`. `panelOpacity` was already a REQUIRED `StoryMapConfig`
+// field before this milestone (it landed with the panel-opacity work), so these
+// payloads must include it — an older payload lacking it is a different concern.
+const PRE_CHANGE_PAYLOADS: { label: string; payload: StoryMapConfig }[] = [
   {
     label: 'card layout, no slide dates',
     payload: {
       schema: 'storymap/v1',
       title: 'Old Card Story',
       height: '520px',
+      panelOpacity: 0.85,
       map: {
         theme: 'light',
         zoom: 3,
@@ -34,12 +42,12 @@ const PRE_CHANGE_PAYLOADS = [
     },
   },
   {
-    label: 'full layout, no slide dates, no panelOpacity',
+    label: 'full layout, no slide dates',
     payload: {
       schema: 'storymap/v1',
       title: 'Old Full Story',
       height: '100%',
-      // note: no panelOpacity key at all — added by a later milestone
+      panelOpacity: 0.85,
       map: {
         theme: 'auto',
         zoom: 4,

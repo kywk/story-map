@@ -325,6 +325,31 @@ describe('StoryMap timeline note links', () => {
     expect(timelineRows(html)[1]).toContain('story-map__timeline-note');
   });
 
+  it('gives a title-less row a visible, non-empty heading', () => {
+    // Regression: the select button used to render `{slide.title}` unconditionally,
+    // so a slide with only a date or only a location produced an empty <h3> and a
+    // blank row whose only content was an invisible stretched hit area.
+    const html = renderToStaticMarkup(
+      <StoryMap
+        story={timelineStory([
+          { date: Date.UTC(2024, 4, 13), location: { lat: 1, lng: 1 } },
+          { location: { lat: 2, lng: 2 } },
+          { title: 'Named', date: Date.UTC(2024, 6, 2), location: { lat: 3, lng: 3 } },
+        ])}
+      />,
+    );
+    const rows = timelineRows(html);
+    expect(rows).toHaveLength(3);
+    // Falls back to the date chip text, then to a positional label.
+    expect(rows[0]).toContain('May 13, 2024');
+    expect(rows[1]).toContain('Slide 2');
+    // A titled row is unaffected and shows its own title.
+    expect(rows[2]).toContain('Named');
+    // No heading may be empty: every row's button carries text.
+    const empties = [...html.matchAll(/<button[^>]*class="story-map__timeline-select"[^>]*><\/button>/g)];
+    expect(empties).toHaveLength(0);
+  });
+
   it('emits the callback-variant anchor for the chip exactly like the panel title', () => {
     // `data-href` is the marker that the host-callback branch was taken — it is what
     // Obsidian registers as a Page-preview hover source, so it is the observable
