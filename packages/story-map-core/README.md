@@ -75,7 +75,7 @@ defaults cannot override it.
 | `layout.full.side` | `left` |
 | `layout.full.contentRatio` | `0.5` |
 
-`map.center`, `map.minZoom`, and `map.maxZoom` are optional. `panelOpacity` accepts a number between `0.0` and `1.0` (built-in default `0.85`). All source keys use camelCase.
+`map.center`, `map.minZoom`, and `map.maxZoom` are optional. `panelOpacity` accepts a number between `0.0` and `1.0` (built-in default `0.85`); a legacy root-level `opacity` or `map.opacity` is accepted and normalized into it. All source keys use camelCase.
 Themes are `auto`, `light`, `dark`, `vintage`, `cyber`, and `atlas` (built-in default
 `light`). Layout modes are `card` (built-in default), `full`, and `timeline`; `timeline`
 reuses the `full` side and content ratio rather than adding a mode of its own. Card layouts also accept

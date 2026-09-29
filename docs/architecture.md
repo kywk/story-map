@@ -106,7 +106,8 @@ Key invariants:
   string media into the canonical shape before validation. It also coerces `slides[].date`
   through `toTimestamp` (accepting `Date`, finite `number`, and `string`) into epoch
   milliseconds, deletes the key when absent, and throws `StoryMapParseError` when a
-  present value is unparseable.
+  present value is unparseable. A root-level `opacity` or `map.opacity` is normalized into
+  `panelOpacity` and then deleted, so an explicit `panelOpacity` always wins.
 - `effectiveNoteDisplay` forces `full` only for the `full` layout mode; `card` and
   `timeline` return the configured value.
 - `locationOnlySlide` keeps only `location` and `mapmarker`; the adapters apply it for

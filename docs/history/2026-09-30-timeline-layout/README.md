@@ -14,7 +14,6 @@ Documents in this directory:
 | [multi-agent-task-prompt.md](multi-agent-task-prompt.md) | Ready-to-paste agent briefs, one per package, plus the integrator brief |
 | [pm-agent-prompt.md](pm-agent-prompt.md) | Standing prompt for the PM/orchestrator agent that owns this milestone |
 | [tickets.md](tickets.md) | Ticket-per-track breakdown with blocking edges and one acceptance test each |
-| [pm-report.md](pm-report.md) | The PM/orchestrator report for this milestone |
 
 ## Scope in one paragraph
 

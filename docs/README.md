@@ -12,6 +12,7 @@ Start here when you need to understand or change StoryMap.
 | [`acceptance/2026-09-28-site-redesign.md`](acceptance/2026-09-28-site-redesign.md) | Bilingual website verification, CI evidence, and unrun gates. |
 | [`acceptance/2026-09-28-atlas-comparison.md`](acceptance/2026-09-28-atlas-comparison.md) | Atlas screenshot diagnosis and community installation update verification. |
 | [`history/2026-09-28-map-theme-layout/README.md`](history/2026-09-28-map-theme-layout/README.md) | Archived design bundle for the implemented map themes and layouts. |
+| [`history/2026-09-30-timeline-layout/README.md`](history/2026-09-30-timeline-layout/README.md) | Archived design bundle for the `timeline` layout and `StorySlide.date`. |
 | [`docusaurus-full-page.md`](docusaurus-full-page.md) | Host-owned full-page StoryMap view example for Docusaurus (not a package option). |
 | [`obsidian-submission.md`](obsidian-submission.md) | Geo Story Map community listing, release assets and follow-up release checks. |
 | [`../RELEASING.md`](../RELEASING.md) | npm publishing, Trusted Publisher setup and Obsidian community releases. |

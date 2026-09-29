@@ -371,7 +371,8 @@ interface StorySlide {
 
 Accepted convenience forms: `location: [lat, lng]`; `media: ./image.jpg` as image media;
 root-level Leaflet-like `lat`, `long`, `defaultZoom`, and `tileServer` normalized into map
-fields.
+fields. A root-level `opacity`, or `map.opacity`, normalizes into `panelOpacity`; both are
+then removed, so `panelOpacity` always wins.
 
 ## 8. Note metadata and Leaflet compatibility
 
