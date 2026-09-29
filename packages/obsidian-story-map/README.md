@@ -63,6 +63,23 @@ layout:
 ```
 ````
 
+## Layouts
+
+`layout.mode` is document-only and accepts `card` (default), `full`, or `timeline`:
+
+- `card` — a floating slide card over the map;
+- `full` — a scrollable story surface beside a full-bleed map;
+- `timeline` — a dated vertical list of every entry beside the map, using the same
+  `layout.full.side` and `layout.full.contentRatio` options as `full`.
+
+Each entry's date comes from the configured `dateField` frontmatter key, so a timeline and
+the default ordering always read the same value. An explicit slide may set its own
+`date` (for example `date: 2024-04-12`), which wins over the note's value.
+
+`noteDisplay` applies as configured for `card` and `timeline`; the `full` layout always
+shows the complete note body, while a timeline keeps each note's title, cover, and date
+alongside the body when you set `noteDisplay: full`.
+
 ## Note display
 
 `noteDisplay` controls how a resolved note appears in the slide panel:

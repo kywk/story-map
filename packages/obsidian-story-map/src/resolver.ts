@@ -12,6 +12,7 @@ import {
   toStoryMapConfig,
   toTimestamp,
   type StoryMapConfig,
+  type StoryMapLayoutMode,
   type StoryMapSourceConfig,
   type StoryMedia,
   type StoryNoteDisplay,
@@ -26,7 +27,14 @@ export async function resolveObsidianStory(
   const noteDisplay = effectiveNoteDisplay(source.layout.mode, source.noteDisplay);
   const explicitSlides = source.slides ?? [];
   const slides = explicitSlides.length > 0
-    ? await resolveExplicitSlides(app, explicitSlides, sourcePath, noteDisplay)
+    ? await resolveExplicitSlides(
+        app,
+        explicitSlides,
+        sourcePath,
+        noteDisplay,
+        source.layout.mode,
+        source.dateField,
+      )
     : source.noteFolder
       ? await resolveFolderSlides(
           app,
@@ -34,6 +42,7 @@ export async function resolveObsidianStory(
           source.dateField,
           source.order,
           noteDisplay,
+          source.layout.mode,
           source.includeTags,
           source.excludeTags,
         )
@@ -47,8 +56,12 @@ async function resolveExplicitSlides(
   slides: StorySlide[],
   sourcePath: string,
   noteDisplay: StoryNoteDisplay,
+  layoutMode: StoryMapLayoutMode,
+  dateField: string,
 ): Promise<StorySlide[]> {
-  return Promise.all(slides.map((slide) => resolveSlide(app, slide, sourcePath, noteDisplay)));
+  return Promise.all(
+    slides.map((slide) => resolveSlide(app, slide, sourcePath, noteDisplay, layoutMode, dateField)),
+  );
 }
 
 async function resolveFolderSlides(
@@ -57,6 +70,7 @@ async function resolveFolderSlides(
   dateField: string,
   order: StoryMapSourceConfig['order'],
   noteDisplay: StoryNoteDisplay,
+  layoutMode: StoryMapLayoutMode,
   includeTags?: readonly string[],
   excludeTags?: readonly string[],
 ): Promise<StorySlide[]> {
@@ -77,7 +91,7 @@ async function resolveFolderSlides(
 
   return Promise.all(
     sortNoteDates(entries, order).map((entry) =>
-      resolveDiscoveredNote(app, entry.file, entry.frontmatter, noteDisplay),
+      resolveDiscoveredNote(app, entry.file, entry.frontmatter, noteDisplay, layoutMode, entry.date),
     ),
   );
 }
@@ -87,11 +101,13 @@ async function resolveDiscoveredNote(
   file: TFile,
   frontmatter: Record<string, unknown>,
   noteDisplay: StoryNoteDisplay,
+  layoutMode: StoryMapLayoutMode,
+  date: number | null,
 ): Promise<StorySlide> {
   const frontmatterFields = slideFromNoteFrontmatter(frontmatter, file.basename);
-  const slide: StorySlide = noteDisplay === 'full'
+  const slide: StorySlide = noteDisplay === 'full' && layoutMode !== 'timeline'
     ? locationOnlySlide(frontmatterFields)
-    : { ...frontmatterFields };
+    : { ...frontmatterFields, ...(date !== null ? { date } : {}) };
   const media = slide.media ? await resolveMedia(app, slide.media, file.path) : undefined;
   const withMedia = media ? { ...slide, media } : slide;
   return applyNoteDisplay(app, withMedia, file, noteDisplay);
@@ -102,6 +118,8 @@ async function resolveSlide(
   slide: StorySlide,
   sourcePath: string,
   noteDisplay: StoryNoteDisplay,
+  layoutMode: StoryMapLayoutMode,
+  dateField: string,
 ): Promise<StorySlide> {
   let resolved: Partial<StorySlide> = {};
   let noteFile: TFile | null = null;
@@ -109,8 +127,12 @@ async function resolveSlide(
   if (slide.note) {
     noteFile = resolveWikiFile(app, slide.note, sourcePath);
     if (noteFile) {
-      const frontmatterFields = slideFromNoteFrontmatter(readFrontmatter(app, noteFile), noteFile.basename);
-      resolved = noteDisplay === 'full' ? locationOnlySlide(frontmatterFields) : frontmatterFields;
+      const noteFrontmatter = readFrontmatter(app, noteFile);
+      const frontmatterFields = slideFromNoteFrontmatter(noteFrontmatter, noteFile.basename);
+      const date = toTimestamp(noteFrontmatter[dateField]);
+      resolved = noteDisplay === 'full' && layoutMode !== 'timeline'
+        ? locationOnlySlide(frontmatterFields)
+        : { ...frontmatterFields, ...(date !== null ? { date } : {}) };
     }
   }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { App } from 'obsidian';
-import { parseStoryMapSourceObject } from '@story-map/story-map-core';
+import { parseStoryMapSourceObject, toTimestamp } from '@story-map/story-map-core';
 import { resolveObsidianStory } from './resolver.js';
 
 interface FakeFile {
@@ -116,6 +116,36 @@ describe('resolveObsidianStory with explicit slides', () => {
     expect(story.slides[0]?.title).toBe('Explicit');
     expect(story.slides[0]?.location).toEqual({ lat: 1, lng: 2 });
   });
+
+  it('inherits the note dateField value and lets an authored date win', async () => {
+    const app = makeApp([
+      note('Places/Santiago.md', { title: 'Santiago', 'date-created': '2026-01-15' }),
+    ]);
+    const source = parseStoryMapSourceObject({
+      slides: [{ note: '[[Santiago]]' }, { note: '[[Santiago]]', date: '1999-12-31' }],
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+    expect(story.slides[1]?.date).toBe(toTimestamp('1999-12-31'));
+  });
+
+  it('reads the note date from a custom dateField', async () => {
+    const app = makeApp([
+      note('Places/Santiago.md', {
+        title: 'Santiago',
+        'date-created': '2026-01-15',
+        'date-visited': '2024-04-12',
+      }),
+    ]);
+    const source = parseStoryMapSourceObject({
+      dateField: 'date-visited',
+      slides: [{ note: '[[Santiago]]' }],
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+    expect(story.slides[0]?.date).toBe(toTimestamp('2024-04-12'));
+  });
 });
 
 describe('resolveObsidianStory folder discovery', () => {
@@ -185,6 +215,81 @@ describe('resolveObsidianStory folder discovery', () => {
 
     const story = await resolveObsidianStory(app, source, 'Story.md');
     expect(story.slides.map((slide) => slide.title)).toEqual(['B', 'A']);
+  });
+
+  it('carries the discovered dateField value on each slide', async () => {
+    const app = makeApp([
+      note('Places/A.md', { 'story-map-note': true, title: 'A', 'date-created': '2026-01-15' }),
+      // Obsidian hands unquoted YAML timestamps to the resolver as Date instances.
+      note('Places/B.md', {
+        'story-map-note': true,
+        title: 'B',
+        'date-created': new Date('2026-02-20T00:00:00Z'),
+      }),
+    ]);
+    const source = parseStoryMapSourceObject({ noteFolder: 'Places' });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+    expect(story.slides.map((slide) => slide.date)).toEqual([
+      toTimestamp('2026-01-15'),
+      Date.UTC(2026, 1, 20),
+    ]);
+  });
+
+  it('dateField moves which frontmatter key feeds both ordering and slide date', async () => {
+    const app = makeApp([
+      note('Places/A.md', {
+        'story-map-note': true,
+        title: 'A',
+        'date-created': '2026-05-05',
+        'date-visited': '2026-01-01',
+      }),
+      note('Places/B.md', {
+        'story-map-note': true,
+        title: 'B',
+        'date-created': '2026-02-02',
+        'date-visited': '2026-06-06',
+      }),
+    ]);
+
+    const byCreated = await resolveObsidianStory(
+      app,
+      parseStoryMapSourceObject({ noteFolder: 'Places' }),
+      'Story.md',
+    );
+    expect(byCreated.slides.map((slide) => slide.title)).toEqual(['B', 'A']);
+    expect(byCreated.slides.map((slide) => slide.date)).toEqual([
+      toTimestamp('2026-02-02'),
+      toTimestamp('2026-05-05'),
+    ]);
+
+    const byVisited = await resolveObsidianStory(
+      app,
+      parseStoryMapSourceObject({ noteFolder: 'Places', dateField: 'date-visited' }),
+      'Story.md',
+    );
+    expect(byVisited.slides.map((slide) => slide.title)).toEqual(['A', 'B']);
+    expect(byVisited.slides.map((slide) => slide.date)).toEqual([
+      toTimestamp('2026-01-01'),
+      toTimestamp('2026-06-06'),
+    ]);
+  });
+
+  it('discovers a note with an unparseable dateField value and gives it no date', async () => {
+    const app = makeApp([
+      note('Places/A.md', { 'story-map-note': true, title: 'A', 'date-created': '2026-01-15' }),
+      note('Places/B.md', {
+        'story-map-note': true,
+        title: 'B',
+        'date-created': 'sometime in spring',
+      }),
+    ]);
+    const source = parseStoryMapSourceObject({ noteFolder: 'Places' });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+    expect(story.slides.map((slide) => slide.title)).toEqual(['A', 'B']);
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+    expect(Object.keys(story.slides[1] ?? {})).not.toContain('date');
   });
 
   it('does not append folder notes when explicit slides exist', async () => {
@@ -369,5 +474,123 @@ describe('resolveObsidianStory noteDisplay', () => {
     const story = await resolveObsidianStory(app, source, 'Story.md');
 
     expect(story.slides[0]?.text).toBe('# Real body\n\nFull note text.');
+  });
+});
+
+describe('resolveObsidianStory timeline layout', () => {
+  const body = [
+    '---',
+    'unused: true',
+    '---',
+    '',
+    '# Real body',
+    '',
+    'Full note text.',
+  ].join('\n');
+  const files: FakeFile[] = [
+    note(
+      'Places/Santiago.md',
+      {
+        'story-map-note': true,
+        title: 'Santiago',
+        'date-created': '2026-01-15',
+        description: 'Frontmatter summary.',
+        cover: 'cover.jpg',
+        location: [-33.4489, -70.6693],
+        mapmarker: 'city',
+      },
+      body,
+    ),
+    { path: 'Places/cover.jpg', frontmatter: {} },
+  ];
+  const cover = { type: 'image', src: 'app://vault/Places/cover.jpg' };
+  const bodyText = '# Real body\n\nFull note text.';
+
+  it('keeps frontmatter basics in link mode, which timeline does not force to full', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({
+      noteFolder: 'Places',
+      layout: { mode: 'timeline' },
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+
+    expect(source.noteDisplay).toBe('link');
+    expect(story.slides[0]?.text).toBe('Frontmatter summary.');
+    expect(story.slides[0]?.media).toEqual(cover);
+    expect(story.slides[0]?.notePath).toBe('Places/Santiago.md');
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+  });
+
+  it('keeps title, cover, date, and notePath next to the body in full mode', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({
+      noteFolder: 'Places',
+      noteDisplay: 'full',
+      layout: { mode: 'timeline' },
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+
+    expect(story.slides[0]?.title).toBe('Santiago');
+    expect(story.slides[0]?.media).toEqual(cover);
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+    expect(story.slides[0]?.notePath).toBe('Places/Santiago.md');
+    expect(story.slides[0]?.text).toBe(bodyText);
+  });
+
+  it('keeps frontmatter on an explicitly referenced note in a full mode timeline', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({
+      noteDisplay: 'full',
+      layout: { mode: 'timeline' },
+      slides: [{ note: '[[Santiago]]' }],
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+
+    expect(story.slides[0]?.title).toBe('Santiago');
+    expect(story.slides[0]?.media).toEqual(cover);
+    expect(story.slides[0]?.date).toBe(toTimestamp('2026-01-15'));
+    expect(story.slides[0]?.notePath).toBe('Places/Santiago.md');
+    expect(story.slides[0]?.text).toBe(bodyText);
+  });
+
+  it('still strips card mode down to the location in full mode', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({
+      noteFolder: 'Places',
+      noteDisplay: 'full',
+      layout: { mode: 'card' },
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+
+    expect(story.slides[0]?.title).toBeUndefined();
+    expect(story.slides[0]?.media).toBeUndefined();
+    expect(story.slides[0]?.date).toBeUndefined();
+    expect(story.slides[0]?.location).toEqual({ lat: -33.4489, lng: -70.6693 });
+    expect(story.slides[0]?.mapmarker).toBe('city');
+    expect(story.slides[0]?.notePath).toBe('Places/Santiago.md');
+    expect(story.slides[0]?.text).toBe(bodyText);
+  });
+
+  it('still strips the full layout down to the location in full mode', async () => {
+    const app = makeApp(files);
+    const source = parseStoryMapSourceObject({
+      noteFolder: 'Places',
+      noteDisplay: 'full',
+      layout: { mode: 'full' },
+    });
+
+    const story = await resolveObsidianStory(app, source, 'Story.md');
+
+    expect(story.slides[0]?.title).toBeUndefined();
+    expect(story.slides[0]?.media).toBeUndefined();
+    expect(story.slides[0]?.date).toBeUndefined();
+    expect(story.slides[0]?.location).toEqual({ lat: -33.4489, lng: -70.6693 });
+    expect(story.slides[0]?.mapmarker).toBe('city');
+    expect(story.slides[0]?.notePath).toBe('Places/Santiago.md');
+    expect(story.slides[0]?.text).toBe(bodyText);
   });
 });
