@@ -1,6 +1,11 @@
 import { createRoot, type Root } from 'react-dom/client';
-import type { ComponentType } from 'react';
-import type { GeoMapConfig, MarkerTypeDefinition, StoryMapConfig } from '@story-map/story-map-core';
+import type { ComponentType, ReactNode } from 'react';
+import type {
+  GeoMapConfig,
+  GeoMapDiagnostic,
+  MarkerTypeDefinition,
+  StoryMapConfig,
+} from '@story-map/story-map-core';
 import 'leaflet/dist/leaflet.css';
 import '@story-map/react-story-map/styles.css';
 
@@ -40,26 +45,59 @@ function hostKind(host: HTMLElement): string {
 
 /**
  * Surface a recognized-but-unsupported key on the published page. The renderer
- * deliberately has no error UI, so a host that carries diagnostics owns the
- * disclosure; the list is a sibling of the map rather than an overlay, so a
- * diagnostic can never cover the map it is about.
+ * deliberately has no error UI, so the host owns the disclosure; the list sits
+ * below the map rather than over it, so a diagnostic can never cover the map it
+ * is about.
+ *
+ * This returns React elements instead of appending DOM nodes on purpose. React
+ * takes ownership of a `createRoot` container and clears its existing children on
+ * the first commit, so anything appended to the host around `root.render()` is
+ * wiped. Rendering the list inside the same tree is what keeps it on the page.
  */
-function renderDiagnostics(host: HTMLElement, config: GeoMapConfig): void {
+function hostDiagnostics(config: GeoMapConfig): ReactNode {
   const diagnostics = config.diagnostics;
-  if (!Array.isArray(diagnostics) || diagnostics.length === 0) return;
+  if (!Array.isArray(diagnostics) || diagnostics.length === 0) return null;
 
-  const list = document.createElement('ul');
-  list.className = 'story-map-host__diagnostics';
-  for (const diagnostic of diagnostics) {
-    if (!diagnostic || typeof diagnostic.message !== 'string') continue;
-    const item = document.createElement('li');
-    item.dataset.level = diagnostic.level === 'error' ? 'error' : 'warning';
-    if (diagnostic.key) item.dataset.key = diagnostic.key;
-    item.dataset.code = diagnostic.code;
-    item.textContent = diagnostic.message;
-    list.appendChild(item);
-  }
-  if (list.childElementCount > 0) host.appendChild(list);
+  const items = diagnostics
+    .filter(
+      (diagnostic): diagnostic is GeoMapDiagnostic =>
+        !!diagnostic && typeof diagnostic.message === 'string' && diagnostic.message.length > 0,
+    )
+    .map((diagnostic) => (
+      <li
+        key={`${diagnostic.code}:${diagnostic.key ?? ''}:${diagnostic.message}`}
+        data-level={diagnostic.level === 'error' ? 'error' : 'warning'}
+        data-code={diagnostic.code}
+        {...(diagnostic.key ? { 'data-key': diagnostic.key } : {})}
+      >
+        {diagnostic.message}
+      </li>
+    ));
+
+  if (items.length === 0) return null;
+  return <ul className="story-map-host__diagnostics">{items}</ul>;
+}
+
+/**
+ * A `leaflet` host: the map plus its compatibility diagnostics. Only the host's
+ * presentation is composed here; map rendering stays in `<GeoMap>`.
+ *
+ * Exported so a host that mounts maps outside this client - and the tests - can
+ * reuse the same composition.
+ */
+export function MapHost({
+  config,
+  GeoMap,
+}: {
+  config: GeoMapConfig;
+  GeoMap: ComponentType<{ map: GeoMapConfig }>;
+}) {
+  return (
+    <>
+      <GeoMap map={config} />
+      {hostDiagnostics(config)}
+    </>
+  );
 }
 
 /** A malformed block degrades in place instead of throwing into the page. */
@@ -80,12 +118,10 @@ async function mountHost(host: HTMLElement) {
 
     const isMap = hostKind(host) === MAP_KIND;
     const root = createRoot(host);
-    root.render(isMap ? <GeoMap map={config} /> : <StoryMap story={config} />);
+    root.render(
+      isMap ? <MapHost config={config} GeoMap={GeoMap} /> : <StoryMap story={config} />,
+    );
     roots.set(host, root);
-
-    // Appended after the root is created, so React owns the host's children and
-    // a re-render never clears the list.
-    if (isMap) renderDiagnostics(host, config);
   } catch (error) {
     renderHostError(host, error instanceof Error ? error : new Error(String(error)));
   } finally {

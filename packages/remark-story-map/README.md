@@ -97,7 +97,9 @@ list is deterministic and matches the Obsidian adapter's order.
 
 A recognized key that is not implemented produces a `GeoMapDiagnostic` naming that
 key, serialized inside the host payload and rendered by the browser client as a
-short list under the map (`.story-map-host__diagnostics`). Nothing authored is
+short list under the map (`.story-map-host__diagnostics`). The list is part of the
+host's React tree rather than DOM appended beside it, because React clears a
+`createRoot` container's children on its first commit. Nothing authored is
 silently dropped. The same applies to an unrecognized key, which is reported as
 an unknown key rather than ignored.
 
@@ -366,11 +368,11 @@ host nodes were removed during SPA navigation, and keeps Node APIs out of the
 browser bundle.
 
 One client serves both dialects. It reads `data-story-map-kind` and mounts
-`<StoryMap />` or `<GeoMap />` accordingly, so a site can delete a separate
-Leaflet bootstrap script and its own `leaflet` remark plugin: Leaflet is loaded
-from this bundle alone, and only when a story or map host is present on the
-page. A host with no discriminator is treated as a story host, so pages
-published before the discriminator existed keep working.
+`<StoryMap />` or a map host that composes `<GeoMap />` with its diagnostics,
+so a site can delete a separate Leaflet bootstrap script and its own `leaflet`
+remark plugin: Leaflet is loaded from this bundle alone, and only when a story
+or map host is present on the page. A host with no discriminator is treated as a
+story host, so pages published before the discriminator existed keep working.
 
 ## Docusaurus theme bridge
 

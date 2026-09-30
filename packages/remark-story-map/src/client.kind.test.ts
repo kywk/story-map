@@ -3,10 +3,11 @@
 // the page loads the renderer module - and therefore Leaflet - exactly once no
 // matter how many hosts of either kind it holds.
 //
-// The suite runs under Node, so hosts are plain objects and the only DOM the
-// client reaches for (building the diagnostics list) is supplied by a small fake
-// element. That keeps the package free of a jsdom devDependency while still
-// pinning the observable behavior.
+// The suite runs under Node, so hosts are plain objects and `react-dom/client`
+// is stubbed. That keeps the package free of a jsdom devDependency while still
+// pinning the observable behavior. What a stubbed root cannot prove is whether
+// the rendered tree survives a real React commit, so the diagnostics markup is
+// asserted separately in client.diagnostics-dom.test.tsx with a real renderer.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {
@@ -81,8 +82,9 @@ function camelCase(value: string): string {
 }
 
 /**
- * Stub the only DOM the client touches - `document.createElement` for the
- * diagnostics list - and return every element it created, in creation order.
+ * Stub `document.createElement` and return every element the client created, in
+ * creation order. A correct client creates none: the React root owns its
+ * container, so host UI belongs in the tree rather than in the DOM beside it.
  */
 function withFakeDom(): FakeElement[] {
   const created: FakeElement[] = [];
@@ -133,6 +135,15 @@ function rendered(root: (typeof mocks.roots)[number]) {
   };
 }
 
+/**
+ * The `GeoMap` component a map host was actually given. A map host renders the
+ * `MapHost` wrapper rather than `GeoMap` directly, so this reads through the
+ * wrapper to assert which renderer the page handed it.
+ */
+function mapRenderer(root: (typeof mocks.roots)[number]) {
+  return rendered(root).props.GeoMap;
+}
+
 async function renderer() {
   return (await import('@story-map/react-story-map')) as unknown as {
     StoryMap: unknown;
@@ -177,8 +188,10 @@ describe('browser client discriminator', () => {
 
     const element = rendered(mocks.roots[0]!);
     const { GeoMap } = await renderer();
-    expect(element.type).toBe(GeoMap);
-    expect(element.props.map).toEqual(mapConfig('chile-2509'));
+    // A map host renders the `MapHost` wrapper, which receives the page's single
+    // `GeoMap` reference and the map config.
+    expect(mapRenderer(mocks.roots[0]!)).toBe(GeoMap);
+    expect(element.props.config).toEqual(mapConfig('chile-2509'));
     expect(element.props.story).toBeUndefined();
   });
 
@@ -207,9 +220,11 @@ describe('browser client discriminator', () => {
     expect(mocks.imports).toHaveLength(1);
     expect(rendered(mocks.roots[0]!).type).toBe(StoryMap);
     // The two hosts sharing the authored id are two mounts, not one deduplicated.
-    expect(rendered(mocks.roots[1]!).type).toBe(GeoMap);
-    expect(rendered(mocks.roots[2]!).type).toBe(GeoMap);
-    expect(rendered(mocks.roots[1]!).props.map).toEqual(mapConfig('chile-2509'));
+    // A map host renders the `MapHost` wrapper, which is handed the page's single
+    // `GeoMap` reference and owns the diagnostics list beside it.
+    expect(mapRenderer(mocks.roots[1]!)).toBe(GeoMap);
+    expect(mapRenderer(mocks.roots[2]!)).toBe(GeoMap);
+    expect(rendered(mocks.roots[1]!).props.config).toEqual(mapConfig('chile-2509'));
   });
 
   it('does not double-mount a host across repeated passes', async () => {
@@ -227,7 +242,7 @@ describe('browser client discriminator', () => {
     expect(mocks.roots).toHaveLength(2);
     expect(mocks.imports).toHaveLength(1);
     // Repeated passes reuse both roots: no re-render, no second Leaflet map.
-    expect(rendered(mocks.roots[0]!).type).toBe(GeoMap);
+    expect(mapRenderer(mocks.roots[0]!)).toBe(GeoMap);
     expect(rendered(mocks.roots[1]!).type).toBe(StoryMap);
   });
 
@@ -252,8 +267,7 @@ describe('browser client discriminator', () => {
 });
 
 describe('browser client map-host diagnostics', () => {
-  it('surfaces a recognized-but-unsupported key in the host element', async () => {
-    const created = withFakeDom();
+  it('renders a map host as a component tree that owns the diagnostics', async () => {
     await mount([
       hostElement('map', {
         ...mapConfig('deferred'),
@@ -274,57 +288,39 @@ describe('browser client map-host diagnostics', () => {
       }),
     ]);
 
-    const [list, ...items] = created;
-    expect(list?.tagName).toBe('ul');
-    expect(list?.className).toBe('story-map-host__diagnostics');
-    expect(items).toHaveLength(2);
-    // Each entry names the offending key, so nothing is silently swallowed.
-    expect(items.map((item) => item.dataset.key)).toEqual(['noUI', 'unit']);
-    expect(items.map((item) => item.dataset.code)).toEqual([
-      'leaflet-pending-p1',
-      'leaflet-compat-metadata',
-    ]);
-    expect(items[0]!.textContent).toContain('(P1)');
-    expect(items[1]!.textContent).toContain('metadata only');
+    // The diagnostics must be part of the React tree. React clears a createRoot
+    // container's children on its first commit, so a list appended around
+    // `root.render()` would be wiped in a real browser. The rendered markup of
+    // that tree is asserted in client.diagnostics-dom.test.tsx.
+    const element = rendered(mocks.roots[0]!);
+    expect((element.type as { name?: string }).name).toBe('MapHost');
+    expect((element.props.config as { diagnostics?: unknown[] }).diagnostics).toHaveLength(2);
   });
 
-  it('marks an error-level diagnostic apart from a warning', async () => {
-    const created = withFakeDom();
+  it('renders a story host as StoryMap, never as the map host wrapper', async () => {
+    await mount([hostElement('story', storyConfig('Trip'))]);
 
+    const element = rendered(mocks.roots[0]!);
+    expect((element.type as { name?: string }).name).toBe('MockStoryMap');
+  });
+
+  it('passes the map config through to the host component for a clean map', async () => {
+    await mount([hostElement('map', mapConfig('clean'))]);
+
+    const element = rendered(mocks.roots[0]!);
+    expect((element.props.config as { id?: string }).id).toBe('clean');
+  });
+
+  it('never creates host DOM nodes, because the renderer owns the container', async () => {
+    const created = withFakeDom();
     await mount([
       hostElement('map', {
         ...mapConfig(),
-        diagnostics: [
-          { level: 'error', code: 'leaflet-invalid-value', key: 'defaultZoom', message: 'bad zoom' },
-        ],
+        diagnostics: [{ level: 'warning', code: 'leaflet-pending-p1', key: 'noUI', message: 'pending' }],
       }),
     ]);
-
-    expect(created[1]?.dataset.level).toBe('error');
-  });
-
-  it('adds no diagnostics element for a clean map or a story host', async () => {
-    const created = withFakeDom();
-
-    await mount([hostElement('map', mapConfig()), hostElement('story', storyConfig('Trip'))]);
 
     expect(created).toEqual([]);
-  });
-
-  it('ignores a malformed diagnostics entry rather than rendering it', async () => {
-    const created = withFakeDom();
-
-    await mount([
-      hostElement('map', {
-        ...mapConfig(),
-        diagnostics: [null, { level: 'warning' }, { level: 'warning', message: 'kept' }],
-      }),
-    ]);
-
-    const [list, ...items] = created;
-    expect(list?.tagName).toBe('ul');
-    expect(items).toHaveLength(1);
-    expect(items[0]!.textContent).toBe('kept');
   });
 });
 

@@ -1,6 +1,15 @@
 // Site-owned glue. Merge these pieces into your existing docusaurus.config.js/mjs.
 // Nothing here is exported by @story-map/remark-story-map; the host site owns
 // route resolution, asset publishing, and the client plugin registration.
+//
+// One remark plugin now handles BOTH `story-map` and legacy `leaflet` fences, and
+// the single StoryMap client module mounts either renderer. A site that also
+// carries a separate `remark-obsidian-leaflet` plugin plus its own CDN Leaflet
+// bootstrap script can therefore remove both once its existing `leaflet` blocks
+// render: drop the `remarkLeaflet` entry from `remarkPlugins`, and drop the
+// `<script>` for its init file. Leaflet is then loaded from this bundle only, and
+// only when a story or map host is on the page. Do this after the map pages have
+// been smoke-tested; see docs/leaflet-compatibility.md for which keys are honored.
 import remarkStoryMap from '@story-map/remark-story-map';
 
 // The published-route authority for kywk.github.io already lives in
