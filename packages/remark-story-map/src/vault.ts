@@ -6,14 +6,21 @@ import {
   effectiveNoteDisplay,
   isPathInFolder,
   locationOnlySlide,
+  markerFromNoteFrontmatter,
   matchesTagFilter,
   mergeResolvedSlide,
   parseWikiLinkRef,
   slideFromNoteFrontmatter,
   sortNoteDates,
   stripFrontmatter,
+  toGeoMapConfig,
   toStoryMapConfig,
   toTimestamp,
+  type GeoMapConfig,
+  type GeoMarker,
+  type LeafletSourceConfig,
+  type MarkerTypeDefinition,
+  type MarkerTooltipDisplay,
   type StoryMapConfig,
   type StoryMapLayoutMode,
   type StoryMapSourceConfig,
@@ -26,6 +33,20 @@ export interface VaultResolveOptions {
   vaultRoot: string;
   assetBase?: string;
   resolveNoteHref?: (vaultRelativePath: string) => string | undefined;
+}
+
+/**
+ * Presentation inputs for a `leaflet` host that the source dialect does not carry.
+ *
+ * These are a `leaflet` host's own knobs and are never read for a `story-map`
+ * block: a native StoryMap must not inherit a Leaflet-only marker registry or
+ * tooltip rule, and a `leaflet` block must not assume a StoryMap setting exists.
+ * Every field is optional, and an absent field keeps the renderer's own default.
+ */
+export interface LeafletHostPresentation {
+  markerTypes?: readonly MarkerTypeDefinition[] | undefined;
+  defaultMarkerType?: string | undefined;
+  defaultTooltip?: MarkerTooltipDisplay | undefined;
 }
 
 const EXCLUDED_DIRECTORIES = new Set(['node_modules', 'build', 'dist', 'coverage']);
@@ -69,6 +90,82 @@ export class VaultIndex {
         : [];
 
     return toStoryMapConfig(source, slides);
+  }
+
+  /**
+   * Resolve a parsed `leaflet` block into renderer input.
+   *
+   * This is the second dialect, so it never reuses the `storymap/v1` path: the
+   * source is the `leaflet` dialect's own normalized shape and the result is a
+   * `GeoMapConfig`, not a `StoryMapConfig`. There are no slides, no ordering, and
+   * no `noteDisplay` here - a `leaflet` block has no story concept to configure.
+   *
+   * Every `markerFolder` resolves recursively through the same index and the same
+   * scan exclusions as `noteFolder`. A note becomes a marker only when it has a
+   * valid `location`; a note without one is skipped, never a build failure.
+   * `notePath` comes from the host route resolver, so an unresolvable or ambiguous
+   * note simply stays unlinked and the build never invents a route.
+   */
+  resolveLeafletSource(
+    source: LeafletSourceConfig,
+    presentation: LeafletHostPresentation = {},
+  ): GeoMapConfig {
+    return toGeoMapConfig(source, this.resolveLeafletMarkers(source, presentation));
+  }
+
+  /** The marker list alone, so a host can extend it without re-resolving folders. */
+  resolveLeafletMarkers(
+    source: LeafletSourceConfig,
+    presentation: LeafletHostPresentation = {},
+  ): GeoMarker[] {
+    const markers = source.markerFolder.flatMap((folder) => this.markersInFolder(folder, presentation));
+    const used = new Set<string>();
+    return markers.map((marker) => {
+      // Marker ids only need to be unique inside one host, and a repeated note
+      // path would otherwise collide in the renderer's marker registry.
+      const base = marker.notePath ?? marker.title ?? 'marker';
+      let id = base;
+      if (used.has(id)) {
+        let suffix = 2;
+        while (used.has(`${id}#${suffix}`)) suffix += 1;
+        id = `${id}#${suffix}`;
+      }
+      used.add(id);
+      return { ...marker, id };
+    });
+  }
+
+  private markersInFolder(folder: string, presentation: LeafletHostPresentation): GeoMarker[] {
+    const resolveHref = this.options.resolveNoteHref;
+    const markers: GeoMarker[] = [];
+
+    // Directory order is filesystem-dependent, so a folder's notes are ordered by
+    // Vault-relative path to make the serialized marker list deterministic. The
+    // comparison is `localeCompare`, matching the Obsidian adapter exactly, so
+    // the two hosts emit markers in the same order for the same folder.
+    // Folder order still follows the authored `markerFolder` sequence, because
+    // the list is a flatMap over it.
+    const indexed = this.notes
+      .filter((note) => isPathInFolder(note.relativePath, folder))
+      .sort((left, right) => left.relativePath.localeCompare(right.relativePath));
+
+    for (const note of indexed) {
+
+      // The published route is the host's decision (SPEC 11.2); an unresolved or
+      // ambiguous note stays unlinked rather than getting a guessed route.
+      const href = resolveHref?.(note.relativePath);
+      const marker = markerFromNoteFrontmatter(note.frontmatter, {
+        fallbackTitle: path.basename(note.relativePath),
+        ...(href ? { notePath: href } : {}),
+        ...(presentation.markerTypes ? { types: presentation.markerTypes } : {}),
+        ...(presentation.defaultMarkerType ? { defaultTypeId: presentation.defaultMarkerType } : {}),
+        ...(presentation.defaultTooltip ? { tooltip: presentation.defaultTooltip } : {}),
+      });
+      // A note without a valid `location` is skipped, never a build failure.
+      if (marker) markers.push(marker);
+    }
+
+    return markers;
   }
 
   /**
