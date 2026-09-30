@@ -9,7 +9,7 @@ import {
   type MarkerTooltipDisplay,
   type MarkerTypeDefinition,
 } from '@story-map/story-map-core';
-import { GeoMap } from './GeoMap.js';
+import { GeoMap, tooltipBinding } from './GeoMap.js';
 import { buildMarkerPlan, isMarkerVisibleAtZoom, markerZoomRange, resolveMarkerVisual } from './geoMarker.js';
 import { resolveTileSource, tileLayerKey } from './geoTiles.js';
 import { noteLinkAttributes } from './noteLink.js';
@@ -194,6 +194,46 @@ describe('GeoMap tooltips', () => {
     expect(plans('never').tooltip).toBeNull();
   });
 
+  it('binds a linked tooltip permanent and interactive, so its anchor is usable', () => {
+    // Leaflet closes a non-permanent tooltip the moment the pointer leaves the
+    // marker and ships tooltips with `pointer-events: none`. Without both of these
+    // a marker whose tooltip holds a note link cannot be clicked, and the hover
+    // source a host uses for an out-of-element preview leaves the DOM at once.
+    const links = { onNoteClick: () => {}, onNoteHover: () => {} };
+    const marker = { location: { lat: 1, lng: 2 }, title: 'Place', notePath: 'n.md' };
+
+    expect(tooltipBinding(marker, { permanent: false }, links)).toEqual({
+      permanent: true,
+      interactive: true,
+      linked: true,
+    });
+  });
+
+  it('leaves an unlinked tooltip on plain Leaflet hover behavior', () => {
+    const links = { onNoteClick: () => {}, onNoteHover: () => {} };
+    const noNote = { location: { lat: 1, lng: 2 }, title: 'Place' };
+
+    expect(tooltipBinding(noNote, { permanent: false }, links)).toEqual({
+      permanent: false,
+      interactive: false,
+      linked: false,
+    });
+    // A permanent mode is still honored when there is no link to protect.
+    expect(tooltipBinding(noNote, { permanent: true }, links).permanent).toBe(true);
+  });
+
+  it('leaves a note link on plain hover when the host has no callbacks', () => {
+    // No callback means a normal `href` (Docusaurus), which is a real link the
+    // pointer can follow, so Leaflet's own lifecycle is correct here.
+    const marker = { location: { lat: 1, lng: 2 }, title: 'Place', notePath: '/notes/place' };
+
+    expect(tooltipBinding(marker, { permanent: false }, {})).toEqual({
+      permanent: false,
+      interactive: false,
+      linked: false,
+    });
+  });
+
   it('defaults to hover, and lets the host default override it', () => {
     expect(plans(undefined).tooltip).toEqual({ permanent: false });
     const always = buildMarkerPlan([marker({ title: 'Place' })], TYPES, 'always')[0]!;
@@ -293,8 +333,7 @@ describe('GeoMap tile sources', () => {
   });
 });
 
-describe('StoryMap composition over GeoMap', () => {
-  const story: StoryMapConfig = {
+describe('StoryMap composition over GeoMap', () => {  const story: StoryMapConfig = {
     schema: 'storymap/v1',
     height: '520px',
     panelOpacity: 0.85,

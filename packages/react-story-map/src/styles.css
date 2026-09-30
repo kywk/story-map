@@ -302,6 +302,20 @@
   font-size: 0.8rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
+/* Leaflet ships `.leaflet-tooltip { pointer-events: none }`, so a tooltip that
+   carries a note link would swallow clicks on its own anchor. A linked tooltip is
+   bound interactive and must forward pointer events to reach it. */
+.story-map .story-map__marker-tooltip.leaflet-interactive {
+  pointer-events: auto;
+}
+.story-map .story-map__marker-tooltip .story-map__note-link {
+  color: var(--story-map-accent, var(--story-map-highlight, #2563eb));
+  text-decoration: none;
+  cursor: pointer;
+}
+.story-map .story-map__marker-tooltip .story-map__note-link:hover {
+  text-decoration: underline;
+}
 .story-map .story-map__marker-tooltip::before {
   border-top-color: var(--story-map-bg, var(--story-map-surface));
 }

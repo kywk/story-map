@@ -14,6 +14,7 @@ import type { MarkerPlan } from './geoMarker.js';
 import { resolveTileSource, TILE_CLASS, tileLayerKey, tileSourceZoomBounds } from './geoTiles.js';
 import { attachNoteLinkHandlers, noteLinkAttributes } from './noteLink.js';
 import type { NoteLinkShape } from './noteLink.js';
+import { createLinkedTooltipController, type LinkedTooltipController } from './tooltipLifecycle.js';
 
 /** The Leaflet module, imported dynamically so the package stays SSR-import-safe. */
 type Leaflet = typeof import('leaflet');
@@ -26,7 +27,10 @@ const ACTIVE_STYLE = { radius: 8, weight: 3, fillOpacity: 1 };
 
 /** A Leaflet layer that may carry a tooltip. `Layer` itself does not declare one. */
 type TooltipLayer = Layer & {
-  bindTooltip?: (content: HTMLElement, options: { permanent: boolean; direction: 'top'; className: string }) => unknown;
+  bindTooltip?: (
+    content: HTMLElement,
+    options: { permanent: boolean; interactive?: boolean; direction: 'top'; className: string },
+  ) => unknown;
 };
 
 /**
@@ -155,6 +159,11 @@ export function GeoMap({
   const activeRef = useRef(activeMarkerIndex);
   const onReadyRef = useRef(onReady);
   const linksRef = useRef<NoteLinkShape>({ noteLinkClassName, onNoteClick, onNoteHover });
+  // One controller per mounted map, so a linked tooltip in one map never closes or
+  // reopens a tooltip in another.
+  const linkedTooltipsRef = useRef<LinkedTooltipController | null>(null);
+  linkedTooltipsRef.current ??= createLinkedTooltipController();
+  const linkedTooltips = linkedTooltipsRef.current;
   configRef.current = config;
   markerTypesRef.current = markerTypes;
   tooltipRef.current = defaultTooltip;
@@ -180,7 +189,7 @@ export function GeoMap({
   }
 
   function buildMarkers(leaflet: Leaflet, group: LayerGroup, plans: MarkerPlan[]): MarkerEntry[] {
-    return plans.map((plan) => createMarker(leaflet, group, plan, readLinks));
+    return plans.map((plan) => createMarker(leaflet, group, plan, readLinks, linkedTooltips));
   }
 
   function updateLayers() {
@@ -295,6 +304,14 @@ export function GeoMap({
       };
       map.on('zoom', onZoom);
 
+      // A linked tooltip holds a hover source for an out-of-element preview. Any
+      // other map interaction ends that interaction, so the tooltip does not stay
+      // open over a map the user has moved on from.
+      const dismissLinked = () => linkedTooltips.closeAll();
+      map.on('click', dismissLinked);
+      map.on('movestart', dismissLinked);
+      map.on('zoomstart', dismissLinked);
+
       const runtime: GeoMapRuntime = {
         map,
         element,
@@ -308,6 +325,7 @@ export function GeoMap({
     return () => {
       cancelled = true;
       onReadyRef.current?.(null);
+      linkedTooltips.closeAll();
       pathLayerRef.current = null;
       markersRef.current = [];
       markerLayerRef.current = null;
@@ -366,6 +384,7 @@ function createMarker(
   group: LayerGroup,
   plan: MarkerPlan,
   readLinks: () => NoteLinkShape,
+  linkedTooltips: LinkedTooltipController,
 ): MarkerEntry {
   const { marker, visual } = plan;
   const position: LatLngTuple = [marker.location.lat, marker.location.lng];
@@ -417,7 +436,7 @@ function createMarker(
   }
 
   layer.addTo(group);
-  bindTooltip(layer, plan, readLinks);
+  bindTooltip(layer, plan, readLinks, linkedTooltips);
 
   const element = (layer as CircleMarker).getElement?.() ?? null;
   if (element) {
@@ -438,22 +457,58 @@ function createMarker(
 }
 
 /**
+ * How a marker's tooltip is bound.
+ *
+ * A tooltip holding a note link is bound permanent and interactive, and its
+ * lifecycle is handed to the linked-tooltip controller. That is what keeps the link
+ * clickable and keeps the element a host uses as its hover source in the DOM long
+ * enough to reach an out-of-element preview. A tooltip with no link keeps Leaflet's
+ * ordinary hover binding, which is cheaper and needs no controller.
+ */
+export function tooltipBinding(
+  marker: GeoMarker,
+  tooltip: { permanent: boolean } | null,
+  links: NoteLinkShape,
+): { permanent: boolean; interactive: boolean; linked: boolean } {
+  const linksAreInteractive =
+    marker.notePath !== undefined &&
+    (links.onNoteClick !== undefined || links.onNoteHover !== undefined);
+  return {
+    // A permanent binding would leave every tooltip open at once, so only a linked
+    // tooltip takes over its own lifecycle, and then only while hovered.
+    permanent: linksAreInteractive ? true : (tooltip?.permanent ?? false),
+    interactive: linksAreInteractive,
+    linked: linksAreInteractive,
+  };
+}
+
+/**
  * Bind a marker's tooltip, when it has a mode with content. Tooltips carry the
  * same note link as every other surface, so a host never sees two different link
  * shapes for one note.
  */
-function bindTooltip(layer: Layer, plan: MarkerPlan, readLinks: () => NoteLinkShape) {
+function bindTooltip(
+  layer: Layer,
+  plan: MarkerPlan,
+  readLinks: () => NoteLinkShape,
+  linkedTooltips: LinkedTooltipController,
+) {
   const { marker, tooltip, hasTooltipContent } = plan;
   if (!tooltip || !hasTooltipContent) return;
   const content = markerTooltipElement(marker, readLinks);
   if (!content) return;
   const bindable = layer as TooltipLayer;
   if (typeof bindable.bindTooltip !== 'function') return;
+
+  const binding = tooltipBinding(marker, tooltip, readLinks());
   bindable.bindTooltip(content, {
-    permanent: tooltip.permanent,
+    permanent: binding.permanent,
+    interactive: binding.interactive,
     direction: 'top',
     className: TOOLTIP_CLASS,
   });
+
+  if (binding.linked) linkedTooltips.track(layer);
 }
 
 function escapeHtml(value: string): string {
