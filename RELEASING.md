@@ -2,15 +2,21 @@
 
 The three npm libraries release together; the bundled Obsidian plugin releases independently.
 All three npm libraries are published at `0.4.0` on `latest` with GitHub OIDC provenance, and
-the Obsidian plugin is released at `0.4.0` on GitHub with attested assets. Plugin `0.4.0` retains minimum app
+the Obsidian plugin is released at `0.4.0` on GitHub with attested assets. **`0.5.0` is
+prepared and verified but not yet published**; its notes are
+[docs/releases/0.5.0.md](docs/releases/0.5.0.md). Plugin `0.4.0` retains minimum app
 version `1.8.7` for the `loadLocalStorage`/`saveLocalStorage`/`getLanguage` APIs; `0.2.0`
 declared `1.8.0` incorrectly and should not be submitted.
 Published versions are immutable; choose a new version for the next release.
 The plugin is available in the official community directory.
 
-See [0.4.0 release notes](docs/releases/0.4.0.md) for changes, upgrade guidance and
-validation evidence, and [0.3.0 release notes](docs/releases/0.3.0.md) for the previous
-release.
+Note that `0.4.0` on npm is an **older, unrelated release** that does not contain the
+`leaflet` dialect; the `0.5.0` branch work required a new number rather than a re-publish.
+Verify which `0.4.0` you are looking at before comparing artifacts.
+
+See [0.5.0 release notes](docs/releases/0.5.0.md) for the pending release,
+[0.4.0 release notes](docs/releases/0.4.0.md) for the current published one, and
+[0.3.0 release notes](docs/releases/0.3.0.md) before that.
 
 ## Versioning policy
 
@@ -19,7 +25,9 @@ otherwise breaks a consumer's build is a **minor** release, not a patch. Adding 
 optional field, a layout mode, or a defaultable configuration key is also minor. Patch
 releases are for fixes that keep every published type and behavior source-compatible.
 `0.3.0` added the required `map.theme` and `layout` fields; `0.4.0` added the required
-`panelOpacity` field.
+`panelOpacity` field. `0.5.0` adds the `GeoMap` model and the `leaflet` dialect and is
+purely additive: `story-map-core/src/types.ts` gained 210 lines and removed none, so no
+consumer has to change anything to upgrade.
 
 ## npm account setup
 
@@ -79,8 +87,8 @@ Do not create placeholder packages or add a token fallback to this workflow.
 
 All three library versions must match; private root, example and Obsidian packages are
 excluded from the explicit release allowlist. Update the three package versions together
-for later releases, then refresh the lockfile. The three packages are currently at `0.4.0`.
-Private root and Obsidian versions remain independent.
+for later releases, then refresh the lockfile. The three packages are currently at `0.5.0`,
+prepared but not yet published. Private root and Obsidian versions remain independent.
 
 ```bash
 pnpm install
@@ -121,8 +129,9 @@ not proven by local checks. The workflow does not create an Obsidian release.
 
 ## Obsidian community release
 
-The desktop plugin is **Geo Story Map**, ID `geo-story-map`, current version `0.4.0`,
-minimum Obsidian `1.8.7`. Its versions are independent of the npm libraries.
+The desktop plugin is **Geo Story Map**, ID `geo-story-map`, published version `0.4.0` with
+`0.5.0` prepared. Minimum Obsidian `1.8.7`. Its versions are independent of the npm
+libraries.
 It is published in the [Obsidian community directory](https://community.obsidian.md/plugins/geo-story-map).
 The previous candidate `story-map` is already used by an unrelated community plugin.
 

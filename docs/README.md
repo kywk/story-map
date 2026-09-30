@@ -18,6 +18,8 @@ Start here when you need to understand or change StoryMap.
 | [`../RELEASING.md`](../RELEASING.md) | npm publishing, Trusted Publisher setup and Obsidian community releases. |
 | [`releases/0.3.0.md`](releases/0.3.0.md) | 0.3.0 release notes, upgrade guidance and validation evidence. |
 | [`releases/0.4.0.md`](releases/0.4.0.md) | 0.4.0 release notes: timeline layout, `initialSlide`, `panelOpacity`, and the required-field upgrade. |
+| [`releases/0.5.0.md`](releases/0.5.0.md) | 0.5.0 release notes: the `GeoMap` layer, the `leaflet` dialect, and the `kywk.github.io` migration. Prepared, not yet published. |
+| [`leaflet-compatibility.md`](leaflet-compatibility.md) | Live per-key record of what the ` ```leaflet ` dialect actually supports, with known gaps. |
 | [`history/`](history/) | Archived plans and background. Superseded, not authoritative. |
 
 Recommended reading order for a new agent: `README.md` -> `architecture.md` -> `SPEC.md` -> `AGENTS.md`.
