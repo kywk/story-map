@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { assertNoScriptCreation } from '../packages/obsidian-story-map/react-script-policy.mjs';
+import { createObsidianStub } from './obsidian-release-stub.mjs';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -29,8 +30,9 @@ assert(readFileSync(join(dist, 'styles.css'), 'utf8').includes('.story-map'));
 
 const exports = {};
 const module = { exports };
-const obsidian = Object.fromEntries(['Plugin', 'PluginSettingTab', 'TextFileView',
-  'TFile', 'WorkspaceLeaf', 'Setting', 'Modal'].map(name => [name, class {}]));
+// See obsidian-release-stub.mjs: one list builds the stub and is asserted against
+// the plugin's real imports by obsidian-release-stub.test.mjs.
+const obsidian = createObsidianStub();
 const host = {
   module, exports, console, setTimeout, clearTimeout, queueMicrotask,
   require(name) {
