@@ -3,13 +3,34 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('obsidian', () => {
   class Plugin {
     cleanups: Array<() => void> = [];
+    codeBlockProcessors: Array<[string, unknown]> = [];
+    commands: Array<{ id: string; name: string }> = [];
+    viewTypes: string[] = [];
+    settingTabs: unknown[] = [];
+    events: Array<() => void> = [];
+    data: unknown = null;
+    async loadData() { return this.data; }
+    async saveData(value: unknown) { this.data = value; }
     register(cleanup: () => void) { this.cleanups.push(cleanup); }
+    registerView(type: string) { this.viewTypes.push(type); return class {}; }
+    registerHoverLinkSource() {}
+    addSettingTab(tab: unknown) { this.settingTabs.push(tab); }
+    addCommand(command: { id: string; name: string }) { this.commands.push(command); }
+    registerEvent(_ref: unknown) { this.events.push(() => {}); }
+    registerMarkdownCodeBlockProcessor(language: string, handler: unknown) {
+      this.codeBlockProcessors.push([language, handler]);
+    }
   }
-  class TFile { constructor(public path: string) {} }
+  class TFile { constructor(public path = '') {} }
   class WorkspaceLeaf {
     async setViewState(_state: unknown, _eState?: unknown): Promise<void> {}
   }
-  return { Plugin, TFile, WorkspaceLeaf };
+  class MarkdownRenderChild {
+    constructor(public containerEl: unknown) {}
+  }
+  class Notice { constructor(_message?: unknown, _timeout?: number) {} }
+  const getLanguage = () => 'en';
+  return { Plugin, TFile, WorkspaceLeaf, MarkdownRenderChild, Notice, getLanguage };
 });
 vi.mock('./view.js', () => ({ StoryMapView: class {} }));
 vi.mock('./settings-tab.js', () => ({ StoryMapSettingTab: class {} }));
@@ -105,5 +126,87 @@ describe('scoped Story Map view routing', () => {
     await leaf.setViewState(state);
     expect(laterWrapper).toHaveBeenCalledWith(state);
     expect(forwarding).toHaveBeenCalledWith(state, undefined);
+  });
+});
+
+describe('plugin load', () => {
+  function loadPlugin(data: unknown = null) {
+    const app = {
+      vault: { getAbstractFileByPath: () => null, configDir: '.obsidian' },
+      metadataCache: { getFileCache: () => ({ frontmatter: {} }) },
+      workspace: { on: () => () => {}, getLeavesOfType: () => [], trigger: vi.fn(), openLinkText: vi.fn(), getActiveFile: () => null, activeLeaf: null },
+      loadLocalStorage: () => null,
+      saveLocalStorage: vi.fn(),
+    };
+    const plugin = new StoryMapPlugin(app as never, {} as never);
+    Object.assign(plugin, { app, data });
+    return { plugin, app };
+  }
+
+  it('owns the legacy leaflet language and nothing else', async () => {
+    const { plugin } = loadPlugin();
+    await plugin.onload();
+
+    const internals = plugin as unknown as { codeBlockProcessors: Array<[string, unknown]> };
+    // Exactly one language is claimed, so every other fenced block in the vault
+    // keeps Obsidian's own renderer.
+    expect(internals.codeBlockProcessors.map(([language]) => language)).toEqual(['leaflet']);
+    expect(typeof internals.codeBlockProcessors[0]?.[1]).toBe('function');
+  });
+
+  it('registers the Story Map view, the hover-link source, and both commands', async () => {
+    const { plugin } = loadPlugin();
+    await plugin.onload();
+
+    const internals = plugin as unknown as { viewTypes: string[]; settingTabs: unknown[]; commands: Array<{ id: string }> };
+    expect(internals.viewTypes).toEqual([VIEW_TYPE_STORY_MAP]);
+    expect(internals.settingTabs).toHaveLength(1);
+    expect(internals.commands.map((command) => command.id)).toEqual([
+      'open-as-story-map',
+      'open-as-markdown',
+      'find-location-coordinates',
+      'import-leaflet-settings',
+    ]);
+  });
+
+  it('migrates stored settings on load and keeps them per dialect', async () => {
+    const { plugin } = loadPlugin({
+      version: 2,
+      story: { order: 'desc', noteDisplay: 'full' },
+      map: { theme: 'vintage', zoom: 7, showPath: true },
+      leafletCompatibility: { defaultCenter: [1, 2], diagnostics: true },
+    });
+    await plugin.onload();
+
+    expect(plugin.getSourceDefaults()).toEqual({
+      order: 'desc',
+      noteDisplay: 'full',
+      map: { theme: 'vintage', zoom: 7, showPath: true },
+    });
+    // The compatibility center exists for legacy blocks only; it never centers a
+    // story-map document.
+    expect(plugin.settings.leafletCompatibility.defaultCenter).toEqual([1, 2]);
+    expect(plugin.isNotePreviewEnabled()).toBe(true);
+  });
+
+  it('migrates flat version 1 defaults on load', async () => {
+    const { plugin } = loadPlugin({ mapTheme: 'atlas', mapShowPath: false, dateField: 'visited' });
+    await plugin.onload();
+
+    expect(plugin.getSourceDefaults()).toEqual({
+      dateField: 'visited',
+      map: { theme: 'atlas', showPath: false },
+    });
+  });
+
+  it('releases the inline block roots on unload', async () => {
+    const { plugin } = loadPlugin();
+    await plugin.onload();
+    const internals = plugin as unknown as { cleanups: Array<() => void> };
+    // Agent controller, the inline block controller, and the view-state wrapper.
+    expect(internals.cleanups).toHaveLength(3);
+    expect(() => {
+      for (const cleanup of internals.cleanups) cleanup();
+    }).not.toThrow();
   });
 });

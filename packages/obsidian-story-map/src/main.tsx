@@ -4,9 +4,12 @@ import { HOVER_LINK_DISPLAY, HOVER_LINK_SOURCE, VIEW_TYPE_STORY_MAP } from './co
 import { startCoordinateLookup } from './coordinate-lookup.js';
 import { isStoryMapFile } from './detect.js';
 import { configureI18n, t } from './i18n.js';
+import { importObsidianLeafletSettings } from './leaflet-import-command.js';
+import { LeafletBlockController, LEAFLET_FENCE } from './leaflet-block.js';
 import { LocalAgentController } from './local-agents.js';
 import {
-  DEFAULT_STORY_MAP_SETTINGS,
+  defaultSettings,
+  migrateSettings,
   toSourceDefaults,
   type StoryMapPluginSettings,
 } from './settings-data.js';
@@ -42,7 +45,8 @@ export default class StoryMapPlugin extends Plugin implements StoryMapViewHost {
   private readonly markdownMode = new Set<string>();
   private loaded = false;
   private persistTimer: number | null = null;
-  settings: StoryMapPluginSettings = { ...DEFAULT_STORY_MAP_SETTINGS };
+  private leafletBlocks!: LeafletBlockController;
+  settings: StoryMapPluginSettings = defaultSettings();
   agentController!: LocalAgentController;
 
   async onload(): Promise<void> {
@@ -56,6 +60,9 @@ export default class StoryMapPlugin extends Plugin implements StoryMapViewHost {
       display: HOVER_LINK_DISPLAY,
       defaultMod: false,
     });
+    this.leafletBlocks = new LeafletBlockController(this);
+    this.registerMarkdownCodeBlockProcessor(LEAFLET_FENCE, this.leafletBlocks.process);
+    this.register(() => this.leafletBlocks.dispose());
     this.addSettingTab(new StoryMapSettingTab(this.app, this));
     this.patchLeafViewState();
     this.loaded = true;
@@ -91,6 +98,12 @@ export default class StoryMapPlugin extends Plugin implements StoryMapViewHost {
         if (!checking) void startCoordinateLookup(this, file);
         return true;
       },
+    });
+
+    this.addCommand({
+      id: 'import-leaflet-settings',
+      name: t('Import settings from Obsidian Leaflet'),
+      callback: () => void this.importLeafletSettings(),
     });
 
     this.registerEvent(
@@ -150,9 +163,20 @@ export default class StoryMapPlugin extends Plugin implements StoryMapViewHost {
     return toSourceDefaults(this.settings);
   }
 
+  getSettings(): StoryMapPluginSettings {
+    return this.settings;
+  }
+
+  isNotePreviewEnabled(): boolean {
+    return this.settings.interaction.notePreview;
+  }
+
+  async importLeafletSettings(): Promise<void> {
+    await importObsidianLeafletSettings(this);
+  }
+
   async loadSettings(): Promise<void> {
-    const stored = (await this.loadData()) as StoryMapPluginSettings | null;
-    this.settings = { ...DEFAULT_STORY_MAP_SETTINGS, ...(stored ?? {}) };
+    this.settings = migrateSettings(await this.loadData());
   }
 
   async saveSettings(): Promise<void> {
@@ -166,6 +190,7 @@ export default class StoryMapPlugin extends Plugin implements StoryMapViewHost {
   private async persistSettings(): Promise<void> {
     await this.saveData(this.settings);
     this.refreshStoryMapViews();
+    this.leafletBlocks?.refresh();
   }
 
   private refreshStoryMapViews(): void {

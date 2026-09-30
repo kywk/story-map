@@ -6,12 +6,15 @@ import {
   type StoryMapSourceDefaults,
 } from '@story-map/story-map-core';
 import { StoryMap } from '@story-map/react-story-map';
-import { HOVER_LINK_SOURCE, STORY_MAP_FENCE, VIEW_TYPE_STORY_MAP } from './constants.js';
+import { STORY_MAP_FENCE, VIEW_TYPE_STORY_MAP } from './constants.js';
+import { createNoteLinkHandlers, type NoteLinkHandlers } from './note-links.js';
 import { resolveObsidianStory } from './resolver.js';
 
 export interface StoryMapViewHost {
   openAsMarkdown(file: TFile, leaf: WorkspaceLeaf): void;
   getSourceDefaults(): StoryMapSourceDefaults;
+  /** Page preview on hover is a shared Obsidian behavior, not a per-view one. */
+  isNotePreviewEnabled(): boolean;
 }
 
 export class StoryMapView extends TextFileView {
@@ -113,13 +116,16 @@ export class StoryMapView extends TextFileView {
       const story = await resolveObsidianStory(this.app, parsed, this.file?.path ?? '');
       if (token !== this.renderToken) return;
 
+      const { onNoteClick, onNoteHover } = this.noteLinks();
       this.root = createRoot(host);
       this.root.render(
         <StoryMap
           story={{ ...story, height: '100%' }}
           noteLinkClassName="internal-link"
-          onNoteClick={(notePath) => this.openNoteInNewTab(notePath)}
-          onNoteHover={(notePath, targetEl, event) => this.previewNote(notePath, targetEl, event)}
+          onNoteClick={onNoteClick}
+          // `exactOptionalPropertyTypes`: a disabled preview omits the callback
+          // instead of passing `undefined`, so the renderer keeps a plain link.
+          {...(onNoteHover ? { onNoteHover } : {})}
         />,
       );
     } catch (error) {
@@ -129,18 +135,16 @@ export class StoryMapView extends TextFileView {
     }
   }
 
-  private openNoteInNewTab(notePath: string): void {
-    void this.app.workspace.openLinkText(notePath, this.file?.path ?? '', true);
-  }
-
-  private previewNote(notePath: string, targetEl: HTMLElement, event: MouseEvent): void {
-    this.app.workspace.trigger('hover-link', {
-      event,
-      source: HOVER_LINK_SOURCE,
-      hoverParent: this.leaf,
-      targetEl,
-      linktext: notePath,
+  /**
+   * The same note-link pair the inline `leaflet` block uses: open in a new tab on
+   * click, and the registered page preview on hover. Built per render so a
+   * settings change to the preview is picked up without extra bookkeeping.
+   */
+  private noteLinks(): NoteLinkHandlers {
+    return createNoteLinkHandlers(this.app, {
       sourcePath: this.file?.path ?? '',
+      hoverParent: this.leaf,
+      notePreview: this.host.isNotePreviewEnabled(),
     });
   }
 }
