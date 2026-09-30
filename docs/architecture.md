@@ -9,7 +9,8 @@ reference) and the Docusaurus/Remark publishing path.
 Sections 1-13 describe the code as it stands. Section 14 describes the Leaflet
 compatibility work on the `feat/leaflet` branch and is explicitly marked as
 not-yet-implemented until the agents land; read the status line there before trusting any
-file name in it.
+file name in it. The per-key support record lives separately in
+[`leaflet-compatibility.md`](leaflet-compatibility.md).
 
 ## 1. Repository layout
 
