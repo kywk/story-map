@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
-import type { CircleMarker, LayerGroup, Map as LeafletMap, Polyline, TileLayer } from 'leaflet';
-import type { StoryMapConfig } from '@story-map/story-map-core';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { GeoMapConfig, GeoMarker, LatLngTuple, StoryMapConfig, StorySlide } from '@story-map/story-map-core';
+import { tileSourcesFromStoryMap } from '@story-map/story-map-core';
+import { GeoMap } from './GeoMap.js';
+import type { GeoMapFocusContext, GeoMapRuntime } from './GeoMap.js';
 import { focusPixelOffset, getMarkerFocus } from './markerOffset.js';
 
 interface MapCanvasProps {
@@ -8,181 +10,108 @@ interface MapCanvasProps {
   activeIndex: number;
 }
 
-/** The map element and Leaflet instance stay mounted while presentation changes. */
+/**
+ * The StoryMap-specific layer above the shared `<GeoMap />`: it turns slides into
+ * the generic marker/path model, owns the layout-aware focus offset, and drives
+ * `flyTo` for slide navigation.
+ *
+ * The Leaflet instance itself - tiles, marker lifecycle, zoom visibility,
+ * tooltips, resize invalidation, cleanup - belongs to `<GeoMap />`. Switching
+ * slides or layouts only refreshes layers, so the map element and the runtime
+ * stay mounted and the Leaflet instance is never recreated.
+ */
 export function MapCanvas({ story, activeIndex }: MapCanvasProps) {
-  const elementRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LeafletMap | null>(null);
-  const tileRef = useRef<TileLayer | null>(null);
-  const markersRef = useRef<CircleMarker[]>([]);
-  const markerLayerRef = useRef<LayerGroup | null>(null);
-  const pathRef = useRef<Polyline | null>(null);
-  const leafletRef = useRef<typeof import('leaflet') | null>(null);
-  const tileKeyRef = useRef('');
-  const slidesRef = useRef<StoryMapConfig['slides'] | null>(null);
-  const showPathRef = useRef<boolean | null>(null);
-  const storyRef = useRef(story);
-  const activeIndexRef = useRef(activeIndex);
-  storyRef.current = story;
-  activeIndexRef.current = activeIndex;
+  const [runtime, setRuntime] = useState<GeoMapRuntime | null>(null);
+  const handleReady = useCallback((next: GeoMapRuntime | null) => setRuntime(next), []);
 
-  function updateLayers(current: StoryMapConfig) {
-    const map = mapRef.current;
-    const L = leafletRef.current;
-    if (!map || !L) return;
+  const config = useMemo(() => storyToGeoMapConfig(story), [story]);
+  const markers = config.markers;
+  const activeMarkerIndex = useMemo(
+    () => markerIndexForSlide(story.slides, activeIndex),
+    [story.slides, activeIndex],
+  );
 
-    map.setMinZoom(current.map.minZoom ?? 0);
-    map.setMaxZoom(current.map.maxZoom ?? 18);
-    const tileKey = [current.map.tileUrl, current.map.attribution, current.map.minZoom, current.map.maxZoom].join('|');
-    if (tileKeyRef.current !== tileKey) {
-      tileRef.current?.remove();
-      tileRef.current = L.tileLayer(current.map.tileUrl, {
-        attribution: current.map.attribution,
-        className: 'story-map__tiles',
-        ...(current.map.minZoom === undefined ? {} : { minZoom: current.map.minZoom }),
-        ...(current.map.maxZoom === undefined ? {} : { maxZoom: current.map.maxZoom }),
-      }).addTo(map);
-      tileKeyRef.current = tileKey;
-    }
+  const path = useMemo(
+    () =>
+      story.map.showPath
+        ? markers.map((marker) => [marker.location.lat, marker.location.lng] as LatLngTuple)
+        : undefined,
+    [markers, story.map.showPath],
+  );
 
-    if (slidesRef.current === current.slides && showPathRef.current === current.map.showPath) {
-      updateMarkerStyles(current, activeIndexRef.current, markersRef.current);
-      return;
-    }
+  // Same rule as before: park the active marker on the layout-aware focus point so
+  // the card/full/timeline overlay never covers it.
+  const focusOffset = useCallback(
+    ({ width, height, viewportWidth }: GeoMapFocusContext) =>
+      focusPixelOffset({ width, height }, getMarkerFocus(story.layout, viewportWidth)),
+    [story.layout.mode, story.layout.card.align, story.layout.full.side, story.layout.full.contentRatio],
+  );
 
-    markerLayerRef.current?.remove();
-    pathRef.current?.remove();
-    const layer = L.layerGroup().addTo(map);
-    markerLayerRef.current = layer;
-    const located = current.slides.filter((slide) => slide.location);
-    markersRef.current = located.map((slide) => {
-      const location = slide.location!;
-      return L.circleMarker([location.lat, location.lng], {
-        className: 'story-map__marker', radius: 6, weight: 2, fillOpacity: 0.85,
-      }).addTo(layer);
-    });
-    pathRef.current = current.map.showPath && located.length >= 2
-      ? L.polyline(
-          located.map((slide) => [slide.location!.lat, slide.location!.lng] as [number, number]),
-          { className: 'story-map__path', weight: 3, opacity: 0.65 },
-        ).addTo(map)
-      : null;
-    slidesRef.current = current.slides;
-    showPathRef.current = current.map.showPath;
-    updateMarkerStyles(current, activeIndexRef.current, markersRef.current);
-  }
-
-  // Leaflet is imported only in a browser effect. A config or layout change never
-  // creates another map on the same element.
-  useEffect(() => {
-    let cancelled = false;
-    async function mount() {
-      const element = elementRef.current;
-      if (!element) return;
-      const L = await import('leaflet');
-      if (cancelled || !elementRef.current) return;
-      leafletRef.current = L;
-      const current = storyRef.current;
-      const initial = current.slides[activeIndexRef.current]?.location;
-      const center = initial
-        ? [initial.lat, initial.lng] as [number, number]
-        : current.map.center ?? [0, 0];
-      const map = L.map(element);
-      mapRef.current = map;
-      const initialZoom = initial?.zoom ?? current.map.zoom;
-      map.setView(focusTarget(map, L, center, initialZoom, current, element), initialZoom);
-      updateLayers(current);
-    }
-    void mount();
-    return () => {
-      cancelled = true;
-      pathRef.current = null;
-      markersRef.current = [];
-      markerLayerRef.current = null;
-      tileRef.current = null;
-      leafletRef.current = null;
-      tileKeyRef.current = '';
-      slidesRef.current = null;
-      showPathRef.current = null;
-      mapRef.current?.remove();
-      mapRef.current = null;
-    };
-  }, []);
+  // `<GeoMap />` already opens on the active marker, so the first runtime must not
+  // animate a second time; only later slide or layout changes fly.
+  const flownRef = useRef<string | null>(null);
+  const activeLocation = story.slides[activeIndex]?.location;
+  const activeZoom = activeLocation?.zoom ?? story.map.zoom;
+  const flyKey = activeMarkerIndex === null ? null : `${activeMarkerIndex}:${activeZoom}`;
 
   useEffect(() => {
-    updateLayers(story);
-  }, [story]);
+    if (!runtime || !activeLocation || flyKey === null) return;
+    if (flownRef.current === flyKey) return;
+    flownRef.current = flyKey;
+    runtime.flyTo([activeLocation.lat, activeLocation.lng], activeZoom, { duration: 1.1 });
+  }, [runtime, activeLocation, activeZoom, flyKey]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    const L = leafletRef.current;
-    const location = story.slides[activeIndex]?.location;
-    if (map && L && location) {
-      const zoom = location.zoom ?? story.map.zoom;
-      map.flyTo(
-        focusTarget(map, L, [location.lat, location.lng], zoom, story, elementRef.current),
-        zoom,
-        { duration: 1.1 },
-      );
-    }
-    updateMarkerStyles(story, activeIndex, markersRef.current);
-  }, [
-    activeIndex,
-    story.slides,
-    story.map.zoom,
-    story.layout.mode,
-    story.layout.card.align,
-    story.layout.full.side,
-    story.layout.full.contentRatio,
-  ]);
-
-  useEffect(() => {
-    const element = elementRef.current;
-    if (!element || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(() => mapRef.current?.invalidateSize());
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  return <div className="story-map__map" ref={elementRef} />;
+  return (
+    <GeoMap
+      map={config}
+      rootless
+      activeMarkerIndex={activeMarkerIndex}
+      path={path}
+      focusOffset={focusOffset}
+      onReady={handleReady}
+    />
+  );
 }
 
 /**
- * Map center that lands the marker on the layout-aware focus point instead of the
- * container center, so the card/full overlay never covers the active marker.
- * Falls back to the plain center when the container has no measurable size yet.
+ * The StoryMap -> GeoMap projection. Slides keep their own `storymap/v1` shape;
+ * a located slide becomes a generic marker carrying only map data, and the
+ * published `map.tileUrl` / `map.attribution` pair is normalized into the shared
+ * tile model instead of being removed.
  */
-function focusTarget(
-  map: LeafletMap,
-  L: typeof import('leaflet'),
-  center: [number, number],
-  zoom: number,
-  story: StoryMapConfig,
-  element: HTMLDivElement | null,
-): [number, number] {
-  const width = element?.clientWidth ?? 0;
-  const height = element?.clientHeight ?? 0;
-  const viewportWidth = typeof window === 'undefined' ? width : window.innerWidth;
-  const offset = focusPixelOffset(
-    { width, height },
-    getMarkerFocus(story.layout, viewportWidth),
-  );
-  if (offset.x === 0 && offset.y === 0) return center;
-  const projected = map.project(center, zoom).subtract(L.point(offset.x, offset.y));
-  const focused = map.unproject(projected, zoom);
-  return [focused.lat, focused.lng];
+export function storyToGeoMapConfig(story: StoryMapConfig): GeoMapConfig {
+  const markers: GeoMarker[] = [];
+  for (const slide of story.slides) {
+    if (!slide.location) continue;
+    markers.push({ location: { lat: slide.location.lat, lng: slide.location.lng } });
+  }
+
+  return {
+    schema: 'geomap/v1',
+    ...(story.id === undefined ? {} : { id: story.id }),
+    height: story.height,
+    map: {
+      ...(story.map.center === undefined ? {} : { center: story.map.center }),
+      zoom: story.map.zoom,
+      ...(story.map.minZoom === undefined ? {} : { minZoom: story.map.minZoom }),
+      ...(story.map.maxZoom === undefined ? {} : { maxZoom: story.map.maxZoom }),
+      theme: story.map.theme,
+      tiles: tileSourcesFromStoryMap(story.map),
+    },
+    markers,
+  };
 }
 
-function updateMarkerStyles(story: StoryMapConfig, activeIndex: number, markers: CircleMarker[]) {
+/**
+ * The marker index for a slide, or `null` when the slide has no location. Markers
+ * only exist for located slides, so a slide index is not a marker index.
+ */
+export function markerIndexForSlide(slides: readonly StorySlide[], slideIndex: number): number | null {
   let markerIndex = 0;
-  story.slides.forEach((slide, slideIndex) => {
-    if (!slide.location) return;
-    const marker = markers[markerIndex++];
-    if (!marker) return;
-    marker.setRadius(slideIndex === activeIndex ? 8 : 5);
-    marker.setStyle({
-      weight: slideIndex === activeIndex ? 3 : 2,
-      fillOpacity: slideIndex === activeIndex ? 1 : 0.7,
-    });
-    marker.getElement()?.classList.toggle('story-map__marker--active', slideIndex === activeIndex);
-  });
+  for (let index = 0; index < slides.length; index += 1) {
+    if (!slides[index]?.location) continue;
+    if (index === slideIndex) return markerIndex;
+    markerIndex += 1;
+  }
+  return null;
 }

@@ -5,6 +5,8 @@ import remarkGfm from 'remark-gfm';
 import type { StoryMapConfig, StorySlide } from '@story-map/story-map-core';
 import { MapCanvas } from './MapCanvas.js';
 import { StoryTimeline } from './Timeline.js';
+import { noteLinkAttributes } from './noteLink.js';
+import type { NoteLinkShape } from './noteLink.js';
 
 export interface StoryMapProps {
   story: StoryMapConfig;
@@ -216,11 +218,12 @@ export function NoteLink({
   'aria-label': ariaLabel,
   children,
 }: NoteLinkProps) {
-  const linkClassName = ['story-map__note-link', className, noteLinkClassName].filter(Boolean).join(' ');
+  const shape: NoteLinkShape = { className, noteLinkClassName, onNoteClick, onNoteHover };
+  const attributes = noteLinkAttributes(notePath, shape);
 
-  if (onNoteClick === undefined && onNoteHover === undefined) {
+  if (!attributes.callbackDriven) {
     return (
-      <a className={linkClassName} href={notePath} aria-label={ariaLabel}>
+      <a className={attributes.className} href={notePath} aria-label={ariaLabel}>
         {children}
       </a>
     );
@@ -228,7 +231,7 @@ export function NoteLink({
 
   return (
     <a
-      className={linkClassName}
+      className={attributes.className}
       href={notePath}
       data-href={notePath}
       aria-label={ariaLabel}

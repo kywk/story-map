@@ -250,6 +250,67 @@
 .story-map .story-map__marker { fill: var(--story-map-marker); stroke: var(--story-map-marker-border); }
 .story-map .story-map__marker--active { fill: var(--story-map-marker-active); }
 .story-map .story-map__path { stroke: var(--story-map-path); }
+
+/* A storyless <GeoMap /> reuses the same themed root, so all six presets and the
+   --story-map-* variables apply with no duplicated CSS. It has no story card
+   above it, so the root is just a framed map surface of the configured height. */
+.story-map[data-geomap] {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+.story-map[data-geomap]:focus-visible {
+  outline: none;
+}
+
+/* Marker type visuals other than the generic circle. A type carries a portable
+   symbol or an image, never a Font Awesome name, so these are plain themed
+   elements. */
+.story-map .story-map__marker--symbol {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--story-map-marker-border);
+  border-radius: 50%;
+  background: var(--story-map-marker);
+  color: var(--story-map-marker-border);
+  font-size: 0.7rem;
+  line-height: 1;
+}
+.story-map .story-map__marker--active.story-map__marker--symbol {
+  background: var(--story-map-marker-active);
+}
+.story-map .story-map__marker--image {
+  border: 2px solid var(--story-map-marker-border);
+  border-radius: 50%;
+  object-fit: cover;
+}
+.story-map .story-map__marker--unknown {
+  /* A type this package does not know still renders; the dashed ring is the
+     only visual difference, so a fallback is visible without being an error. */
+  stroke-dasharray: 2 2;
+}
+
+/* Marker tooltip: the shared note-link surface plus title/description text. */
+.story-map .story-map__marker-tooltip {
+  padding: 6px 8px;
+  border: 1px solid var(--story-map-border, var(--story-map-line));
+  border-radius: 8px;
+  background: var(--story-map-bg, var(--story-map-surface));
+  color: var(--story-map-fg, var(--story-map-ink));
+  font-size: 0.8rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.story-map .story-map__marker-tooltip::before {
+  border-top-color: var(--story-map-bg, var(--story-map-surface));
+}
+.story-map .story-map__marker-title {
+  font-weight: 600;
+}
+.story-map .story-map__marker-description {
+  color: var(--story-map-muted, var(--story-map-subtle));
+}
 .story-map[data-map-theme='cyber'] .story-map__marker--active,
 .story-map[data-map-theme='cyber'] .story-map__path { filter: drop-shadow(0 0 3px var(--story-map-highlight)); }
 .story-map .leaflet-control-zoom a,
