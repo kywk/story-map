@@ -102,12 +102,27 @@ through *both* adapters in `remark-story-map/src/parity.test.ts`, asserting iden
 options, markers, and order. No absolute path leak and no Node API in the browser bundle
 are asserted directly against the transform output and the built client.
 
-The Obsidian side was additionally opened in a real vault on 2026-09-30: the plugin was
-installed into a sandbox vault, 33 live `leaflet` blocks were surveyed (all P0 keys, none
-outside it), and the historical Leaflet plugin was uninstalled after its settings were
-backed up for the import path. That run surfaced two defects a scripted check had missed -
-the release check's Obsidian stub lacked `MarkdownRenderChild`, and the importer read the
-wrong plugin directory - both fixed with regression tests.
+The Obsidian side was additionally verified by hand in a real vault on 2026-09-30, across
+all nine manual steps: plugin load and settings sections, map rendering and the three
+compatibility diagnostics, `markerFolder` resolution (28 markers for Chile, 27 for Egypt, 5
+for Kuala Lumpur, 20 for Xinjiang, 0 for the empty Zao folder), two independent maps on one
+page, dark-theme following, marker note links with Page preview, Shift-click coordinate
+copy, the `version: 2` settings file, and no leaks across note switches. A 33-block survey
+of that vault found only P0 keys, none outside them.
+
+That run found three defects no scripted check had caught, each fixed with a regression
+test:
+
+- the Obsidian release check's stub module lacked `MarkdownRenderChild`, so the bundled
+  plugin threw on import and every Obsidian release would have failed;
+- the settings importer read `plugins/obsidian-leaflet/` instead of the community plugin's
+  real `plugins/obsidian-leaflet-plugin/`, so it reported nothing to import on a real vault;
+- a marker note link could not be used at all: Leaflet closes a non-permanent tooltip the
+  moment the pointer leaves the marker, and ships tooltips with `pointer-events: none`, so
+  the Page preview collapsed before the pointer could reach it and the link was not
+  clickable. Fixing that first attempt made every linked tooltip open and stay open,
+  because binding a permanent tooltip while the layer is already on the map makes Leaflet
+  open it.
 
 Not verified by anyone yet: the Docusaurus site. The Remark dual-dialect transform, the
 discriminator, and the one-runtime client are covered by tests, but no `kywk.github.io`
