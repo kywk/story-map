@@ -468,14 +468,33 @@ Archived milestones live under `history/`:
 
 They are archival; the current contract is `SPEC.md` plus this document.
 
-## 14. Leaflet compatibility (in progress on `feat/leaflet`)
+## 14. Leaflet compatibility
 
-**Status: target state, not yet implemented.** The file names below are the agreed
-allocation for the work described in
-`history/2026-09-29-leaflet-compatibility/`. Nothing in this section is true of `main`
-today; each item flips to actual when its agent lands and its tests pass. Until then,
-`docs/history/2026-09-29-leaflet-compatibility/compatibility-matrix.md` is the authority
-for which Leaflet keys actually work.
+**Status: implemented on `feat/leaflet`; the per-key support record is
+[`leaflet-compatibility.md`](leaflet-compatibility.md).** This section describes the
+structure. The approved design, settings decisions, and phase plan are archival under
+`history/2026-09-29-leaflet-compatibility/`.
+
+### 14.0 Files
+
+| File | Role |
+| --- | --- |
+| `story-map-core/src/leaflet.ts` | The `leaflet` dialect parser, the repeated-key pre-pass, and the diagnostic phase table. |
+| `story-map-core/src/leaflet.test.ts` | Fixtures, repeated keys, diagnostics, `mapzoom`, marker-type precedence, tile normalization. |
+| `react-story-map/src/GeoMap.tsx` | The shared Leaflet lifecycle and the exported `<GeoMap />`. |
+| `react-story-map/src/geoMarker.ts` | Marker plan, registry visuals, and `mapzoom` visibility. |
+| `react-story-map/src/geoTiles.ts` | Tile source resolution and layer identity. |
+| `react-story-map/src/noteLink.ts` | The callback-vs-`href` note link shape shared by both surfaces. |
+| `react-story-map/src/MapCanvas.tsx` | StoryMap's layer above `<GeoMap>`: slide projection, active styling, focus offset. |
+| `obsidian-story-map/src/leaflet-block.tsx` | `registerMarkdownCodeBlockProcessor('leaflet', …)` and its inline diagnostics. |
+| `obsidian-story-map/src/leaflet-resolver.ts` | `resolveObsidianGeoMap`: recursive `markerFolder` over Vault metadata. |
+| `obsidian-story-map/src/note-links.ts` | The one Obsidian note-link/preview implementation, used by both surfaces. |
+| `obsidian-story-map/src/leaflet-import.ts` | Optional "Import settings from Obsidian Leaflet". |
+| `remark-story-map/src/vault.ts` | `resolveLeafletSource` / `resolveLeafletMarkers` beside the story path. |
+| `remark-story-map/src/client.tsx` | One client; `data-story-map-kind` picks the renderer. |
+| `remark-story-map/src/fixtures.ts` | The four production blocks, pinned as test data. |
+| `remark-story-map/src/parity.test.ts` | Cross-host parity: the same fixtures through both adapters. |
+
 
 ### 14.1 Data flow
 
@@ -493,60 +512,103 @@ Two dialects, two parsers, one runtime. The `leaflet` dialect never enters the
 ### 14.2 Parser split
 
 `story-map-core` keeps `schema.ts` / `parser.ts` exactly as they are for `storymap/v1`, and
-gains a separate `leaflet` parser that owns historical key spellings, historical repeated
-keys for repeatable keys, and the diagnostic list. Both live in the same package because
-both are pure source-to-config transforms with no platform dependency.
+adds a separate `leaflet.ts` for the second dialect. That parser owns historical key
+spellings, historical repeated keys, and the diagnostic list. Both live in the same
+package because both are pure source-to-config transforms with no platform dependency.
+
+Historical repeated keys are a source-text problem: `js-yaml` throws `duplicated mapping
+key`, so `groupRepeatedTopLevelKeys` folds a repeated top-level key into one flow sequence
+first. It is deliberately narrow - an explicit repeatable-key set, top level only, simple
+scalars only - and it leaves every other line byte-identical so a later error still points
+at the authored line. Block scalars, nested mappings, and duplicated singleton keys are
+left alone.
 
 ### 14.3 Diagnostics
 
 A recognized `leaflet` key that is not implemented becomes a `GeoMapDiagnostic` naming the
-key, rather than being dropped. The Obsidian host surfaces diagnostics inline with the
-block; Remark serializes them into the host payload so the published page can show them.
-This is the mechanism that keeps the compatibility matrix honest: a key cannot quietly
-regress into "ignored".
+key, rather than being dropped. One key-to-phase table in `leaflet.ts` is the single source
+for both "is this recognized" and "which phase", so the promise that a pending key is
+always reported cannot go stale. The Obsidian block renders them inline under the map; the
+Remark transform serializes them into the host payload and the browser client renders them
+in the same React tree as the map. An unknown key gets a distinct `leaflet-unknown-key`
+code, because a typo and a scheduled feature are different problems for the author.
+
+Host UI is a *tree*, not a DOM append. React takes ownership of a `createRoot` container
+and clears its children on the first commit, so anything appended around `root.render()`
+disappears. `MapHost` in the Remark client and the inline block in Obsidian both compose
+their list together with the map.
 
 ### 14.4 Renderer
 
-`react-story-map` extracts the Leaflet lifecycle currently in `MapCanvas.tsx` into a
-`<GeoMap />` component owning one map instance, the tile-source layer, generic markers,
-marker zoom visibility, tooltips, and the shared `ResizeObserver` / `invalidateSize()`
-behavior. `MapCanvas` stays as the StoryMap-specific layer above it: active-slide styling
-and the layout-aware `focusTarget` offset. Config or layout changes refresh layers and
-never recreate the map.
+`react-story-map` holds the Leaflet lifecycle in `<GeoMap />`: one map instance per host,
+the tile-source layer, generic markers, `mapzoom` zoom visibility, tooltips, note-link
+callbacks, and the shared `ResizeObserver` / `invalidateSize()`. `MapCanvas.tsx` stays as
+the StoryMap-specific layer above it: slide-to-marker projection, active-slide styling,
+the path polyline, and the layout-aware focus offset. Config and marker changes refresh
+layers in place and never recreate the map.
+
+A standalone `<GeoMap>` renders the same themed `.story-map` root as `StoryMap`, so all six
+presets and the `--story-map-*` variables style a plain map with no duplicated CSS.
+`StoryMap` composes it with `rootless`, which keeps its DOM byte-identical - the existing
+StoryMap test files are unmodified.
+
+`map.controls` (`noUI`, `noScrollZoom`, `recenter`, `locked`) and `map.zoomDelta` are
+deliberately inert. Core reports them as `leaflet-pending-p1`, and implementing them would
+make that diagnostic a lie.
 
 ### 14.5 Obsidian inline fence
 
-`obsidian-story-map` gains a `registerMarkdownCodeBlockProcessor('leaflet', ...)` handler
-that mounts `<GeoMap />` in ordinary reading view, plus a `markerFolder` resolver over
-Vault metadata that produces markers and note-link/preview callbacks. It is independent of
-the full-leaf `TextFileView`, uses the block's own `height`, and leaves unrelated code
-blocks alone. Settings move to a versioned structure with `story`, `map`, `markers`,
-`interaction`, and `leafletCompatibility` sections, migrated from the current flat shape;
-device-local AI agent settings keep using `app.saveLocalStorage`.
+`obsidian-story-map` adds `registerMarkdownCodeBlockProcessor('leaflet', ...)`
+(`leaflet-block.tsx`), which mounts `<GeoMap />` in ordinary reading view, plus
+`leaflet-resolver.ts` for recursive `markerFolder` resolution over Vault metadata. It is
+independent of the full-leaf `TextFileView`, uses the block's own `height`, and leaves
+unrelated code blocks alone. `note-links.ts` is the single implementation of Page preview
+on hover and open-in-new-tab on click, shared with the StoryMap view, so the two surfaces
+cannot drift.
+
+Settings moved to a versioned `version: 2` structure - `story`, `map`, `markers`,
+`interaction`, `leafletCompatibility` - migrated from the previous flat shape without
+losing existing defaults. Default resolution is structurally separated: `toSourceDefaults`
+can only read `story` and `map`, so a Leaflet-only `defaultCenter`, marker registry,
+tooltip default, or unit system is unreachable from a story map. A `leaflet` block has no
+theme key of its own, so `leafletCompatibility.theme` is what lets an inline map follow
+Obsidian's light/dark; it defaults to `auto` for the same reason the story-map default
+does. Device-local AI agent settings still use `app.saveLocalStorage` and stay out of the
+persisted object.
+
+`map.tiles` is the one section both dialects read. Two independent tile settings would
+contradict the approved settings structure, which adopts the historical Default Tile Server
+into a single `map` section.
 
 ### 14.6 Remark discriminator
 
-`remark-story-map` transforms `leaflet` code nodes as well as `story-map` nodes, reusing
+`remark-story-map` transforms `leaflet` nodes as well as `story-map` nodes, reusing
 `VaultIndex` for `markerFolder` and the host `resolveNoteHref` for published note links.
 Every host carries `data-story-map-kind="story" | "map"`, and the single browser client
-mounts the matching renderer. One client, one Leaflet module load, existing SPA
-mount/unmount behavior unchanged.
+mounts the matching renderer. One client, one renderer module import, one Leaflet CSS
+import; existing SPA mount/unmount behavior is unchanged.
+
+Host instance identity is a per-transformed-file counter (`data-story-map-instance`),
+never derived from the authored id: the Xinjiang fixture reuses `chile-2509` from the Chile
+block, and nothing may rename, deduplicate, or reject a repeated authored id.
 
 ### 14.7 Host boundaries
 
 Unchanged by this work: Docusaurus slug policy stays host-owned through
 `resolveNoteHref`; `react-story-map` imports no Obsidian, Docusaurus, or Node API and stays
 SSR-import-safe; the Remark browser entry stays free of Node APIs; no Leaflet instance is
-created during build.
+created during build. A `leaflet` block with no `vaultRoot` renders an empty map rather
+than failing the page build.
 
 ### 14.8 Credential policy
 
 Markdown fences and generated HTML are public source and public output, so a tile-provider
 API key is never a secret in a fenced block and is never serialized as if it were private.
 A browser-delivered key is a public client credential that must be provider-restricted and
-configured by the host. `docs/architecture.md` §6 records the built-in
-`https://tile.openstreetmap.org/{z}/{x}/{y}.png` source, already implemented on this
-branch; CARTO Basemaps is never a default because it now requires a key.
+configured by the host. Section 6 records the built-in
+`https://tile.openstreetmap.org/{z}/{x}/{y}.png` source; CARTO Basemaps is never a default
+because it now requires a key, and the importer warns about a keyless CARTO URL instead of
+adopting it.
 
 Obsidian release automation lives in `.github/workflows/release-obsidian.yml`: it validates
 plain tags, builds/tests, attests the three release assets and publishes new releases.

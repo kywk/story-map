@@ -53,7 +53,7 @@ Diagnostic codes come from `LEAFLET_DIAGNOSTIC_CODES` in `story-map-core`: `pend
 | `markerFolder` | P0 | Supported | Vault-relative folder, resolved recursively. Accepts the historical repeated-key form, a YAML list, and a comma-separated string. A folder name containing spaces stays one folder. |
 | `unit` | P0 | Metadata | Measurement-only. Accepted without a parse error; no measurement tooling exists yet. |
 | `scale` | P0 | Metadata | Measurement/image. Accepted without a parse error; no effect yet. |
-| `darkMode` | P0 | Metadata | Compatibility flag. Parse only: tile provider and theme are orthogonal, so it never changes `tiles` or `theme` by itself. |
+| `darkMode` | P0 | Metadata | Compatibility flag. Parse only: tile provider and theme are orthogonal, so it never changes `tiles` or `theme` by itself. A configured dark tile source is also not switched to yet - `resolveTileSource` always requests `light`. |
 | `width` | P1 | Deferred | Generic size. |
 | `markerFile` | P1 | Parsed only | Explicit note marker source, carried as a list. |
 | `marker` | P1 | Parsed only | Inline static markers, carried raw. |
@@ -111,10 +111,16 @@ byte-identical so later error line numbers still match the authored block.
 | `leaflet` block renders | Yes, in ordinary Markdown reading view | Yes, as a map host element |
 | Discriminator | n/a (code-block processor) | `data-story-map-kind="map"`, vs `"story"` for `story-map` |
 | `markerFolder` resolution | Recursive Vault scan | Recursive `VaultIndex` scan, same exclusions |
+| Marker order | Vault-relative path, `localeCompare` | Vault-relative path, `localeCompare` - asserted identical by a cross-host parity test |
 | Published note links | Vault path + Page preview + open in new tab | Host `resolveNoteHref`; unresolvable leaves the marker unlinked |
-| Diagnostics | Rendered in the block | Serialized into the host payload and shown in the browser |
+| Theme | `leafletCompatibility.theme`, default `auto`, so an inline map follows Obsidian light/dark | `leafletDefaults.theme`; the built-in `light` when a host sets nothing |
+| Diagnostics | Rendered under the map in the block | Serialized into the host payload, rendered in the same React tree as the map |
 | Leaflet runtime | One per mounted map | One per page, shared by story and map hosts |
 | SSR / build safety | n/a | No Node API in the browser entry; no Leaflet during build |
+
+Both hosts resolve the same fixtures to the same map options and the same markers, in the
+same order. `remark-story-map/src/parity.test.ts` runs the four production blocks through
+both adapters and asserts that, so the two hosts cannot silently drift.
 
 ## Tile policy
 
@@ -150,6 +156,27 @@ pass.
 Settings adopted from the old plugin are documented in the archived
 `settings-integration.md`. The live settings structure is `version: 2`, with `story`,
 `map`, `markers`, `interaction`, and `leafletCompatibility` sections, migrated from the
-previous flat shape without losing existing defaults. Deliberately **not** adopted: the
-mutable-marker CSV store, the custom config directory, map-view persistence, Font Awesome
-layer composition, and command-marker / Initiative Tracker integrations.
+previous flat shape without losing existing defaults. Default resolution is structurally
+separated per dialect: `toSourceDefaults` can only read `story` and `map`, so a
+Leaflet-only default center, marker registry, tooltip default, unit system, or theme is
+unreachable from a native story map, and a story map's zoom/theme/path keys are not applied
+to a `leaflet` block.
+
+`map.tiles` is the one section both dialects read. Two independent tile settings would
+contradict the approved settings structure, which adopts the historical Default Tile
+Server into a single `map` section.
+
+Known gaps, in the interest of not overstating support:
+
+- A configured **dark** tile source is stored but never requested; the renderer always
+  uses the light source and lets the theme's tile filter darken it. `darkMode` is parsed
+  and reported, not acted on.
+- **Shift-click coordinate copy** resolves the nearest marker by map projection within a
+  16 px radius rather than binding a handler per marker layer, because Leaflet does not
+  expose the originating layer on a propagated click and `onReady` fires once. A click on a
+  marker note link is ignored, so copying does not fight navigation.
+- `unitSystem` is stored for future measurement tooling. Nothing measures.
+
+Deliberately **not** adopted: the mutable-marker CSV store, the custom config directory,
+map-view persistence, Font Awesome layer composition, and command-marker / Initiative
+Tracker integrations.
