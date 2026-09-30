@@ -29,8 +29,12 @@
  * restyles the StoryMap through Obsidian's own CSS variables. The fixed
  * `light`/`dark`/`vintage`/`cyber`/`atlas` presets keep their authored look,
  * and an explicit host `--story-map-*` override still wins because the renderer
- * consumes those semantic variables directly. */
-.story-map-view .story-map[data-map-theme='auto'] {
+ * consumes those semantic variables directly.
+ *
+ * The inline `leaflet` block renders through the same shared renderer and the
+ * same bridge, so both entry points look like part of the vault. */
+.story-map-view .story-map[data-map-theme='auto'],
+.geo-story-map-block__map[data-map-theme='auto'] {
   --story-map-bg: var(--background-primary);
   --story-map-fg: var(--text-normal);
   --story-map-muted: var(--text-muted);
@@ -47,16 +51,59 @@
  * Obsidian's dark/light mode classes for the cartography filter. The tile
  * container background (visible while tiles load and beyond tile edges at
  * low zoom) follows the theme background instead of Leaflet's default gray. */
-body.theme-dark .story-map-view .story-map[data-map-theme='auto'] {
+body.theme-dark .story-map-view .story-map[data-map-theme='auto'],
+body.theme-dark .geo-story-map-block__map[data-map-theme='auto'] {
   --story-map-tile-filter: invert(0.95) hue-rotate(195deg) saturate(0.5) brightness(1.0) contrast(0.95);
 }
 
-body.theme-light .story-map-view .story-map[data-map-theme='auto'] {
+body.theme-light .story-map-view .story-map[data-map-theme='auto'],
+body.theme-light .geo-story-map-block__map[data-map-theme='auto'] {
   --story-map-tile-filter: none;
 }
 
-.story-map-view .story-map[data-map-theme='auto'] .leaflet-container {
+.story-map-view .story-map[data-map-theme='auto'] .leaflet-container,
+.geo-story-map-block__map[data-map-theme='auto'] .leaflet-container {
   background: var(--background-primary);
+}
+
+/* Inline legacy `leaflet` block. `<GeoMap />` renders its own themed root and its
+ * own height, so the host only adds the surrounding block chrome. */
+.geo-story-map-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+
+.geo-story-map-block__map {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+/* Parser diagnostics for recognized-but-unimplemented `leaflet` keys. They are
+ * author-facing warnings, so they stay small, muted, and collapsed by default
+ * rather than competing with the map. */
+.geo-story-map-diagnostics {
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+.geo-story-map-diagnostics ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.geo-story-map-diagnostics li {
+  margin: 0.15rem 0;
+}
+
+.geo-story-map-diagnostics li[data-level='error'] {
+  color: var(--text-error);
+}
+
+.geo-story-map-diagnostics code {
+  font-size: 0.95em;
 }
 
 .story-map-host--error {
