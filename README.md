@@ -1,91 +1,24 @@
 # Story Map
 
-A small, reusable Leaflet-based StoryMap stack. One Markdown source and one standard
-`StoryMapConfig` render in three hosts:
+Turn coordinate-bearing Markdown notes into paged geographic stories.
 
-- standalone React applications;
-- an Obsidian plugin (file-backed full-leaf view);
-- a Docusaurus site via a Remark build-time transform and browser client.
+One source document and one config render in three places: a standalone React app, the
+**Geo Story Map** Obsidian plugin, and a Docusaurus site.
 
-Built-in map themes (`auto`, `light`, `dark`, `vintage`, `cyber`, `atlas`) and document-owned
-`card`/`full`/`timeline` layouts render through the same shared component in all three hosts.
-`auto` follows the host theme (Obsidian native light/dark and colors; `prefers-color-scheme`
-elsewhere), while `light`/`dark` are fixed palettes.
-The [design bundle](docs/history/2026-09-28-map-theme-layout/README.md) records the milestone.
+[繁體中文](README.zh-TW.md) · [Docs](docs/README.md)
 
-## Website
+## Install
 
-A bilingual project site (English / 繁體中文) lives in `site/` and renders several live
-examples with theme, layout, alignment, and ratio controls on the shared renderer. It is
-published to GitHub Pages from `main` by
-`.github/workflows/pages.yml` at <https://kywk.github.io/story-map/>; run it locally with
-`pnpm --filter @story-map/site dev`.
-
-## Geo Story Map for Obsidian
-
-Turn Markdown notes into geographic stories with an interactive map and slides.
-Requires desktop Obsidian 1.8.7 or newer; mobile is not supported in this release.
-The plugin is named **Geo Story Map** (`geo-story-map`); the source syntax remains
-`story-map`. It does not require the separate Obsidian Leaflet plugin.
-
-1. Open Settings → Community plugins → Browse, search for **Geo Story Map**, then install
-   and enable it. See the [community listing](https://community.obsidian.md/plugins/geo-story-map).
-2. Create a Markdown document using the Story syntax below, then close and reopen it,
-   or run **Geo Story Map: Open as map** from the command palette.
-3. Use **Open as Markdown** to edit the same document; the source stays unchanged.
-4. Run **Geo Story Map: Find coordinates with AI** on a note to look up a place with a
-   configured local CLI agent, confirm it on a map, and write `location` or copy it.
-
-Add notes under the document's `noteFolder`, for example `Travel/Chile/Places/Santiago.md`:
-
-```yaml
----
-story-map-note: true
-title: Santiago
-location: [-33.4489, -70.6693]
-date-created: 2026-01-15
-description: The journey begins here.
----
-```
-
-See [the plugin guide](packages/obsidian-story-map/README.md) for settings, note display,
-and manual installation.
-Geo Story Map is free, needs no plugin account, and includes no telemetry. Maps request
-OpenStreetMap tiles by default; configured tile providers and remote media connect to
-their specified hosts. The plugin reads notes and attachments inside your vault.
-
-## Packages
-
-| Package | Role | Distribution |
-| --- | --- | --- |
-| `@story-map/story-map-core` | Framework-agnostic schema, parser, and helpers | npm |
-| `@story-map/react-story-map` | React + Leaflet renderer | npm |
-| `@story-map/remark-story-map` | Remark build-time transform + browser client | npm |
-| `@story-map/obsidian-story-map` | Geo Story Map Obsidian view and Vault resolver | Obsidian Community plugins / GitHub Releases |
+| Where | How |
+| --- | --- |
+| Obsidian | Settings → Community plugins → Browse → **Geo Story Map** ([listing](https://community.obsidian.md/plugins/geo-story-map)) |
+| React | `npm install @story-map/react-story-map react react-dom` |
+| Docusaurus | `npm install @story-map/remark-story-map react react-dom` |
 
 ## Quick start
 
-```bash
-corepack enable
-pnpm install
-pnpm typecheck
-pnpm test
-pnpm build
-```
-
-`pnpm typecheck` uses TypeScript project references (`tsc -b`), so it builds
-`story-map-core` for dependents instead of relying on a stale `dist`.
-
-Run the standalone example:
-
-```bash
-pnpm --filter @story-map/example-react dev   # http://127.0.0.1:5173
-```
-
-## Story syntax
-
 A StoryMap document is a normal Markdown file with `story-map: true` frontmatter and one
-fenced `story-map` configuration block:
+fenced configuration block. Add notes under the `noteFolder` you name:
 
 ````markdown
 ---
@@ -93,63 +26,74 @@ story-map: true
 ---
 
 ```story-map
-schema: storymap/v1
 title: Chile Trip
 map:
   theme: vintage
   center: [-33.4489, -70.6693]
   zoom: 6
-  showPath: true
-layout:
-  mode: full
-  full:
-    side: left
-    contentRatio: 0.5
 noteFolder: Travel/Chile/Places
 order: asc
 dateField: date-created
-noteDisplay: link
-includeTags: [travel, chile]
-excludeTags: [draft]
 ```
 ````
 
-`noteFolder` recursively discovers Markdown notes with `story-map-note: true`, ordered by
-`dateField` using `order: asc | desc`. `includeTags` keeps notes with any listed
-frontmatter tag and `excludeTags` drops notes with any listed tag (both optional). Explicit
-`slides` keep their exact order and are never reordered or appended to by folder discovery.
+```markdown
+<!-- Travel/Chile/Places/Santiago.md -->
+---
+story-map-note: true
+title: Santiago
+location: [-33.4489, -70.6693]
+date-created: 2026-01-15
+---
+```
 
-`noteDisplay: basic | link | full` controls how resolved notes are shown (default `link`):
-frontmatter basics, basics with a title link to the note, or the full frontmatter-stripped
-note body. The `full` layout always uses the note body regardless of this setting. Obsidian
-opens the note through host callbacks; Docusaurus renders the published route as a normal
-browser link.
+`noteFolder` finds every note marked `story-map-note: true`, recursively, and orders them by
+`dateField`. Layouts are `card`, `full`, and `timeline`; map themes are `auto`, `light`,
+`dark`, `vintage`, `cyber`, and `atlas`.
 
-## Docusaurus
+You can also paste a legacy ` ```leaflet ` block from the old Obsidian Leaflet plugin and it
+renders as a plain map, with markers read from a folder — no migration of your notes.
 
-`remark-story-map` transforms each fence at build time into a host element and a browser
-client mounts the shared renderer. Configure it with `vaultRoot`, `assetBase`, and a host
-`resolveNoteHref` route callback. See `packages/remark-story-map/README.md` and
-`examples/docusaurus/`.
+## Working on this repository
 
-A full-page map (Open as Story Map, with a Markdown toggle) is deliberately host UI rather
-than a package option; to add it to a site, follow
-[docs/docusaurus-full-page.md](docs/docusaurus-full-page.md).
-
-## Design rule
-
-`react-story-map` must never import Obsidian or Docusaurus APIs. Platform adapters resolve
-notes, WikiLinks, Vault frontmatter, local assets, and routes into a `StoryMapConfig`
-before render time.
+```bash
+corepack enable
+pnpm install
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm --filter @story-map/example-react dev   # http://127.0.0.1:5173
+```
 
 ## Documentation
 
-- `SPEC.md` — product and architecture contract.
-- `docs/architecture.md` — implementation map for contributors and agents.
-- `AGENTS.md` — working agreement and definition of done.
-- `RELEASING.md` — npm and Obsidian plugin release steps.
-- `docs/history/` — archived plans.
+**Start here**
+
+| Guide | What it covers |
+| --- | --- |
+| [Source syntax](docs/guides/syntax.md) | Every `story-map` and `leaflet` block key, and the note frontmatter both read. |
+| [Geo Story Map for Obsidian](docs/guides/obsidian.md) | Install, settings, layouts, note display, AI coordinate lookup. |
+| [Docusaurus](docs/guides/docusaurus.md) | Publishing stories and legacy maps on a site. |
+| [React](docs/guides/react.md) | Embedding `<StoryMap />` and `<GeoMap />` directly. |
+
+**Reference and contributor docs**
+
+| Document | What it covers |
+| --- | --- |
+| [`SPEC.md`](SPEC.md) | Product and architecture contract. |
+| [`docs/architecture.md`](docs/architecture.md) | Implementation map: packages, data flow, files, APIs. |
+| [`docs/leaflet-compatibility.md`](docs/leaflet-compatibility.md) | Which legacy `leaflet` keys actually work, and which do not. |
+| [`AGENTS.md`](AGENTS.md) | Working agreement and definition of done. |
+| [`RELEASING.md`](RELEASING.md) | npm and Obsidian plugin release steps. |
+| [`docs/acceptance/`](docs/acceptance/) | Verification evidence. |
+| [`docs/history/`](docs/history/) | Archived plans. Superseded, not authoritative. |
+
+## Design rule
+
+`react-story-map` never imports Obsidian or Docusaurus APIs. Each adapter resolves notes,
+frontmatter, media and routes into a config *before* render time, so the renderer has one
+job and the same code runs in every host.
 
 ## License
 
-MIT; see [LICENSE](LICENSE). Bundled dependency notices accompany the plugin release.
+MIT — see [LICENSE](LICENSE). Bundled dependency notices accompany the plugin release.

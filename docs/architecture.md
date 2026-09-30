@@ -468,10 +468,9 @@ Archived milestones live under `history/`:
   adapters' `date` threading.
 - `history/2026-09-29-leaflet-compatibility/` — the approved GeoMap and legacy `leaflet`
   compatibility design, settings decisions, and phase plan.
-- `history/2026-09-30-docusaurus-migration/` — the handoff for the remaining work: retiring
-  the duplicate Leaflet runtime in `kywk.github.io`. Read
-  [`hand-off.md`](history/2026-09-30-docusaurus-migration/hand-off.md) first when picking
-  that up.
+
+The `kywk.github.io` migration hand-off was removed once its work landed; its evidence
+lives in [`acceptance/2026-09-30-docusaurus-leaflet-migration.md`](acceptance/2026-09-30-docusaurus-leaflet-migration.md).
 
 They are archival; the current contract is `SPEC.md` plus this document.
 

@@ -233,6 +233,10 @@ See `docs/architecture.md` for the file-level map and public APIs.
 
 - Keep `README.md`, `SPEC.md`, and `AGENTS.md` short and current; implementation detail goes
   in `docs/architecture.md`.
+- User-facing documentation lives in `docs/guides/`, one page per topic, and each has an
+  English original plus a `zh-TW` translation. Contributor and contract docs stay English
+  only. A package `README.md` is an npm entry point: it installs, shows one working
+  example, and links into `docs/guides/` rather than duplicating the guide.
 - Archive completed plans under `docs/history/<YYYY-MM-DD>-<slug>/`; delete
   development-process notes once their work is merged.
 - When behavior changes, update the matching doc in the same change.
