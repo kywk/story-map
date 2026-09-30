@@ -18,6 +18,25 @@ const zhTW = {
   'Could not update frontmatter': '無法更新 frontmatter',
   'mapmarker (leave empty to skip)': 'mapmarker（留空則不寫入）',
   'The AI did not return valid coordinates.': 'AI 沒有回傳有效的座標。',
+  // Inline leaflet blocks
+  Map: '地圖',
+  'Compatibility notices ({count})': '相容性提示（{count}）',
+  'Leaflet block configuration error': 'leaflet 區塊設定錯誤',
+  'Leaflet block error': 'leaflet 區塊錯誤',
+  'Marker type: {id}': '標記類型：{id}',
+  'Add marker type': '新增標記類型',
+  'Remove marker type': '移除標記類型',
+  'Import settings from Obsidian Leaflet': '從 Obsidian Leaflet 匯入設定',
+  'Reads the old plugin settings once, if they exist in this vault. Mutable markers, overlays, CSV data, and map-view state are not imported.':
+    '若此 vault 中存在舊插件設定，會讀取一次。可變標記、圖層覆蓋、CSV 資料與地圖檢視狀態都不會匯入。',
+  'No saved Obsidian Leaflet settings were found in this vault.':
+    '在此 vault 中找不到已儲存的 Obsidian Leaflet 設定。',
+  'No importable Obsidian Leaflet settings were found.': '找不到可匯入的 Obsidian Leaflet 設定。',
+  'Imported Obsidian Leaflet settings: {items}': '已匯入的 Obsidian Leaflet 設定：{items}',
+  'This CARTO Basemaps URL does not contain an API key. CARTO now requires keys for Basemaps. Configure a CARTO key or switch to another tile provider.':
+    '這個 CARTO Basemaps URL 沒有包含 API key。CARTO 的 Basemaps 現在需要 key。請設定 CARTO key，或改用其他圖磚供應商。',
+  'The marker type "{id}" uses an icon this plugin cannot translate to a portable symbol. It keeps the default marker visual; set a symbol or image in settings to change it.':
+    '標記類型「{id}」使用的圖示無法轉換成可攜的符號，會沿用預設的標記外觀；若要變更，請在設定中指定符號或圖片。',
   // Local agent settings
   'Local agents': '本地 AI 代理',
   'Uses a local CLI login and model. The place name is sent to that service. Paths, arguments, and the default agent are stored only on this device.':
