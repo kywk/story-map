@@ -143,6 +143,19 @@ records the four live `kywk.github.io` blocks: Chile, Egypt, Kuala Lumpur, Xinji
 use only `id`, `height`, `lat`, `long`, `minZoom`, `maxZoom`, `defaultZoom`, `unit`,
 `scale`, `darkMode`, and `markerFolder`.
 
+A broader survey of a real 33-block vault on 2026-09-30 found the same key set and
+nothing outside P0:
+
+| Key | Blocks using it |
+| --- | ---: |
+| `lat`, `long`, `id`, `defaultZoom` | 33 |
+| `minZoom`, `maxZoom`, `scale`, `darkMode`, `unit`, `height` | 32 |
+| `markerFolder` | 6 |
+
+No P1, P2, or P3 key appeared in any of the 33. That is the practical evidence that the
+P0 surface is enough to retire the historical plugin for existing content, and it also
+means the four pinned fixtures understate the corpus while describing it accurately.
+
 One of them, Xinjiang, reuses the authored id `chile-2509` from the Chile block. That
 duplicate is authored content, so it is passed through unchanged; host instance identity
 is derived separately so the two maps cannot collide.
@@ -165,6 +178,12 @@ to a `leaflet` block.
 `map.tiles` is the one section both dialects read. Two independent tile settings would
 contradict the approved settings structure, which adopts the historical Default Tile
 Server into a single `map` section.
+
+The importer reads the historical plugin's data from `plugins/obsidian-leaflet-plugin/`
+first, then `plugins/obsidian-leaflet/` for vaults that hold it under the un-suffixed
+name. The first is the community plugin's published id; reading only the second reports
+"nothing to import" on a real vault while a test written against the same wrong path
+still passes.
 
 Known gaps, in the interest of not overstating support:
 
