@@ -185,4 +185,32 @@ describe('linked marker tooltip lifecycle', () => {
 
     expect(fake.openCount).toBe(1);
   });
+
+  it('keeps tracking after closing on map interaction, so a later hover reopens', () => {
+    const controller = createLinkedTooltipController();
+    const fake = new FakeLayer();
+    controller.track(layer(fake));
+
+    fake.fire('mouseover');
+    controller.closeAll();
+    expect(fake.closed).toBe(true);
+
+    // The layer is still on the map, so the next hover must work normally.
+    fake.fire('mouseover');
+    expect(fake.openCount).toBe(2);
+  });
+
+  it('forgets detached layers on reset, and tracks a fresh layer afterwards', () => {
+    const controller = createLinkedTooltipController();
+    const stale = new FakeLayer();
+    controller.track(layer(stale));
+
+    // A marker rebuild detaches the old layer, so the controller must let go of it.
+    controller.reset();
+    controller.track(layer(stale));
+    stale.fire('mouseover');
+
+    // Exactly one handler survived the rebuild, not two stacked ones.
+    expect(stale.openCount).toBe(1);
+  });
 });

@@ -31,6 +31,7 @@ type TooltipLayer = Layer & {
     content: HTMLElement,
     options: { permanent: boolean; interactive?: boolean; direction: 'top'; className: string },
   ) => unknown;
+  closeTooltip?: () => unknown;
 };
 
 /**
@@ -223,6 +224,8 @@ export function GeoMap({
     const nextMarkerKey = registryKey(markerTypesRef.current, tooltipRef.current);
     if (nextMarkerKey !== markerKeyRef.current || current.markers !== markersConfigRef.current) {
       markerLayerRef.current?.remove();
+      // The old layers are detached from the map, so their tracked state is stale.
+      linkedTooltips.reset();
       const group = leaflet.layerGroup().addTo(map);
       markerLayerRef.current = group;
       markersRef.current = buildMarkers(
@@ -325,7 +328,7 @@ export function GeoMap({
     return () => {
       cancelled = true;
       onReadyRef.current?.(null);
-      linkedTooltips.closeAll();
+      linkedTooltips.reset();
       pathLayerRef.current = null;
       markersRef.current = [];
       markerLayerRef.current = null;
@@ -486,8 +489,12 @@ export function tooltipBinding(
  * Bind a marker's tooltip, when it has a mode with content. Tooltips carry the
  * same note link as every other surface, so a host never sees two different link
  * shapes for one note.
+ *
+ * Exported so the bind/close order can be asserted directly: the regression where
+ * every linked tooltip stayed open came from the permanent binding alone, and that
+ * is only visible if this call's sequence is observable.
  */
-function bindTooltip(
+export function bindTooltip(
   layer: Layer,
   plan: MarkerPlan,
   readLinks: () => NoteLinkShape,
@@ -508,7 +515,16 @@ function bindTooltip(
     className: TOOLTIP_CLASS,
   });
 
-  if (binding.linked) linkedTooltips.track(layer);
+  if (binding.linked) {
+    // A permanent binding makes Leaflet open the tooltip the moment the layer is
+    // on the map - `_initTooltipInteractions` maps `permanent` to an `add` handler -
+    // so binding one while building every marker would leave all of them open at
+    // once. Leaflet has no "permanent but managed" mode, so the tooltip is closed
+    // again immediately and the controller owns it from here. Bind and close share
+    // one synchronous block, so the browser never paints the intermediate state.
+    bindable.closeTooltip?.();
+    linkedTooltips.track(layer);
+  }
 }
 
 function escapeHtml(value: string): string {
@@ -519,24 +535,18 @@ function escapeHtml(value: string): string {
  * Tooltip content for one marker: title, description, and - when the marker
  * resolves a note - the shared note link, so a marker carries exactly the same
  * link shape as the StoryMap panel heading and the timeline note chip.
+ *
+ * A linked marker's title *is* its link. Rendering the title once as plain text and
+ * again as the anchor's text duplicated every label and gave the reader two
+ * competing rows, so the linked variant puts the title inside the anchor and keeps
+ * only the description as separate text.
  */
 function markerTooltipElement(marker: GeoMarker, readLinks: () => NoteLinkShape): HTMLElement | null {
   if (typeof document === 'undefined') return null;
   const root = document.createElement('div');
   root.className = 'story-map__marker-content';
 
-  if (marker.title) {
-    const title = document.createElement('div');
-    title.className = 'story-map__marker-title';
-    title.textContent = marker.title;
-    root.appendChild(title);
-  }
-  if (marker.description) {
-    const description = document.createElement('div');
-    description.className = 'story-map__marker-description';
-    description.textContent = marker.description;
-    root.appendChild(description);
-  }
+  const title = marker.title;
   if (marker.notePath !== undefined) {
     const attributes = noteLinkAttributes(marker.notePath, readLinks());
     const anchor = document.createElement('a');
@@ -544,8 +554,20 @@ function markerTooltipElement(marker: GeoMarker, readLinks: () => NoteLinkShape)
     anchor.setAttribute('href', attributes.href);
     if (attributes.dataHref !== undefined) anchor.setAttribute('data-href', attributes.dataHref);
     attachNoteLinkHandlers(anchor, marker.notePath, readLinks);
-    anchor.textContent = marker.title ?? 'Open note';
+    anchor.textContent = title ?? 'Open note';
     root.appendChild(anchor);
+  } else if (title) {
+    const heading = document.createElement('div');
+    heading.className = 'story-map__marker-title';
+    heading.textContent = title;
+    root.appendChild(heading);
+  }
+
+  if (marker.description) {
+    const description = document.createElement('div');
+    description.className = 'story-map__marker-description';
+    description.textContent = marker.description;
+    root.appendChild(description);
   }
   return root;
 }

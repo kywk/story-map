@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_TILE_ATTRIBUTION,
   DEFAULT_TILE_URL,
@@ -9,7 +9,7 @@ import {
   type MarkerTooltipDisplay,
   type MarkerTypeDefinition,
 } from '@story-map/story-map-core';
-import { GeoMap, tooltipBinding } from './GeoMap.js';
+import { bindTooltip, GeoMap, tooltipBinding } from './GeoMap.js';
 import { buildMarkerPlan, isMarkerVisibleAtZoom, markerZoomRange, resolveMarkerVisual } from './geoMarker.js';
 import { resolveTileSource, tileLayerKey } from './geoTiles.js';
 import { noteLinkAttributes } from './noteLink.js';
@@ -232,6 +232,59 @@ describe('GeoMap tooltips', () => {
       interactive: false,
       linked: false,
     });
+  });
+
+  it('closes a linked tooltip right after binding it, so none stay open', () => {
+    // Binding a permanent tooltip while the layer is already on the map makes
+    // Leaflet open it, which once left every marker on the map showing a tooltip
+    // that never closed. The fix is the immediate close in the same tick, and only
+    // a linked tooltip takes that path.
+    //
+    // The suite runs under Node, so the tooltip content is built against a minimal
+    // `document`; only its shape matters here, not its rendering.
+    vi.stubGlobal('document', {
+      createElement: () => {
+        const element = {
+          className: '',
+          textContent: '',
+          children: [] as unknown[],
+          attributes: {} as Record<string, string>,
+          setAttribute(name: string, value: string) {
+            this.attributes[name] = value;
+          },
+          addEventListener() {},
+          removeEventListener() {},
+          appendChild(child: unknown) {
+            this.children.push(child);
+          },
+        };
+        return element;
+      },
+    });
+
+    try {
+      const links = { onNoteClick: () => {}, onNoteHover: () => {} };
+      const marker = { location: { lat: 1, lng: 2 }, title: 'Place', notePath: 'n.md' };
+      const plan = buildMarkerPlan([marker], TYPES, undefined)[0]!;
+
+      const calls: string[] = [];
+      const bindable = {
+        bindTooltip: () => calls.push('bind'),
+        closeTooltip: () => calls.push('close'),
+      };
+      const controller = { track: () => calls.push('track'), closeAll: () => {}, reset: () => {} };
+
+      bindTooltip(bindable as never, plan, () => links, controller as never);
+      expect(calls).toEqual(['bind', 'close', 'track']);
+
+      calls.length = 0;
+      const plain = buildMarkerPlan([{ location: { lat: 1, lng: 2 }, title: 'Place' }], TYPES, undefined)[0]!;
+      bindTooltip(bindable as never, plain, () => links, controller as never);
+      // An unlinked tooltip keeps Leaflet's own lifecycle, so nothing is closed here.
+      expect(calls).toEqual(['bind']);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('defaults to hover, and lets the host default override it', () => {
