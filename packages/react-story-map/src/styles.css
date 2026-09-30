@@ -671,3 +671,18 @@
     height: 56px;
   }
 }
+
+/* Host-level compatibility diagnostics. The renderer has no error UI, so a host
+   that owns a `leaflet` compatibility diagnostic (the Obsidian block processor or
+   the Docusaurus client) appends this list as a sibling of the map: unobtrusive,
+   and never covering the map it describes. */
+.story-map-host__diagnostics {
+  margin: 6px 0 0;
+  padding: 0 0 0 18px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--story-map-muted, var(--story-map-subtle, #6b7280));
+}
+.story-map-host__diagnostics li[data-level='error'] {
+  color: var(--story-map-accent, var(--story-map-highlight, #b91c1c));
+}
