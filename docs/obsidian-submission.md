@@ -4,12 +4,11 @@ Geo Story Map is published in the
 [Obsidian community directory](https://community.obsidian.md/plugins/geo-story-map).
 Install it through **Settings → Community plugins → Browse → Geo Story Map**, then enable it.
 The [public 0.3.0 release](https://github.com/kywk/story-map/releases/tag/0.3.0) is the
-earliest release with a listing entry. See the [0.5.0 release notes](releases/0.5.0.md) for the
-version in preparation and the [0.4.0 release notes](releases/0.4.0.md) for the current
-published plugin version and its validation evidence.
+earliest release with a listing entry. See the [0.5.0 release notes](releases/0.5.0.md) for the current
+plugin version and its validation evidence, and the
+[0.4.0 release notes](releases/0.4.0.md) for the one before.
 
-Plugin: **Geo Story Map**, ID `geo-story-map`, published version `0.4.0`, with `0.5.0`
-prepared. Desktop only; minimum
+Plugin: **Geo Story Map**, ID `geo-story-map`, current version `0.5.0`. Desktop only; minimum
 Obsidian `1.8.7`. The device-local agent settings and locale detection use
 `App.loadLocalStorage`, `App.saveLocalStorage` and `getLanguage`, all introduced in 1.8.7.
 The earlier 1.8.0 compatibility checks covered opening, Markdown switching, split-pane
