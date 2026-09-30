@@ -60,6 +60,9 @@ h1 em { display: block; font: italic 0.92em/1.08 var(--font-body); letter-spacin
 .band { padding-block: 96px; border-top: 1px solid var(--line); }
 .band--tint { background: #e6ecdf; }
 .section-lede { max-width: 68ch; margin-top: 20px; color: var(--ink-2); font-size: 1.13rem; }
+/* Inline code inside prose. Sized to sit on the body baseline rather than
+   shouting, and kept on the monospace face so a fence name reads as a token. */
+.section-lede code, .ledger__note code { font: 0.86em var(--font-mono); padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); color: var(--ink); }
 .section-head > .text-link { display: inline-block; margin-top: 28px; }
 .feature-layout { display: grid; grid-template-columns: 0.95fr 1.2fr; gap: clamp(40px, 7vw, 112px); }
 .features { display: grid; grid-template-columns: 1fr 1fr; gap: 38px 30px; }
@@ -82,14 +85,17 @@ h1 em { display: block; font: italic 0.92em/1.08 var(--font-body); letter-spacin
 .theme-playground select { border: 1px solid #98aa92; background: var(--surface); color: var(--ink); padding: 8px 10px; border-radius: 5px; min-height: 40px; }
 .demo-note { color: var(--muted); font-size: 0.85rem; margin: 2px 0 16px; }
 .examples__canvas { height: 620px; overflow: hidden; border-radius: 12px; border: 1px solid #98aa92; }
-.syntax { display: grid; grid-template-columns: 1.15fr 1fr; align-items: start; gap: 24px; margin-top: 40px; }
-.code { min-width: 0; margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+/* The two snippets differ a lot in length, so stretch the row and let the code
+   area absorb the difference. Left to align-items:start the short panel leaves a
+   void that reads as a spacing mistake rather than a deliberate gap. */
+.syntax { display: grid; grid-template-columns: 1.15fr 1fr; align-items: stretch; gap: 24px; margin-top: 40px; }
+.code { min-width: 0; margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
 .code figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 18px 22px; border-bottom: 1px solid var(--line); }
 .code figcaption span { font: 600 1rem var(--font-display); }
 .code figcaption small { flex-basis: 100%; color: var(--muted); font-size: 0.87rem; }
 .copy-button { border: 1px solid var(--line); color: var(--ink); background: var(--paper); padding: 8px 12px; margin-top: 8px; border-radius: 4px; font: 500 0.8rem var(--font-display); cursor: pointer; }
 .copy-button:hover { background: #e6ecdf; }
-.code pre { margin: 0; padding: 24px; overflow-x: auto; font-size: 0.8rem; line-height: 1.8; }
+.code pre { flex: 1; margin: 0; padding: 24px; overflow-x: auto; font-size: 0.8rem; line-height: 1.8; }
 .settings-reference { margin-top: 64px; }
 .settings-reference > p { max-width: 75ch; margin: 18px 0 24px; color: var(--ink-2); }
 .table-scroll { overflow-x: auto; }
@@ -101,6 +107,22 @@ td:nth-child(2) { width: 27%; }
 table code { font-size: 0.77rem; overflow-wrap: anywhere; }
 .settings-note { font-size: 0.96rem; }
 .syntax__points { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 40px; padding-left: 18px; color: var(--ink-2); font-size: 0.95rem; margin: 28px 0 0; }
+
+/* Legacy Leaflet dialect. The flow strip is the argument: two dialects, one
+   parser boundary, one renderer. It is a sequence, so it reads as one. */
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; list-style: none; margin: 40px 0 0; padding: 0; font: 0.82rem var(--font-mono); }
+.flow li { display: flex; align-items: center; gap: 14px; color: var(--ink-2); }
+.flow li + li::before { content: ''; width: 26px; height: 1px; background: #98aa92; }
+.flow li:last-child { color: var(--pine); font-weight: 600; }
+.legacy { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 24px; margin-top: 34px; align-items: start; }
+.legacy .frame__map { height: 470px; }
+/* Two honest columns, not a feature grid: one list of what runs, one of what is
+   deliberately held back. A single column would read as a disclaimer. */
+.ledger { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; margin-top: 52px; padding-top: 30px; border-top: 1px solid #98aa92; }
+.ledger h3 { font-size: 1.1rem; margin-bottom: 18px; }
+.ledger ul { display: grid; gap: 12px; margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 0.95rem; }
+.ledger__note { max-width: 72ch; margin-top: 30px; color: var(--muted); font-size: 0.95rem; }
+.ledger__note .text-link { font-size: 0.95rem; white-space: nowrap; }
 .band--dark { background: var(--pine-deep); color: var(--paper); --ink-2: #d3decc; --muted: #c0cfb7; --line: #536e5e; }
 .band--dark h2, .band--dark h3 { color: var(--paper); }
 .band--dark .btn--primary { background: #dce6c6; color: #183d30; margin-top: 28px; }
@@ -145,6 +167,8 @@ html[data-lang='zh'] h2 { line-height: 1.35; }
   .nav__links { order: 3; width: 100%; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 10px; }
   .hero { padding-top: 40px; }
   .hero__copy, .feature-layout, .syntax, .start { grid-template-columns: 1fr; gap: 32px; }
+  .legacy, .ledger { grid-template-columns: 1fr; }
+  .legacy .frame__map { height: 520px; }
   .hero__lede { max-width: 60ch; }
   .hero__copy { margin-bottom: 32px; }
   .frame__map { height: 580px; }
@@ -166,12 +190,18 @@ html[data-lang='zh'] h2 { line-height: 1.35; }
   .nav__gh { font-size: 0.78rem; }
   .lang button { padding-inline: 8px; }
   .nav__links a { font-size: 0.82rem; }
+  /* Five items no longer fit one line. space-between spreads each wrapped row to
+     the full width and leaves a ragged rag; a plain gap wraps predictably. */
+  .nav__links { justify-content: flex-start; gap: 6px 16px; }
   .hero__lede { font-size: 1.12rem; }
   .hero__actions { align-items: flex-start; flex-direction: column; }
   .frame__bar { align-items: start; flex-direction: column; gap: 4px; padding: 12px; }
   .frame__map { height: 610px; }
   .frame__hint { padding: 12px; }
   .features, .syntax__points { grid-template-columns: 1fr; }
+  .flow { font-size: 0.8rem; }
+  .flow li + li::before { width: 14px; }
+  .legacy { gap: 20px; }
   .examples__list { grid-template-columns: 1fr; border-bottom: 0; gap: 4px; }
   .example { flex-direction: row; align-items: center; justify-content: space-between; border-radius: 6px; padding: 14px; }
   .example__region { display: none; }

@@ -1,4 +1,4 @@
-import type { StoryMapConfig, StorySlide } from '@story-map/story-map-core';
+import type { GeoMapConfig, GeoMarker, MarkerTypeDefinition, StoryMapConfig, StorySlide } from '@story-map/story-map-core';
 import type { Lang } from './i18n.js';
 
 const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -345,3 +345,64 @@ export const examples: SiteExample[] = [
     ),
   },
 ];
+
+/**
+ * A plain map rather than a story: what a ` ```leaflet ` block produces.
+ *
+ * Markers read from a folder, with no slides, no panel and no narrative. The
+ * geography is deliberately a city rather than an island: a legacy Leaflet map is
+ * usually one town's worth of places, and a tight cluster is what proves the
+ * folder actually produced markers rather than showing a mostly empty ocean.
+ *
+ * Three separate claims are on screen at the opening zoom, so none of them has
+ * to be taken on trust. `food` and `shop` are registered types carrying a portable
+ * symbol. `trail` is registered with a color but no icon, so it renders as a
+ * plain colored circle. `landmark` is deliberately left unregistered, and its
+ * marker draws the dashed fallback ring rather than disappearing. Separately,
+ * `Xiangshan` carries a `mapzoom` floor, so it is absent until the reader zooms
+ * past level 12.
+ */
+const legacyMarkers: Record<Lang, GeoMarker[]> = {
+  en: [
+    { location: { lat: 25.0338, lng: 121.5647 }, title: 'Din Tai Fung', type: 'food', notePath: '/notes/din-tai-fung' },
+    { location: { lat: 25.0555, lng: 121.5097 }, title: 'Dihua Street', type: 'shop', notePath: '/notes/dihua-street' },
+    { location: { lat: 25.0879, lng: 121.5257 }, title: 'Shilin Night Market', type: 'food' },
+    { location: { lat: 25.0503, lng: 121.501 }, title: 'Bopiliao', type: 'landmark' },
+    { location: { lat: 25.0305, lng: 121.52 }, title: 'Xiangshan Trailhead', type: 'trail', minZoom: 12 },
+  ],
+  zh: [
+    { location: { lat: 25.0338, lng: 121.5647 }, title: '鼎泰豐', type: 'food', notePath: '/notes/din-tai-fung' },
+    { location: { lat: 25.0555, lng: 121.5097 }, title: '迪化街', type: 'shop', notePath: '/notes/dihua-street' },
+    { location: { lat: 25.0879, lng: 121.5257 }, title: '士林夜市', type: 'food' },
+    { location: { lat: 25.0503, lng: 121.501 }, title: '剝皮寮', type: 'landmark' },
+    { location: { lat: 25.0305, lng: 121.52 }, title: '象山登山口', type: 'trail', minZoom: 12 },
+  ],
+};
+
+export function buildLegacyMap(lang: Lang): GeoMapConfig {
+  return {
+    schema: 'geomap/v1',
+    height: '100%',
+    map: {
+      theme: 'light',
+      center: [25.058, 121.543],
+      zoom: 11,
+      minZoom: 9,
+      maxZoom: 18,
+      tiles: { light: { url: TILE_URL, attribution: ATTRIBUTION } },
+    },
+    markers: legacyMarkers[lang],
+  };
+}
+
+/**
+ * The marker type registry a host configures. `landmark` is deliberately absent
+ * from it, so that marker shows the real fallback for an unregistered type: it
+ * still renders, as a dashed ring, with its authored name kept for diagnostics.
+ */
+export const legacyMarkerTypes: MarkerTypeDefinition[] = [
+  { id: 'food', icon: { kind: 'symbol', value: '🍜' }, color: '#b6472b' },
+  { id: 'shop', icon: { kind: 'symbol', value: '🏮' }, color: '#244e3f' },
+  { id: 'trail', color: '#8a6d3b' },
+];
+

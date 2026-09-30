@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import { StoryMap } from '@story-map/react-story-map';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { GeoMap, StoryMap } from '@story-map/react-story-map';
 import type { StoryLocation, StorySlide, StoryMapTheme, StoryMapLayoutMode } from '@story-map/story-map-core';
 import { copy, guideCopy, initialLang, type Lang } from './i18n.js';
-import { examples } from './stories.js';
+import { buildLegacyMap, examples, legacyMarkerTypes } from './stories.js';
 
 const REPO = 'https://github.com/kywk/story-map';
 
@@ -11,9 +11,11 @@ const LINKS = {
   repo: REPO,
   spec: `${REPO}/blob/main/SPEC.md`,
   architecture: `${REPO}/blob/main/docs/architecture.md`,
-  plugin: `${REPO}/blob/main/packages/obsidian-story-map/README.md`,
-  react: `${REPO}/blob/main/packages/react-story-map/README.md`,
-  remark: `${REPO}/blob/main/packages/remark-story-map/README.md`,
+  guides: `${REPO}/blob/main/docs/README.md`,
+  compat: `${REPO}/blob/main/docs/leaflet-compatibility.md`,
+  plugin: `${REPO}/blob/main/docs/guides/obsidian.md`,
+  react: `${REPO}/blob/main/docs/guides/react.md`,
+  remark: `${REPO}/blob/main/docs/guides/docusaurus.md`,
 };
 
 const documentSnippet = `---
@@ -64,8 +66,47 @@ import '@story-map/react-story-map/styles.css';
 
 const docusaurusSnippet = `npm install @story-map/remark-story-map`;
 
+/**
+ * The historical Obsidian Leaflet dialect, verbatim. The point of the section is
+ * that nobody has to edit this, so the example is a real block rather than a
+ * tidied one.
+ */
+const leafletSnippet = `\`\`\`leaflet
+id: taipei-eats
+height: 500px
+lat: 25.0330
+long: 121.5654
+minZoom: 6
+maxZoom: 18
+defaultZoom: 11
+unit: meters
+scale: 1
+darkMode: true
+markerFolder: Travel/Taipei/Eats
+\`\`\``;
+
 function Arrow() {
   return <svg className="link-arrow" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 15 15 5M5 5h10v10" stroke="currentColor" strokeWidth="1.5" /></svg>;
+}
+
+/**
+ * Render a copy string, turning `backtick` pairs into real inline code.
+ *
+ * The alternative is to forbid backticks in `i18n.ts`, which pushes authors
+ * into either dropping the code formatting or hand-rolling a per-string
+ * splitter at every call site. Keeping the convention here means a translator
+ * can write ``` ```leaflet ``` and get a styled element instead of three
+ * literal backticks on the page.
+ */
+function Prose({ text }: { text: string }) {
+  const parts = text.split('`');
+  return (
+    <>
+      {parts.map((part, index) =>
+        index % 2 === 1 ? <code key={index}>{part}</code> : <span key={index}>{part}</span>,
+      )}
+    </>
+  );
 }
 
 function CopyButton({ text, lang }: { text: string; lang: Lang }) {
@@ -102,6 +143,7 @@ export default function App() {
   const c = copy[lang];
   const g = guideCopy[lang];
   const heroStory = examples[2]!.story[lang];
+  const legacyMap = useMemo(() => buildLegacyMap(lang), [lang]);
   const current = examples.find((item) => item.id === exampleId) ?? examples[1]!;
   const exampleStory = {
     ...current.story[lang],
@@ -151,6 +193,7 @@ export default function App() {
             <a href="#overview">{c.nav.overview}</a>
             <a href="#examples">{c.nav.examples}</a>
             <a href="#syntax">{c.nav.syntax}</a>
+            <a href="#legacy">{c.nav.legacy}</a>
             <a href="#start">{c.nav.start}</a>
           </nav>
           <div className="nav__right">
@@ -204,7 +247,7 @@ export default function App() {
             <header className="section-head">
               <h2>{g.featuresHeading}</h2>
               <p className="section-lede">{g.featuresLede}</p>
-              <a className="text-link" href={LINKS.plugin}>{c.start.links.plugin} <Arrow /></a>
+              <a className="text-link" href={LINKS.plugin}>{g.obsidianGuide} <Arrow /></a>
             </header>
             <div className="features">
               {g.features.map((item) => <article className="feature" key={item.title}>
@@ -325,6 +368,9 @@ export default function App() {
                 </pre>
               </figure>
             </div>
+            <ul className="syntax__points">
+              {c.syntax.points.map((point) => <li key={point}>{point}</li>)}
+            </ul>
             <div className="settings-reference">
               <h3>{g.settingsHeading}</h3>
               <p>{g.precedence}</p>
@@ -337,6 +383,58 @@ export default function App() {
               <p className="settings-note">{g.documentOnly}</p>
             </div>
 
+          </div>
+        </section>
+
+        <section className="band band--tint" id="legacy">
+          <div className="shell">
+            <header className="section-head">
+              <h2>{g.legacyHeading}</h2>
+              <p className="section-lede"><Prose text={g.legacyLede} /></p>
+            </header>
+
+            <ol className="flow" aria-label={g.legacyFlowLabel}>
+              {c.hosts.flow.map((node) => <li key={node}>{node}</li>)}
+            </ol>
+
+            <div className="legacy">
+              <figure className="code">
+                <figcaption>
+                  <span>{g.legacySnippet.label}</span>
+                  <small>{g.legacySnippet.caption}</small><CopyButton text={leafletSnippet} lang={lang} />
+                </figcaption>
+                <pre>
+                  <code>{leafletSnippet}</code>
+                </pre>
+              </figure>
+              <div className="frame">
+                <div className="frame__bar">
+                  <span className="frame__live">
+                    {c.hero.live} · {g.legacyMapLabel}
+                  </span>
+                  <span className="frame__coords">{legacyMap.markers.length} {g.legacyMarkerCount}</span>
+                </div>
+                <div className="frame__map">
+                  <GeoMap map={legacyMap} markerTypes={legacyMarkerTypes} label={g.legacyMapLabel} />
+                </div>
+                <p className="frame__hint"><span>{g.legacyMapHint}</span></p>
+              </div>
+            </div>
+
+            <div className="ledger">
+              <div>
+                <h3>{g.legacyWorksHeading}</h3>
+                <ul>{g.legacyWorks.map((item) => <li key={item}>{item}</li>)}</ul>
+              </div>
+              <div>
+                <h3>{g.legacyHeldHeading}</h3>
+                <ul>{g.legacyHeld.map((item) => <li key={item}>{item}</li>)}</ul>
+              </div>
+            </div>
+            <p className="ledger__note">
+              {g.legacyFooter}{' '}
+              <a className="text-link" href={LINKS.compat}>{g.legacyLink} <Arrow /></a>
+            </p>
           </div>
         </section>
 
@@ -376,9 +474,10 @@ export default function App() {
               </div>
             </div>
             <nav className="links" aria-label={g.resources}>
+              <a href={LINKS.guides}>{c.start.links.guides}</a>
+              <a href={LINKS.compat}>{c.start.links.compat}</a>
               <a href={LINKS.spec}>{c.start.links.spec}</a>
               <a href={LINKS.architecture}>{c.start.links.architecture}</a>
-              <a href={LINKS.plugin}>{c.start.links.plugin}</a>
               <a href={LINKS.repo}>{c.start.links.repository}</a>
             </nav>
           </div>

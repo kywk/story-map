@@ -2,22 +2,15 @@ export type Lang = 'en' | 'zh';
 
 export interface Copy {
   meta: { title: string; description: string };
-  nav: { overview: string; examples: string; syntax: string; start: string; github: string };
+  nav: { overview: string; examples: string; syntax: string; legacy: string; start: string; github: string };
   langLabel: string;
   hero: {
-    schema: string;
-    title: string;
     lede: string;
     ctaPlugin: string;
-    ctaNpm: string;
-    ctaSpec: string;
     live: string;
     liveHint: string;
-    facts: { value: string; label: string }[];
   };
   hosts: {
-    heading: string;
-    lede: string;
     flow: string[];
     items: { name: string; pkg: string; body: string; note?: string }[];
   };
@@ -25,7 +18,6 @@ export interface Copy {
     heading: string;
     lede: string;
     switchLabel: string;
-    openLabel: string;
     slideCountLabel: string;
   };
   syntax: {
@@ -41,7 +33,7 @@ export interface Copy {
     obsidian: { heading: string; steps: string[] };
     libraries: { heading: string; body: string };
     docusaurus: { heading: string; body: string };
-    links: { spec: string; architecture: string; plugin: string; repository: string };
+    links: { spec: string; architecture: string; guides: string; compat: string; repository: string };
   };
   footer: { line: string; license: string };
 }
@@ -50,35 +42,25 @@ const en: Copy = {
   meta: {
     title: 'Geo Story Map — Markdown notes as geographic stories',
     description:
-      'StoryMap turns a fenced Markdown block and a folder of notes into an interactive, slide-by-slide geographic story across Obsidian, React, and Docusaurus.',
+      'StoryMap turns a fenced Markdown block and a folder of notes into an interactive, slide-by-slide geographic story across Obsidian, React, and Docusaurus — and renders the Leaflet maps you already have.',
   },
   nav: {
     overview: 'Overview',
     examples: 'Examples',
     syntax: 'Configuration',
+    legacy: 'Existing maps',
     start: 'Get started',
     github: 'GitHub',
   },
   langLabel: 'Language',
   hero: {
-    schema: 'storymap/v1',
-    title: 'Markdown notes, turned into geographic stories.',
     lede: 'Turn your Markdown notes into a journey you can explore. Write in Obsidian, connect places on a map, and publish with React or Docusaurus.',
     ctaPlugin: 'Install the Obsidian plugin',
-    ctaNpm: 'Use the npm packages',
-    ctaSpec: 'Read the spec',
     live: 'Live on this page',
     liveHint: 'Drag the map, then page through the stops with Next or the arrow keys.',
-    facts: [
-      { value: '1', label: 'configuration model' },
-      { value: '3', label: 'hosts, same renderer' },
-      { value: '0', label: 'database or account' },
-    ],
   },
   hosts: {
-    heading: 'One configuration, three hosts.',
-    lede: 'Every host resolves its own world — files, routes, themes — into the same StoryMapConfig, then hands it to one shared renderer. Platform code never leaks into the component.',
-    flow: ['Markdown', 'core parser', 'StoryMapConfig', 'react-story-map'],
+    flow: ['Markdown', 'core parser', 'StoryMapConfig · GeoMapConfig', 'react-story-map'],
     items: [
       {
         name: 'Obsidian',
@@ -104,7 +86,6 @@ const en: Copy = {
     heading: 'Three stories, one renderer.',
     lede: 'Explore the live shared renderer. Choose a story, then switch among six map themes and card, full, or timeline layouts.',
     switchLabel: 'Choose a story',
-    openLabel: 'Open',
     slideCountLabel: 'stops',
   },
   syntax: {
@@ -150,7 +131,8 @@ const en: Copy = {
     links: {
       spec: 'Specification',
       architecture: 'Architecture',
-      plugin: 'Plugin guide',
+      guides: 'Guides',
+      compat: 'Leaflet compatibility',
       repository: 'Repository',
     },
   },
@@ -164,35 +146,25 @@ const zh: Copy = {
   meta: {
     title: 'Geo Story Map — 把 Markdown 筆記變成地理故事',
     description:
-      'StoryMap 把一段 Markdown 圍欄設定與一整個資料夾的筆記，變成可逐頁瀏覽的互動地理故事，並同時支援 Obsidian、React 與 Docusaurus。',
+      'StoryMap 把一段 Markdown 圍欄設定與一整個資料夾的筆記，變成可逐頁瀏覽的互動地理故事，並同時支援 Obsidian、React 與 Docusaurus；你既有的 Leaflet 地圖也一樣能顯示。',
   },
   nav: {
     overview: '概觀',
     examples: '範例',
     syntax: '設定指南',
+    legacy: '既有地圖',
     start: '開始使用',
     github: 'GitHub',
   },
   langLabel: '語言',
   hero: {
-    schema: 'storymap/v1',
-    title: '把 Markdown 筆記，變成地理故事。',
     lede: '把 Markdown 筆記串成可以探索的旅程。在 Obsidian 寫下故事，用地圖連起每個地點，再透過 React 或 Docusaurus 分享。',
     ctaPlugin: '安裝 Obsidian 外掛',
-    ctaNpm: '使用 npm 套件',
-    ctaSpec: '閱讀規格',
     live: '本頁即時示範',
     liveHint: '拖曳地圖，再用「Next」或左右方向鍵逐站瀏覽。',
-    facts: [
-      { value: '1', label: '份設定模型' },
-      { value: '3', label: '種載體共用渲染器' },
-      { value: '0', label: '資料庫或帳號' },
-    ],
   },
   hosts: {
-    heading: '一份設定，三種載體。',
-    lede: '每種載體各自解析自己的世界——檔案、路由、主題——再交給同一個共用渲染器。平台細節不會滲進元件。',
-    flow: ['Markdown', 'core parser', 'StoryMapConfig', 'react-story-map'],
+    flow: ['Markdown', 'core parser', 'StoryMapConfig · GeoMapConfig', 'react-story-map'],
     items: [
       {
         name: 'Obsidian',
@@ -218,7 +190,6 @@ const zh: Copy = {
     heading: '三段故事，同一個渲染器。',
     lede: '直接操作共用渲染器：選擇故事，切換六種地圖主題與 card／full／timeline 版型。',
     switchLabel: '選擇故事',
-    openLabel: '開啟',
     slideCountLabel: '站',
   },
   syntax: {
@@ -264,7 +235,8 @@ const zh: Copy = {
     links: {
       spec: '規格',
       architecture: '架構',
-      plugin: '外掛指南',
+      guides: '使用指南',
+      compat: 'Leaflet 相容性',
       repository: '原始碼',
     },
   },
@@ -301,8 +273,14 @@ interface GuideCopy {
   features: { title: string; body: string }[];
   demoNote: string; settingsHeading: string; precedence: string;
   tableHint: string; columns: string[]; settings: [string, string, string][]; documentOnly: string;
+  legacyHeading: string; legacyLede: string; legacyFlowLabel: string;
+  legacySnippet: { label: string; caption: string };
+  legacyMapLabel: string; legacyMapHint: string; legacyMarkerCount: string;
+  legacyWorksHeading: string; legacyWorks: string[];
+  legacyHeldHeading: string; legacyHeld: string[];
+  legacyFooter: string; legacyLink: string;
   clipboard: Record<'idle' | 'done' | 'error', string>;
-  download: string; reactGuide: string; remarkGuide: string;
+  download: string; obsidianGuide: string; reactGuide: string; remarkGuide: string;
   faqHeading: string; faqLede: string; faq: { question: string; answer: string }[];
 }
 
@@ -340,8 +318,33 @@ export const guideCopy: Record<Lang, GuideCopy> = {
       ['map.tileUrl · map.attribution', 'OpenStreetMap', 'Use another compatible tile provider and supply its attribution.'],
     ],
     documentOnly: 'Folder, tags, center, layout, slides, height, title, id, and schema belong in the document, not plugin defaults. Local AI agent settings stay on this device.',
+    legacyHeading: 'The Leaflet maps you\nalready have still work.',
+    legacyLede: 'A `leaflet` fenced block is a second dialect with its own parser. It is not a story and never becomes one: no slides, no panel, just a map and the markers your notes already describe. The block below is the historical syntax, unchanged.',
+    legacyFlowLabel: 'How both dialects reach one renderer',
+    legacySnippet: {
+      label: 'Existing Leaflet block',
+      caption: 'The keys your vault already uses. No conversion, no renamed options.',
+    },
+    legacyMapLabel: 'A Taipei folder, as a plain map',
+    legacyMarkerCount: 'markers from the folder',
+    legacyMapHint: 'Hover a marker for its note link. The dashed ring is a mapmarker type this registry does not define, and it still renders. One more note stays hidden until you pass zoom level 12.',
+    legacyWorksHeading: 'Works today',
+    legacyWorks: [
+      'id, height, lat with long or lng, defaultZoom, minZoom, maxZoom',
+      'markerFolder, resolved recursively; a note without a location is skipped',
+      'location, mapmarker, and mapzoom read straight from your frontmatter',
+      'Unit and scale accepted as metadata, so they are not errors',
+    ],
+    legacyHeldHeading: 'Deliberately held back',
+    legacyHeld: [
+      'Controls (noUI, noScrollZoom, recenter, lock) and zoomDelta parse but do not act',
+      'GeoJSON and GPX layers, tile and image overlays are carried, not drawn',
+      'Image maps, measurement, and drawing are scheduled, not implemented',
+    ],
+    legacyFooter: 'A recognized key that is not implemented yet is reported under the map rather than dropped, and an unrecognized key is reported separately, so a typo never hides as a planned feature.',
+    legacyLink: 'Per-key record',
     clipboard: { idle: 'Copy source', done: 'Copied', error: 'Select and copy manually' },
-    download: 'Get it from the plugin directory', reactGuide: 'Complete React example', remarkGuide: 'Docusaurus setup & browser client',
+    download: 'Get it from the plugin directory', obsidianGuide: 'Read the Obsidian guide', reactGuide: 'Complete React example', remarkGuide: 'Docusaurus setup & browser client',
     faqHeading: 'Before you begin.', faqLede: 'A few practical details about the way StoryMap works.',
     faq: [
       { question: 'Do I need a StoryMap account?', answer: 'No StoryMap account or database is required. Your source stays in Markdown files. Map tiles and example images use external providers, so the demo needs a network connection.' },
@@ -349,6 +352,7 @@ export const guideCopy: Record<Lang, GuideCopy> = {
       { question: 'Can I choose the slide order myself?', answer: 'Yes. Supply an explicit, non-empty slides list. That list preserves your order and ignores noteFolder. Date ordering and tag filters apply to folder discovery.' },
       { question: 'Will my Obsidian links work on the web?', answer: 'Title links use Obsidian navigation in the vault. For Docusaurus, configure resolveNoteHref using your site’s routes. WikiLink and embed expansion inside full note bodies is not included.' },
       { question: 'How do I publish a story?', answer: 'Use the Remark adapter with Docusaurus and register its browser client. It resolves notes during the build; Leaflet starts only in the browser. The linked setup guide includes the required configuration and stylesheets.' },
+      { question: 'I already have Obsidian Leaflet maps. Do I have to convert them?', answer: 'No. A leaflet fenced block renders as a plain inline map with no edits, and the same block publishes through the Remark adapter. Keys that are recognized but not implemented yet are listed under the map, so you can see exactly what is honored.' },
     ],
   },
   zh: {
@@ -384,8 +388,33 @@ export const guideCopy: Record<Lang, GuideCopy> = {
       ['map.tileUrl · map.attribution', 'OpenStreetMap', '可換用相容的圖磚供應商，並提供對應的出處標示。'],
     ],
     documentOnly: '資料夾、標籤、中心座標、版型、投影片、高度、標題、id 與 schema 僅能在文件設定。本機 AI agent 設定只儲存在這台裝置。',
+    legacyHeading: '你既有的 Leaflet 地圖，\n一樣能直接用。',
+    legacyLede: '`leaflet` 圍欄區塊是第二種 dialect，有自己的 parser。它不是故事，也永遠不會被當成故事：沒有投影片、沒有面板，只有一張地圖，以及你筆記裡既有的標記。下面這段就是原始語法，完全沒有改動。',
+    legacyFlowLabel: '兩種 dialect 如何共用同一個渲染器',
+    legacySnippet: {
+      label: '既有的 Leaflet 區塊',
+      caption: '沿用你 vault 裡既有的 key。不用轉換，也沒有改名的選項。',
+    },
+    legacyMapLabel: '一個台北資料夾，純地圖版本',
+    legacyMarkerCount: '個標記，全部來自該資料夾',
+    legacyMapHint: '把指標移上去會顯示筆記連結。虛線圓環是這份登錄表沒有定義的 mapmarker 類型，仍然照常顯示。還有一則筆記要放大到第 12 層以上才會出現。',
+    legacyWorksHeading: '目前可用',
+    legacyWorks: [
+      'id、height、lat 搭配 long 或 lng、defaultZoom、minZoom、maxZoom',
+      'markerFolder 會遞迴解析；沒有座標的筆記會被略過',
+      'location、mapmarker、mapzoom 直接讀取你的 frontmatter',
+      'unit 與 scale 接受為中繼資料，因此不會造成錯誤',
+    ],
+    legacyHeldHeading: '刻意保留的項目',
+    legacyHeld: [
+      '控制項（noUI、noScrollZoom、recenter、lock）與 zoomDelta 會解析但暫不生效',
+      'GeoJSON 與 GPX 圖層、圖磚與影像覆蓋層已保留資料，但尚未繪製',
+      '影像地圖、測量與繪圖屬於排程中，尚未實作',
+    ],
+    legacyFooter: '已辨識但尚未實作的 key 會列在地圖下方而不是被丟掉；無法辨識的 key 另外回報，因此打錯字不會被誤認為是排程中的功能。',
+    legacyLink: '逐 key 記錄',
     clipboard: { idle: '複製原始碼', done: '已複製', error: '請選取文字手動複製' },
-    download: '前往官方外掛市集', reactGuide: '完整 React 範例', remarkGuide: 'Docusaurus 設定與瀏覽器端整合',
+    download: '前往官方外掛市集', obsidianGuide: '閱讀 Obsidian 指南', reactGuide: '完整 React 範例', remarkGuide: 'Docusaurus 設定與瀏覽器端整合',
     faqHeading: '開始前，你可能想知道。', faqLede: '幾個關於 StoryMap 使用方式的實用解答。',
     faq: [
       { question: '需要註冊 StoryMap 帳號嗎？', answer: '不需要 StoryMap 帳號，也不需要資料庫。來源保留為 Markdown 檔案。地圖圖磚與範例圖片使用外部服務，因此示範頁需要網路連線。' },
@@ -393,6 +422,7 @@ export const guideCopy: Record<Lang, GuideCopy> = {
       { question: '可以自己決定投影片順序嗎？', answer: '可以。明確填入非空的 slides 清單，就會保留你指定的順序，並忽略 noteFolder。日期排序與標籤篩選僅用於資料夾自動探索。' },
       { question: 'Obsidian 連結可以直接用在網站嗎？', answer: '標題連結在 Vault 內使用 Obsidian 導覽；Docusaurus 則需要透過 resolveNoteHref 對應站台路由。完整筆記內文不包含 WikiLink 與嵌入語法展開。' },
       { question: '如何把故事發佈到網站？', answer: '在 Docusaurus 加入 Remark 轉接器，並註冊瀏覽器端模組。筆記在建置時解析，Leaflet 僅在瀏覽器啟動。上方整合指南包含必要設定與樣式匯入方式。' },
+      { question: '我已經有 Obsidian Leaflet 地圖，需要轉換嗎？', answer: '不需要。leaflet 圍欄區塊會直接渲染成一般內嵌地圖，完全不必修改；同一段區塊也能透過 Remark 轉接器發佈。已辨識但尚未實作的 key 會列在地圖下方，你可以清楚看到哪些設定真的被採用。' },
     ],
   },
 };
