@@ -21,7 +21,7 @@ describe('settings version and shape', () => {
       map: { theme: 'auto', showPath: true },
       markers: { defaultType: 'default', types: [], tooltip: 'hover' },
       interaction: { notePreview: true, copyCoordinatesOnShiftClick: false },
-      leafletCompatibility: { diagnostics: true },
+      leafletCompatibility: { theme: 'auto', diagnostics: true },
     });
   });
 
@@ -146,15 +146,29 @@ describe('version 1 migration', () => {
     expect(migrated.leafletCompatibility).toEqual({
       defaultCenter: [25.03, 121.56],
       unitSystem: 'metric',
+      // A payload written before the theme row existed still gets the built-in
+      // default, so an inline `leaflet` map follows Obsidian rather than
+      // reverting to the fixed light palette.
+      theme: 'auto',
       diagnostics: false,
     });
   });
 
   it('drops an out-of-range or malformed compatibility center', () => {
     expect(migrateSettings({ version: 2, leafletCompatibility: { defaultCenter: [91, 0] } }).leafletCompatibility)
-      .toEqual({ diagnostics: true });
+      .toEqual({ diagnostics: true, theme: 'auto' });
     expect(migrateSettings({ version: 2, leafletCompatibility: { defaultCenter: [1] } }).leafletCompatibility)
-      .toEqual({ diagnostics: true });
+      .toEqual({ diagnostics: true, theme: 'auto' });
+  });
+
+  it('rejects a malformed compatibility theme back to the built-in default', () => {
+    const read = (theme: unknown) =>
+      migrateSettings({ version: 2, leafletCompatibility: { theme } }).leafletCompatibility.theme;
+
+    expect(read('neon')).toBe('auto');
+    expect(read(7)).toBe('auto');
+    expect(read(undefined)).toBe('auto');
+    expect(read('vintage')).toBe('vintage');
   });
 });
 
@@ -237,15 +251,38 @@ describe('leaflet default resolution', () => {
     const defaults = toLeafletSourceDefaults(
       settings({
         story: { order: 'desc', dateField: 'visited', noteDisplay: 'full', panelOpacity: 0.4 },
+        // `cyber` here is the story-map theme. A `leaflet` block has no theme key
+        // of its own and must not inherit it from the `map` section.
         map: { theme: 'cyber', zoom: 11, minZoom: 3, maxZoom: 19, showPath: false },
+        // A compatibility theme is a separate, explicit opt-in that also never
+        // reaches a story map. Here it is set, so the block follows `vintage` and
+        // not `cyber`; the important assertion is that it is not `cyber`.
+        leafletCompatibility: { theme: 'vintage', diagnostics: true },
       }),
     );
 
     const parsed = parseLeafletSourceYaml('lat: 25\nlong: 121\n', defaults);
-    expect(parsed.map.theme).toBe('light');
+    expect(parsed.map.theme).toBe('vintage');
     expect(parsed.map.zoom).toBe(6);
     expect(parsed.map.minZoom).toBeUndefined();
     expect(parsed.map.maxZoom).toBeUndefined();
+  });
+
+  it('falls back to the built-in light theme with no compatibility theme set', () => {
+    const defaults = toLeafletSourceDefaults(
+      settings({ leafletCompatibility: { diagnostics: true } }),
+    );
+
+    expect(parseLeafletSourceYaml('lat: 25\nlong: 121\n', defaults).map.theme).toBe('light');
+  });
+
+  it('defaults an inline leaflet map to auto so it follows Obsidian light/dark', () => {
+    // The whole reason `leafletCompatibility.theme` exists: a `leaflet` block has
+    // no theme key, so without it a map in a dark vault keeps the fixed `light`
+    // palette while every StoryMap beside it follows Obsidian.
+    const defaults = toLeafletSourceDefaults(defaultSettings());
+    expect(defaults.theme).toBe('auto');
+    expect(parseLeafletSourceYaml('lat: 25\nlong: 121\n', defaults).map.theme).toBe('auto');
   });
 
   it('resolves a compatibility center only when the block omits lat/long', () => {

@@ -78,6 +78,7 @@ describe('import candidate list', () => {
     expect(result.settings.interaction).toEqual({ notePreview: false, copyCoordinatesOnShiftClick: true });
     expect(result.settings.leafletCompatibility).toEqual({
       defaultCenter: [25.033, 121.5654],
+      theme: 'auto',
       unitSystem: 'imperial',
       diagnostics: true,
     });

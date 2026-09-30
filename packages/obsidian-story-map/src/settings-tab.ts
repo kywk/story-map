@@ -444,6 +444,16 @@ export class StoryMapSettingTab extends PluginSettingTab {
           .setDesc('Used when a leaflet block omits long. Built-in default: 0.')
           .addText((text) => this.number(text, centerDraft.lng ?? compat.defaultCenter?.[1], (value) => this.patchCenterHalf('lng', value)));
       } },
+      { name: 'Default leaflet theme', render: (setting) => {
+        setting
+          .setDesc('A leaflet block has no theme key of its own, so this is the only way an inline map can follow Obsidian light/dark. Built-in default: auto.')
+          .addDropdown((dropdown) =>
+            dropdown
+              .addOptions(Object.fromEntries(MAP_THEME_OPTIONS))
+              .setValue(compat.theme ?? 'auto')
+              .onChange((value) => this.patchCompatibility({ theme: toMapTheme(value) })),
+          );
+      } },
       { name: 'Default unit system', render: (setting) => {
         setting
           .setDesc('Carried for future measurement tooling. Nothing measures distances yet.')

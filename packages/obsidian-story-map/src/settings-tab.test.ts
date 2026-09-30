@@ -102,8 +102,8 @@ const DEFINITION_NAMES = [
   'Use separate dark tiles', 'Dark tile URL', 'Dark tile attribution', 'Dark tile subdomains',
   'Markers & interaction', 'Default marker type', 'Default marker tooltip',
   'Preview linked note on hover', 'Copy location on Shift-click', 'Add marker type',
-  'Leaflet compatibility', 'Default latitude', 'Default longitude', 'Default unit system',
-  'Show compatibility warnings', 'Import settings from Obsidian Leaflet',
+  'Leaflet compatibility', 'Default latitude', 'Default longitude', 'Default leaflet theme',
+  'Default unit system', 'Show compatibility warnings', 'Import settings from Obsidian Leaflet',
 ];
 
 describe('settings definitions and legacy rendering', () => {
@@ -289,7 +289,22 @@ describe('leaflet compatibility settings', () => {
     tab.display();
     set(field(container.rows.find((entry) => entry.name === 'Default unit system')), 'imperial');
     set(field(container.rows.find((entry) => entry.name === 'Show compatibility warnings')), false);
-    expect(plugin.settings.leafletCompatibility).toEqual({ unitSystem: 'imperial', diagnostics: false });
+    expect(plugin.settings.leafletCompatibility).toEqual({
+      theme: 'auto',
+      unitSystem: 'imperial',
+      diagnostics: false,
+    });
+  });
+
+  it('lets an inline leaflet map pick its own theme, separately from story maps', () => {
+    // A `leaflet` block has no theme key, so this row is the only way it can
+    // follow Obsidian. It lives in the compatibility section on purpose: the
+    // story-map theme default must not become a leaflet default by accident.
+    const { tab, plugin, container } = setup();
+    tab.display();
+    set(field(container.rows.find((entry) => entry.name === 'Default leaflet theme')), 'vintage');
+    expect(plugin.settings.leafletCompatibility.theme).toBe('vintage');
+    expect(plugin.settings.map.theme).toBe('auto');
   });
 
   it('delegates the import to the plugin command instead of reading the file here', () => {

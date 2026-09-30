@@ -78,6 +78,14 @@ export interface InteractionSectionSettings {
  */
 export interface LeafletCompatibilitySettings {
   defaultCenter?: LatLngTuple | undefined;
+  /**
+   * Theme for a `leaflet` block, which has no source key of its own. A `leaflet`
+   * block never reads the `story-map` `map.theme` default, so without this an
+   * inline map in a dark vault would keep the fixed `light` palette while every
+   * StoryMap beside it followed Obsidian. Defaults to `auto` for the same reason
+   * the StoryMap default does.
+   */
+  theme?: StoryMapTheme | undefined;
   /** Carried for future measurement tooling. Nothing in the plugin measures yet. */
   unitSystem?: UnitSystem | undefined;
   /** Render `GeoMapConfig.diagnostics` under the map. On by default. */
@@ -100,7 +108,7 @@ export function defaultSettings(): StoryMapPluginSettings {
     map: { theme: 'auto', showPath: true },
     markers: { defaultType: DEFAULT_MARKER_TYPE_ID, types: [], tooltip: 'hover' },
     interaction: { notePreview: true, copyCoordinatesOnShiftClick: false },
-    leafletCompatibility: { diagnostics: true },
+    leafletCompatibility: { theme: 'auto', diagnostics: true },
   };
 }
 
@@ -209,7 +217,12 @@ function mergeV2(base: StoryMapPluginSettings, stored: Record<string, unknown>):
     },
     leafletCompatibility: {
       ...(defaultCenter ? { defaultCenter } : {}),
+      // `theme` has a built-in default, so an absent or invalid value falls back
+      // to it rather than staying unset: a partially corrupt settings file must
+      // not silently drop an inline `leaflet` map back to the fixed light palette.
+      // `defaultCenter` has no default (the parser's is 0,0), so it stays optional.
       ...pick(compat, 'unitSystem', asUnitSystem),
+      theme: asMapTheme(compat.theme) ?? base.leafletCompatibility.theme,
       diagnostics:
         typeof compat.diagnostics === 'boolean' ? compat.diagnostics : base.leafletCompatibility.diagnostics,
     },
@@ -355,6 +368,12 @@ export function toLeafletSourceDefaults(settings: StoryMapPluginSettings): Leafl
 
   const center = settings.leafletCompatibility.defaultCenter;
   if (center) defaults.center = center;
+  // A `leaflet` block has no theme key, so this is the only way it can follow
+  // Obsidian's light/dark. It stays in the compatibility section on purpose:
+  // the `story-map` default must not become a `leaflet` default by accident.
+  if (settings.leafletCompatibility.theme !== undefined) {
+    defaults.theme = settings.leafletCompatibility.theme;
+  }
   const url = text(light?.url);
   if (url !== undefined) defaults.tileUrl = url;
   const attribution = text(light?.attribution);
@@ -461,4 +480,15 @@ function asTooltip(value: unknown): MarkerTooltipDisplay | undefined {
 
 function asUnitSystem(value: unknown): UnitSystem | undefined {
   return value === 'metric' || value === 'imperial' ? value : undefined;
+}
+
+function asMapTheme(value: unknown): StoryMapTheme | undefined {
+  return value === 'auto' ||
+    value === 'light' ||
+    value === 'dark' ||
+    value === 'vintage' ||
+    value === 'cyber' ||
+    value === 'atlas'
+    ? value
+    : undefined;
 }
