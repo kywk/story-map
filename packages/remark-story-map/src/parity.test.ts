@@ -12,10 +12,14 @@ import { describe, expect, it } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { parseStoryMapSourceObject } from '@story-map/story-map-core';
+import { parseLeafletSourceYaml, parseStoryMapSourceObject } from '@story-map/story-map-core';
 import { VaultIndex } from './vault.js';
+import remarkStoryMap from './index.js';
 import { resolveObsidianStory } from '../../obsidian-story-map/src/resolver.js';
+import { resolveObsidianGeoMap } from '../../obsidian-story-map/src/leaflet-resolver.js';
 import type { App } from 'obsidian';
+import type { Code, Html, Root } from 'mdast';
+import { LEAFLET_FIXTURES } from './fixtures.js';
 
 interface FakeFile {
   path: string;
@@ -258,5 +262,209 @@ describe('cross-host date parity', () => {
     for (const story of [obsidian, remark]) {
       expect(story.slides.every((s) => s.title === undefined)).toBe(true);
     }
+  });
+});
+
+// Cross-host parity for the `leaflet` dialect. The same promise as above, one
+// layer down: an inline `leaflet` block in Obsidian and a `leaflet` node in
+// Docusaurus must produce the same map - same center, zoom, tile source, markers,
+// and titles - for the same authored source and the same notes. Only the note
+// link is platform-specific by design: Obsidian carries a Vault path, Docusaurus
+// a published href.
+describe('cross-host leaflet parity', () => {
+  /** The marker facts both hosts must agree on, minus the platform link. */
+  function comparable(markers: Array<Record<string, unknown>>) {
+    return markers.map((marker) => ({
+      title: marker.title,
+      type: marker.type,
+      location: marker.location,
+      description: marker.description,
+      minZoom: marker.minZoom,
+      maxZoom: marker.maxZoom,
+    }));
+  }
+
+  /**
+   * The four production fixtures, with a small note tree under each authored
+   * `markerFolder`, run through both adapters and the real Remark transform.
+   */
+  function fixtureNotes(): FakeFile[] {
+    const files: FakeFile[] = [];
+    for (const fixture of LEAFLET_FIXTURES) {
+      // `.md` is part of the path: the Obsidian fake App only hands back Markdown
+      // files and the Remark scanner only indexes them, so both hosts must see a
+      // real file name.
+      files.push(
+        {
+          path: `${fixture.markerFolder}/Santiago.md`,
+          frontmatter: { title: 'Santiago', location: [-33.4489, -70.6693], mapmarker: 'restaurant' },
+          body: 'Santiago body.',
+        },
+        // A nested note proves both hosts walk subfolders.
+        {
+          path: `${fixture.markerFolder}/Regions/Valparaiso.md`,
+          frontmatter: { title: 'Valparaiso', location: [-33.0472, -71.6127], mapzoom: [5, 18] },
+          body: 'Valparaiso body.',
+        },
+        // No valid `location`: skipped by both hosts, never fatal.
+        {
+          path: `${fixture.markerFolder}/Index.md`,
+          frontmatter: { title: 'Index' },
+          body: 'Index body.',
+        },
+        // An unknown `mapmarker` still yields a marker with the authored name.
+        {
+          path: `${fixture.markerFolder}/Marathon.md`,
+          frontmatter: { title: 'Marathon', location: [1, 2], mapmarker: 'marathon' },
+          body: 'Marathon body.',
+        },
+        // Outside the folder.
+        { path: 'elsewhere/Lima.md', frontmatter: { title: 'Lima', location: [-12, -77] }, body: 'Lima.' },
+      );
+    }
+    return files;
+  }
+
+  function transformToGeoMap(fixtureIndex: number, files: FakeFile[]) {
+    const fixture = LEAFLET_FIXTURES[fixtureIndex]!;
+    const tree: Root = { type: 'root', children: [{ type: 'code', lang: 'leaflet', value: fixture.block }] };
+    remarkStoryMap({ vaultRoot: makeVaultRoot(files) })(
+      tree,
+      { path: join('/vault', fixture.source) },
+    );
+    const node = tree.children[0] as Html;
+    const match = /data-story-map-config="(.+?)"/.exec(node.value);
+    if (!match?.[1]) throw new Error('Map host attribute missing');
+    return JSON.parse(decodeURIComponent(match[1])) as {
+      schema: string;
+      id?: string;
+      height: string;
+      map: Record<string, unknown>;
+      markers: Array<Record<string, unknown>>;
+    };
+  }
+
+  for (const [index, fixture] of LEAFLET_FIXTURES.entries()) {
+    it(`resolves the ${fixture.name} fixture identically in both hosts`, () => {
+      const files = fixtureNotes();
+      const source = parseLeafletSourceYaml(fixture.block);
+      const obsidian = resolveObsidianGeoMap(makeApp(files), source);
+      const remark = transformToGeoMap(index, files);
+
+      expect(obsidian.schema).toBe('geomap/v1');
+      expect(remark.schema).toBe('geomap/v1');
+      // Authored identity, height, and the whole map option block.
+      expect(obsidian.id).toBe(fixture.id);
+      expect(remark.id).toBe(fixture.id);
+      expect(obsidian.height).toBe(fixture.height);
+      expect(remark.height).toBe(fixture.height);
+      expect(remark.map).toEqual(obsidian.map);
+      // Same selection, same order, same titles and types.
+      expect(remark.markers.map((marker) => marker.title)).toEqual(
+        obsidian.markers.map((marker) => marker.title),
+      );
+      expect(comparable(remark.markers)).toEqual(
+        comparable(obsidian.markers as unknown as Array<Record<string, unknown>>),
+      );
+      // Both hosts skip the note without a location and keep the unknown type.
+      expect(remark.markers.map((marker) => marker.title)).not.toContain('Index');
+      expect(remark.markers.find((marker) => marker.title === 'Marathon')?.type).toBe('marathon');
+      // `mapzoom` becomes marker zoom visibility in both hosts.
+      expect(remark.markers.find((marker) => marker.title === 'Valparaiso')?.minZoom).toBe(5);
+      expect(remark.markers.find((marker) => marker.title === 'Valparaiso')?.maxZoom).toBe(18);
+    });
+  }
+
+  it('agrees on which notes a folder selects, in the same order', () => {
+    const files = fixtureNotes();
+    const fixture = LEAFLET_FIXTURES[0]!;
+    const source = parseLeafletSourceYaml(fixture.block);
+    const obsidian = resolveObsidianGeoMap(makeApp(files), source);
+    const vault = new VaultIndex({ vaultRoot: makeVaultRoot(files) });
+    const remark = vault.resolveLeafletSource(source);
+
+    expect(remark.markers.map((marker) => marker.title)).toEqual(
+      obsidian.markers.map((marker) => marker.title),
+    );
+    // Both hosts order by Vault path, so a re-scan cannot reshuffle markers.
+    expect(remark.markers.map((marker) => marker.title)).toEqual([
+      'Marathon',
+      'Valparaiso',
+      'Santiago',
+    ]);
+  });
+
+  it('agrees on the built-in tile source and the unit/scale diagnostics', () => {
+    const files = fixtureNotes();
+    const fixture = LEAFLET_FIXTURES[0]!;
+    const source = parseLeafletSourceYaml(fixture.block);
+    const obsidian = resolveObsidianGeoMap(makeApp(files), source);
+    const remark = new VaultIndex({ vaultRoot: makeVaultRoot(files) }).resolveLeafletSource(source);
+
+    expect(remark.map.tiles).toEqual(obsidian.map.tiles);
+    expect((remark.map.tiles as { light: { url: string } }).light.url).toBe(
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    );
+    // The compatibility metadata is reported, not dropped, in both hosts.
+    const keys = (config: { diagnostics?: Array<{ key?: string }> }) =>
+      (config.diagnostics ?? []).map((diagnostic) => diagnostic.key);
+    expect(keys(remark)).toEqual(keys(obsidian));
+    expect(keys(remark)).toEqual(expect.arrayContaining(['unit', 'scale', 'darkMode']));
+  });
+
+  it('keeps a marker unlinked in Docusaurus while Obsidian keeps its Vault path', () => {
+    // The only intentional divergence: a published route is the host's authority.
+    // With no resolver, Remark omits `notePath` rather than guessing a slug.
+    const files = fixtureNotes();
+    const fixture = LEAFLET_FIXTURES[0]!;
+    const source = parseLeafletSourceYaml(fixture.block);
+    const obsidian = resolveObsidianGeoMap(makeApp(files), source);
+    const remark = new VaultIndex({ vaultRoot: makeVaultRoot(files) }).resolveLeafletSource(source);
+
+    expect(obsidian.markers.every((marker) => marker.notePath)).toBe(true);
+    expect(remark.markers.every((marker) => marker.notePath === undefined)).toBe(true);
+    // Titles still match, so the two maps look the same apart from the link.
+    expect(remark.markers.map((marker) => marker.title)).toEqual(
+      obsidian.markers.map((marker) => marker.title),
+    );
+  });
+
+  it('resolves the same markers from a host-supplied published route', () => {
+    const files = fixtureNotes();
+    const fixture = LEAFLET_FIXTURES[0]!;
+    const source = parseLeafletSourceYaml(fixture.block);
+    const obsidian = resolveObsidianGeoMap(makeApp(files), source);
+    const remark = new VaultIndex({
+      vaultRoot: makeVaultRoot(files),
+      resolveNoteHref: (relativePath) => `/docs/${relativePath.toLowerCase()}/`,
+    }).resolveLeafletSource(source);
+
+    expect(remark.markers.every((marker) => marker.notePath?.startsWith('/docs/'))).toBe(true);
+    // Note the extension-free, forward-slash key the host receives.
+    expect(remark.markers[0]?.notePath).toBe('/docs/backpacker/2509 chile/chile/marathon/');
+    // Selection and order are unaffected by route resolution.
+    expect(remark.markers.map((marker) => marker.title)).toEqual(
+      obsidian.markers.map((marker) => marker.title),
+    );
+  });
+
+  it('leaves the story dialect untouched by the leaflet path', async () => {
+    // One document carrying both dialects: each resolves through its own parser.
+    const files = fixtureNotes();
+    const tree: Root = {
+      type: 'root',
+      children: [
+        { type: 'code', lang: 'story-map', value: 'title: Trip\nnoteFolder: Trips\n' },
+        { type: 'code', lang: 'leaflet', value: LEAFLET_FIXTURES[0]!.block },
+      ] satisfies Code[],
+    };
+    remarkStoryMap({ vaultRoot: makeVaultRoot(files) })(tree, { path: '/vault/Story.md' });
+
+    const schemas = (tree.children as Html[]).map((node) => {
+      const match = /data-story-map-config="(.+?)"/.exec(node.value);
+      if (!match?.[1]) throw new Error('Host attribute missing');
+      return (JSON.parse(decodeURIComponent(match[1])) as { schema: string }).schema;
+    });
+    expect(schemas).toEqual(['storymap/v1', 'geomap/v1']);
   });
 });

@@ -13,7 +13,9 @@ vi.mock('react-dom/client', () => ({
   },
 }));
 
-vi.mock('@story-map/react-story-map', () => ({ StoryMap: () => null }));
+// The renderer module now exports both entry points; the client destructures the
+// pair from one shared import, so the mock must carry both.
+vi.mock('@story-map/react-story-map', () => ({ StoryMap: () => null, GeoMap: () => null }));
 
 describe('StoryMap browser client SPA lifecycle', () => {
   it('mounts multiple hosts once and unmounts removed hosts', async () => {
