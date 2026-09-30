@@ -1,7 +1,8 @@
 # @story-map/react-story-map
 
 React renderer for StoryMap slides, with a Leaflet map, Markdown text, media, and
-previous/next navigation. Requires React and React DOM 19.
+previous/next navigation. Also exports `GeoMap`, the storyless map that StoryMap itself is
+built on. Requires React and React DOM 19.
 
 ## Install
 
@@ -173,6 +174,72 @@ Set these semantic CSS variables on the StoryMap or an ancestor to match your ho
 
 These variables override the selected preset's panel, text, links, borders, and
 navigation colors. The selected theme applies a filter only to the tile layer.
+
+## GeoMap
+
+`GeoMap` is the storyless map. It renders one Leaflet map with generic markers and no
+story panel, navigation, or layout modes, and it is the runtime `StoryMap` itself is built
+on. Use it when you have markers and a viewport but no narrative.
+
+```tsx
+import { GeoMap, type GeoMapConfig } from '@story-map/react-story-map';
+
+const map: GeoMapConfig = {
+  schema: 'geomap/v1',
+  height: '500px',
+  map: {
+    theme: 'light',
+    zoom: 11,
+    minZoom: 4,
+    maxZoom: 17,
+    tiles: {
+      light: {
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '© OpenStreetMap contributors',
+      },
+    },
+  },
+  markers: [
+    { location: { lat: 25.033, lng: 121.5654 }, title: 'Din Tai Fung', type: 'restaurant' },
+    { location: { lat: 25.0555, lng: 121.5097 }, title: 'Dihua Street', notePath: '/notes/dihua' },
+  ],
+};
+
+<GeoMap map={map} />;
+```
+
+| Prop | Type / default | Purpose |
+| --- | --- | --- |
+| `map` | `GeoMapConfig`, required | Resolved map options and markers. |
+| `markerTypes` | `readonly MarkerTypeDefinition[]` | Registry mapping a marker's `type` to an icon, color, tags, and zoom bounds. |
+| `defaultTooltip` | `'always' \| 'hover' \| 'never'`, `hover` | Tooltip mode for markers that do not set their own. |
+| `className` | `string` | Additional class on the themed root. |
+| `label` | `string` | Accessible name for the map region. |
+| `onNoteClick` | `(notePath: string, event: MouseEvent) => void` | Host navigation for a linked marker. |
+| `onNoteHover` | `(notePath: string, targetEl: HTMLElement, event: MouseEvent) => void` | Host preview for a linked marker. |
+| `noteLinkClassName` | `string` | Additional class on linked markers. |
+| `onReady` | `(runtime: GeoMapRuntime \| null) => void` | Receives the live map once Leaflet exists, and `null` on teardown. |
+
+`activeMarkerIndex`, `path`, `focusOffset`, and `rootless` also exist but are used by
+`StoryMap` internally to compose this component. Prefer `StoryMap` for narrated content.
+
+A marker whose `type` is absent from `markerTypes` still renders a marker, using the
+default visual; the fallback is a dashed ring rather than a missing pin. A marker's
+`minZoom` / `maxZoom` (from note `mapzoom` frontmatter, or a marker type's own bounds)
+makes it appear and disappear with the zoom level. `notePath` behaves exactly like a
+StoryMap slide's: a normal anchor without host callbacks, or a callback-driven link with
+`data-href` when `onNoteClick` or `onNoteHover` is provided.
+
+`GeoMap` renders the same themed `.story-map` root as `StoryMap`, so all six themes and
+the `--story-map-*` variables above apply to a plain map with no extra CSS. Override them
+on the `className` element or an ancestor, as for `StoryMap`.
+
+Not implemented yet, and deliberately left inert: `map.controls` (`noUI`, `noScrollZoom`,
+`recenter`, `locked`) and `map.zoomDelta`. The host parser reports these as pending, so
+they are recognized rather than silently dropped; see the compatibility matrix for phases.
+
+`GeoMapProps`, `GeoMapRuntime`, `GeoMapConfig`, `GeoMapOptions`, `TileSource`,
+`TileSources`, `GeoMarker`, and `MarkerTypeDefinition` are exported as TypeScript types.
 
 ## License
 
