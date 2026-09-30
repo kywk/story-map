@@ -8,7 +8,11 @@ import {
 } from './settings-data.js';
 
 /** Community plugin id of the historical Obsidian Leaflet plugin. */
-const LEGACY_PLUGIN_ID = 'obsidian-leaflet';
+/**
+ * Directories the historical plugin's data may live in, most likely first. The
+ * community plugin's published id is `obsidian-leaflet-plugin`.
+ */
+const LEGACY_PLUGIN_IDS = ['obsidian-leaflet-plugin', 'obsidian-leaflet'] as const;
 
 export interface LeafletImportResult {
   settings: StoryMapPluginSettings;
@@ -92,20 +96,29 @@ const ICON_SYMBOLS: Record<string, string> = {
  * plugin never requires the community plugin to be installed, loaded, or enabled.
  * Returns `null` when no readable data file exists, which the caller reports
  * rather than guessing.
+ *
+ * The community plugin's published id is `obsidian-leaflet-plugin`, so that is the
+ * directory a real install uses. `obsidian-leaflet` is accepted too because some
+ * vaults hold it under the un-suffixed name (a manual install or an older
+ * release); trying only one id silently reports "nothing to import" on the other.
  */
 export async function readLegacyLeafletSettings(
   app: App,
 ): Promise<Record<string, unknown> | null> {
-  const path = `${normalizePath(app.vault.configDir)}/plugins/${LEGACY_PLUGIN_ID}/data.json`;
-  try {
-    if (!(await app.vault.adapter.exists(path))) return null;
-    const parsed: unknown = JSON.parse(await app.vault.adapter.read(path));
-    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
+  for (const id of LEGACY_PLUGIN_IDS) {
+    const path = `${normalizePath(app.vault.configDir)}/plugins/${id}/data.json`;
+    try {
+      if (!(await app.vault.adapter.exists(path))) continue;
+      const parsed: unknown = JSON.parse(await app.vault.adapter.read(path));
+      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // A malformed or unreadable file is skipped rather than thrown, so a broken
+      // install of the old plugin cannot block the new one from loading.
+    }
   }
+  return null;
 }
 
 /**

@@ -27,6 +27,31 @@ describe('readLegacyLeafletSettings', () => {
     expect(await readLegacyLeafletSettings(app)).toEqual({ defaultTile: 'https://a.test/{z}/{x}/{y}.png' });
   });
 
+  it('reads the real community install directory, which is the -plugin id', async () => {
+    // The published id of javalent/obsidian-leaflet is `obsidian-leaflet-plugin`.
+    // Reading only the un-suffixed name reports "nothing to import" on a real vault.
+    const app = makeApp({
+      '.obsidian/plugins/obsidian-leaflet-plugin/data.json': '{"defaultTile":"https://real.test/{z}/{x}/{y}.png"}',
+    });
+    expect(await readLegacyLeafletSettings(app)).toEqual({ defaultTile: 'https://real.test/{z}/{x}/{y}.png' });
+  });
+
+  it('prefers the real id when both directories are present', async () => {
+    const app = makeApp({
+      '.obsidian/plugins/obsidian-leaflet-plugin/data.json': '{"defaultTile":"https://real.test/{z}/{x}/{y}.png"}',
+      '.obsidian/plugins/obsidian-leaflet/data.json': '{"defaultTile":"https://stale.test/{z}/{x}/{y}.png"}',
+    });
+    expect(await readLegacyLeafletSettings(app)).toEqual({ defaultTile: 'https://real.test/{z}/{x}/{y}.png' });
+  });
+
+  it('falls through to the other directory when the first holds unusable data', async () => {
+    const app = makeApp({
+      '.obsidian/plugins/obsidian-leaflet-plugin/data.json': '{oops',
+      '.obsidian/plugins/obsidian-leaflet/data.json': '{"defaultTile":"https://fallback.test/{z}/{x}/{y}.png"}',
+    });
+    expect(await readLegacyLeafletSettings(app)).toEqual({ defaultTile: 'https://fallback.test/{z}/{x}/{y}.png' });
+  });
+
   it('returns null when the old plugin was never installed', async () => {
     expect(await readLegacyLeafletSettings(makeApp({}))).toBeNull();
   });
