@@ -39,6 +39,8 @@ export interface MarkerVisual {
 
 const IMAGE_CLASS = 'story-map__marker--image';
 const SYMBOL_CLASS = 'story-map__marker--symbol';
+/** Pairs with the `stroke-dasharray` rule that makes the fallback visible. */
+const UNKNOWN_CLASS = 'story-map__marker--unknown';
 
 /**
  * Resolve one `GeoMarker` against a host's marker type registry.
@@ -59,17 +61,23 @@ export function resolveMarkerVisual(
   const icon = definition?.icon;
   const base: MarkerVisual = {
     kind: 'circle',
-    className: MARKER_CLASS,
+    // The unknown class rides on the className handed to Leaflet, because that is
+    // the only string that reaches the rendered element. Setting it later as a
+    // separate step left the dashed-ring rule matching nothing, so an unrecognized
+    // type looked identical to a registered one.
+    className: resolution.unknown ? `${MARKER_CLASS} ${UNKNOWN_CLASS}` : MARKER_CLASS,
     type: resolution.type,
     unknown: resolution.unknown,
     ...(definition?.color ? { color: definition.color } : {}),
   };
 
+  // Appended to `base.className` rather than rebuilt from MARKER_CLASS, so the
+  // unknown marker can never be lost by a later branch.
   if (icon?.kind === 'image' && icon.value) {
-    return { ...base, kind: 'image', className: `${MARKER_CLASS} ${IMAGE_CLASS}`, iconUrl: icon.value };
+    return { ...base, kind: 'image', className: `${base.className} ${IMAGE_CLASS}`, iconUrl: icon.value };
   }
   if (icon?.kind === 'symbol' && icon.value) {
-    return { ...base, kind: 'symbol', className: `${MARKER_CLASS} ${SYMBOL_CLASS}`, symbol: icon.value };
+    return { ...base, kind: 'symbol', className: `${base.className} ${SYMBOL_CLASS}`, symbol: icon.value };
   }
 
   return base;

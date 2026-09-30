@@ -562,6 +562,12 @@ StoryMap test files are unmodified.
 deliberately inert. Core reports them as `leaflet-pending-p1`, and implementing them would
 make that diagnostic a lie.
 
+A marker's whole class list travels on `MarkerVisual.className`, because that is the only
+string handed to Leaflet. Anything a stylesheet needs to distinguish a marker — the image,
+symbol and unrecognized-type variants — has to be part of it. An earlier version set
+`data-marker-type-unknown` as a separate attribute instead, which left the dashed-ring rule
+matching nothing.
+
 ### 14.5 Obsidian inline fence
 
 `obsidian-story-map` adds `registerMarkdownCodeBlockProcessor('leaflet', ...)`

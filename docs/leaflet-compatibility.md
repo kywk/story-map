@@ -96,7 +96,7 @@ byte-identical so later error line numbers still match the authored block.
 | --- | --- | --- |
 | `location` | Supported | Primary coordinate source, shared with `storymap/v1`. A note without it is skipped, not fatal. |
 | `mapmarker` | Supported | Marker type. Resolution order: explicit `mapmarker`, first registry type whose tags match the note, configured default type, built-in generic default. |
-| unknown `mapmarker` | Supported | Still renders a marker through the default visual; the authored name is preserved. |
+| unknown `mapmarker` | Supported | Still renders a marker through the default visual, with a dashed ring so a reader can see the type was not recognized; the authored name is preserved. |
 | `mapzoom` | Supported | `[min, max]` normalizes to marker min/max zoom visibility and is rendered. A single value is a lower bound. |
 | `title` | Supported | Marker label and link text. |
 | `description` / `summary` | Supported | Marker tooltip body. |
@@ -216,6 +216,26 @@ Confirmed in the browser: hovering a marker and clicking the link navigates to
 `/backpacker/2509-chile/chile/阿塔卡馬沙漠-atacama-desert/`, and
 `document.elementFromPoint` at the link's center resolves to the anchor with
 `pointer-events: auto`.
+
+### The dashed fallback ring was dead CSS
+
+Building the introduction site's `GeoMap` demo surfaced a third defect, of the same
+family: the stylesheet promised a visible signal for an unrecognized `mapmarker`, and
+nothing ever produced it.
+
+`styles.css` keys the dashed ring on `.story-map__marker--unknown`, but `resolveMarkerVisual`
+only set the *attribute* `data-marker-type-unknown` on the rendered element. The attribute is
+for tests and diagnostics; the class list is the only string handed to Leaflet and therefore
+the only thing the rule could match. An unrecognized type rendered the same circle as a
+registered one, so "the fallback is visible without being an error" described nothing.
+
+The class now rides on the visual's own `className`, and the image and symbol branches append
+to it rather than rebuilding it, so no later branch can drop it. A test asserts the class is
+present for an unknown type and absent for a registered one — the previous test only asserted
+`unknown: true` on the plan, which was true while the page showed nothing different.
+
+Obsidian was affected too, in the same way: the inline block renders through the same
+`<GeoMap />`.
 
 ## Settings
 

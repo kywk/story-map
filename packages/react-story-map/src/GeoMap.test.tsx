@@ -123,6 +123,22 @@ describe('GeoMap marker types', () => {
     expect(plans[3]?.visual).toMatchObject({ kind: 'circle', type: 'marathon', unknown: true });
   });
 
+  it('carries the unknown-type class so the fallback is visible, not just present', () => {
+    // `unknown: true` on the plan only says the renderer knows it fell back. The
+    // dashed ring that tells a *reader* the type was not recognized is a CSS
+    // rule keyed on this class, so the class has to be part of the visual's own
+    // className - the one handed to Leaflet - or the rule never matches anything.
+    const unknown = resolveMarkerVisual(marker({ type: 'marathon' }), TYPES);
+    expect(unknown.unknown).toBe(true);
+    expect(unknown.className).toContain('story-map__marker--unknown');
+
+    // A registered type must not pick it up, or every marker reads as a fallback.
+    expect(resolveMarkerVisual(marker({ type: 'restaurant' }), TYPES).className)
+      .not.toContain('story-map__marker--unknown');
+    expect(resolveMarkerVisual(marker({ type: 'default' }), TYPES).className)
+      .not.toContain('story-map__marker--unknown');
+  });
+
   it('falls back to the default visual for a type with no icon', () => {
     expect(resolveMarkerVisual(marker({ type: 'deep' }), TYPES)).toMatchObject({
       kind: 'circle',
