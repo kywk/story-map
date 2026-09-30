@@ -85,7 +85,10 @@ markerFolder: backpacker/2509 Chile/Chile
 - A discovered note becomes a marker when it has a valid `location`. A note
   without one is skipped, never a build failure.
 - A note's `mapmarker` names a marker type; an unregistered value still renders
-  through the default visual with the authored name preserved.
+  through the default visual with the authored name preserved. Register types through
+  `leafletPresentation.markerTypes` to give them a symbol or image.
+- A resolved marker link is bound interactive and held open while the pointer travels to
+  it, so it is clickable. This does not depend on the host supplying callbacks.
 - `mapzoom` becomes marker min/max zoom visibility.
 - `unit`, `scale`, and `darkMode` are accepted as compatibility metadata and do
   not raise a parse error.
@@ -198,8 +201,16 @@ note or `noteFolder` resolution happens.
 
 The normalized `map.theme` (`auto`, `light`, `dark`, `vintage`, `cyber`, `atlas`) and
 document-owned `layout` (`card`, `full`, or `timeline`) pass through to the shared renderer
-unchanged. Remark adds no theme palette or layout behavior of its own. `auto` falls back
-to `prefers-color-scheme` in the published site unless the host sets `--story-map-*`.
+unchanged. Remark adds no theme palette or layout behavior of its own.
+
+`auto` falls back to `prefers-color-scheme`, which is the **operating system**. If the
+site's own theme toggle is what should decide, the host must bridge `auto` in its
+stylesheet and must declare **both** directions. A dark-only bridge is silently outranked
+by the renderer's own dark media query on a dark OS, so the map stays dark after the reader
+switches the site to light. Give the bridge one more compound selector than
+`.story-map[data-map-theme='auto']` and it wins without `!important`; see
+`examples/docusaurus/story-map-theme.css` and the Obsidian host's
+`packages/obsidian-story-map/src/obsidian.css`.
 
 ## Resolving published note routes
 

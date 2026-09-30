@@ -112,8 +112,8 @@ byte-identical so later error line numbers still match the authored block.
 | Discriminator | n/a (code-block processor) | `data-story-map-kind="map"`, vs `"story"` for `story-map` |
 | `markerFolder` resolution | Recursive Vault scan | Recursive `VaultIndex` scan, same exclusions |
 | Marker order | Vault-relative path, `localeCompare` | Vault-relative path, `localeCompare` - asserted identical by a cross-host parity test |
-| Published note links | Vault path + Page preview + open in new tab | Host `resolveNoteHref`; unresolvable leaves the marker unlinked |
-| Theme | `leafletCompatibility.theme`, default `auto`, so an inline map follows Obsidian light/dark | `leafletDefaults.theme`; the built-in `light` when a host sets nothing |
+| Published note links | Vault path + Page preview + open in new tab | Host `resolveNoteHref`; unresolvable leaves the marker unlinked. A resolved link is bound interactive and held open, in both hosts |
+| Theme | `leafletCompatibility.theme`, default `auto`, so an inline map follows Obsidian light/dark | `leafletDefaults.theme`; the built-in `light` when a host sets nothing. A host whose own toggle is not `prefers-color-scheme` must bridge `auto` in both directions |
 | Diagnostics | Rendered under the map in the block | Serialized into the host payload, rendered in the same React tree as the map |
 | Leaflet runtime | One per mounted map | One per page, shared by story and map hosts |
 | SSR / build safety | n/a | No Node API in the browser entry; no Leaflet during build |
@@ -164,6 +164,59 @@ These fixtures are the Phase 1 acceptance bar. `kywk.github.io` may delete
 `plugins/remark-obsidian-leaflet/` and `static/js/leaflet-init.js` only after all four
 pass.
 
+### Migrated site
+
+`kywk.github.io` was migrated on 2026-09-30. All 32 `leaflet` blocks across 31 pages now
+render through `@story-map/remark-story-map`; the old `remark-obsidian-leaflet` plugin,
+its `static/js/leaflet-init.js` CDN bootstrap, and the superseded `.leaflet-*` rules in
+`src/css/custom.css` are deleted. There is one Leaflet runtime per page, loaded from the
+StoryMap client bundle only when a story or map host is present.
+
+Verified against a real production build in a headless browser, not only by unit test:
+
+| Page | Hosts | Markers | Notes |
+| --- | ---: | ---: | --- |
+| `2509 Chile/Index de Chile` | 1 | 28 | every marker links to a published route |
+| `2401 Egypt/Index Pharaoh Egypt` | 2 | 27 + 5 | two maps on one page, distinct `sm-1` / `sm-2` instances |
+| `2601 Xinjiang/Index Xinjiang` | 1 | 20 | authored id `chile-2509` is preserved, not renamed or deduped |
+| `2002 Zao/Index Zao` | 1 | 0 | the `markerFolder` really is empty; an empty map is correct |
+
+Marker counts match the survey above, both the Egypt maps mount from a single Leaflet
+runtime, and an SPA round trip returns exactly 2 hosts / 2 containers / 2 panes with no
+duplicate mount and no leaked root. No absolute local path reaches the HTML, and the
+built-in OpenStreetMap source with its attribution is what the browser requests.
+
+### The marker note link was unreachable, and the fix was not where it looked
+
+On the migrated site a marker's tooltip rendered with a correct `href` and still could not
+be clicked. The anchor was present, pointed at the right route, and was inert.
+
+Two independent causes, both in `tooltipBinding`. Obsidian had been verified against a real
+vault and was never affected, because it supplies callbacks and therefore already took the
+permanent interactive path; only a host whose link is a plain `href` hit this:
+
+1. `interactive` was derived from *host callbacks* rather than from the note link, so a
+   host with no callbacks (Docusaurus, where the link is a plain `href`) bound
+   `interactive: false`. Leaflet ships tooltips with `pointer-events: none` and only adds
+   the `leaflet-interactive` class that the stylesheet's `pointer-events: auto` override
+   keys on when the tooltip was bound interactive. Without it the anchor cannot receive
+   the click.
+2. `permanent` and the linked-tooltip controller were gated the same way. The tooltip sits
+   *above* its marker, so Leaflet's `mouseout` close removed it before the pointer crossed
+   the gap. A correct `href` is not a reachable `href`.
+
+Both now follow `marker.notePath !== undefined`. A host callback adds one more reason to
+hold the tooltip open - it is the hover source for an out-of-element preview - but it was
+never the reason the hold was needed. The previous test asserted the broken behavior as
+correct ("no callback means a normal `href`, so Leaflet's own lifecycle is correct here"),
+which is why this survived a green suite; it is replaced by a test that states both
+requirements.
+
+Confirmed in the browser: hovering a marker and clicking the link navigates to
+`/backpacker/2509-chile/chile/阿塔卡馬沙漠-atacama-desert/`, and
+`document.elementFromPoint` at the link's center resolves to the anchor with
+`pointer-events: auto`.
+
 ## Settings
 
 Settings adopted from the old plugin are documented in the archived
@@ -187,6 +240,14 @@ still passes.
 
 Known gaps, in the interest of not overstating support:
 
+- **`auto` follows `prefers-color-scheme` in a non-Obsidian host.** A host whose theme
+  toggle lives somewhere else - a localStorage value written to a `data-theme` attribute,
+  as in Docusaurus - must bridge `auto` itself, and must declare **both** directions. A
+  dark-only bridge looks correct until a reader on a dark OS switches the site to light:
+  the renderer's own `prefers-color-scheme` block still applies its dark palette, because
+  nothing outranks it. The Obsidian host declares both `theme-dark` and `theme-light` for
+  this reason.
+
 - A configured **dark** tile source is stored but never requested; the renderer always
   uses the light source and lets the theme's tile filter darken it. `darkMode` is parsed
   and reported, not acted on.
@@ -194,6 +255,14 @@ Known gaps, in the interest of not overstating support:
   16 px radius rather than binding a handler per marker layer, because Leaflet does not
   expose the originating layer on a propagated click and `onReady` fires once. A click on a
   marker note link is ignored, so copying does not fight navigation.
+- **`kywk.github.io` logs React error #418 on every page holding a story or map host.**
+  This is pre-existing on the already-deployed story-map path, not introduced by the
+  migration: it reproduces on `0.1.1` with no `leaflet` block on the page. The client mounts
+  a second `createRoot` *into* a host element that Docusaurus's own React tree already
+  owns, so the two roots disagree about that subtree during hydration. It is recoverable
+  and the page renders correctly; the nested `createRoot` is longstanding. Fixing it means
+  moving host ownership, which is a Docusaurus-integration change rather than a
+  compatibility one.
 - `unitSystem` is stored for future measurement tooling. Nothing measures.
 
 Deliberately **not** adopted: the mutable-marker CSV store, the custom config directory,

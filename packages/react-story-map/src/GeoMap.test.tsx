@@ -218,19 +218,32 @@ describe('GeoMap tooltips', () => {
       interactive: false,
       linked: false,
     });
+    // Host callbacks alone do not make a tooltip interactive; only a note link
+    // does. A callback with nothing to call is not a reason to hold the tooltip.
+    expect(tooltipBinding(noNote, { permanent: false }, {}).interactive).toBe(false);
     // A permanent mode is still honored when there is no link to protect.
     expect(tooltipBinding(noNote, { permanent: true }, links).permanent).toBe(true);
   });
 
-  it('leaves a note link on plain hover when the host has no callbacks', () => {
-    // No callback means a normal `href` (Docusaurus), which is a real link the
-    // pointer can follow, so Leaflet's own lifecycle is correct here.
+  it('binds a plain href note link permanent and interactive, so the anchor is usable', () => {
+    // A host with no callbacks (Docusaurus) gets a normal `href`, but the anchor
+    // still has to be reachable and clickable. Two separate things are needed:
+    //
+    // `interactive` - Leaflet ships tooltips with `pointer-events: none` and only
+    // adds the `leaflet-interactive` class that the stylesheet's
+    // `pointer-events: auto` override keys on when the tooltip was bound
+    // `interactive: true`. Without it the link sits in the DOM with the right href
+    // and cannot be clicked at all.
+    //
+    // `permanent` + the controller - the tooltip is positioned above its marker, so
+    // Leaflet's own `mouseout` close removes the anchor before the pointer crosses
+    // the gap. A correct href is not a reachable href.
     const marker = { location: { lat: 1, lng: 2 }, title: 'Place', notePath: '/notes/place' };
 
     expect(tooltipBinding(marker, { permanent: false }, {})).toEqual({
-      permanent: false,
-      interactive: false,
-      linked: false,
+      permanent: true,
+      interactive: true,
+      linked: true,
     });
   });
 

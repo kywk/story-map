@@ -434,6 +434,7 @@ partial release retry. Account-side Trusted Publishers must be configured separa
 | `packages/obsidian-story-map/src/settings-tab.test.ts` | definitions, legacy rendering, local-agent draft persistence |
 | `packages/remark-story-map/src/index.test.ts` | fence transform, document flag, `VaultIndex`, folder discovery, tag filtering, `noteDisplay`, source-relative media, scan exclusions, host route resolver, timeline slide dates and their serialization |
 | `packages/remark-story-map/src/parity.test.ts` | cross-host parity: one fixture resolved through both the Obsidian and Remark adapters, asserting identical selection, order, and slide dates, plus the shared `noteDisplay` carve-out |
+| `packages/react-story-map/src/GeoMap.test.tsx` | marker visuals, zoom visibility, tile identity, and the tooltip binding: a note link is interactive and held open whether or not the host supplies callbacks |
 
 The examples and the landing site have no automated tests; verify them manually.
 
@@ -597,6 +598,30 @@ import; existing SPA mount/unmount behavior is unchanged.
 Host instance identity is a per-transformed-file counter (`data-story-map-instance`),
 never derived from the authored id: the Xinjiang fixture reuses `chile-2509` from the Chile
 block, and nothing may rename, deduplicate, or reject a repeated authored id.
+
+### 14.7 A note link is a link in every host
+
+`tooltipBinding` in `react-story-map` decides two things from `marker.notePath`, and from
+nothing else: whether the tooltip is bound `interactive`, and whether it is bound
+`permanent` and handed to the linked-tooltip controller. Host callbacks are not part of
+that decision.
+
+This is the whole fix for a marker note link that renders with a correct `href` and cannot
+be clicked. Leaflet ships tooltips with `pointer-events: none` and only adds the
+`leaflet-interactive` class that the stylesheet's `pointer-events: auto` override keys on
+when the tooltip was bound interactive; and because the tooltip is positioned *above* its
+marker, Leaflet's `mouseout` close removes it before the pointer crosses the gap. A host
+whose link is a plain `href` - Docusaurus, rather than Obsidian's callbacks - needs both
+exactly as much as a callback-driven one. Obsidian supplies callbacks, so it already took
+the permanent interactive path and was never affected; a host without them silently lost
+the link.
+
+`auto` theme is the same kind of host responsibility. The renderer's own `auto` preset
+follows `prefers-color-scheme`, which is the OS, not a host toggle. A host whose toggle
+lives elsewhere bridges `auto` in its own stylesheet, and must declare both directions:
+a dark-only bridge is outranked by the renderer's own dark media query on a dark OS, so the
+map stays dark after the reader switches the site to light. The Obsidian host and
+`kywk.github.io` both do this.
 
 ### 14.7 Host boundaries
 

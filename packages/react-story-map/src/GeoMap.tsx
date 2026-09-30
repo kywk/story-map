@@ -463,9 +463,11 @@ function createMarker(
  * How a marker's tooltip is bound.
  *
  * A tooltip holding a note link is bound permanent and interactive, and its
- * lifecycle is handed to the linked-tooltip controller. That is what keeps the link
- * clickable and keeps the element a host uses as its hover source in the DOM long
- * enough to reach an out-of-element preview. A tooltip with no link keeps Leaflet's
+ * lifecycle is handed to the linked-tooltip controller. `interactive` is what lets
+ * the anchor receive pointer events, and the controller is what keeps the tooltip
+ * in the DOM while the pointer travels to it - both are needed by any note link,
+ * not only by a callback-driven one. A callback additionally makes the tooltip the
+ * hover source for an out-of-element preview. A tooltip with no link keeps Leaflet's
  * ordinary hover binding, which is cheaper and needs no controller.
  */
 export function tooltipBinding(
@@ -473,15 +475,26 @@ export function tooltipBinding(
   tooltip: { permanent: boolean } | null,
   links: NoteLinkShape,
 ): { permanent: boolean; interactive: boolean; linked: boolean } {
-  const linksAreInteractive =
-    marker.notePath !== undefined &&
-    (links.onNoteClick !== undefined || links.onNoteHover !== undefined);
+  const hasNoteLink = marker.notePath !== undefined;
+  // Every note link needs both of these, and neither depends on the host's
+  // callbacks. `interactive` is what lets the anchor receive pointer events at all:
+  // Leaflet ships tooltips with `pointer-events: none` and only adds the
+  // `leaflet-interactive` class the stylesheet's `pointer-events: auto` override
+  // keys on when the tooltip was bound `interactive: true`. The permanent binding
+  // plus the controller are what keep the tooltip alive while the pointer travels:
+  // the tooltip is positioned above its marker, so Leaflet's own `mouseout` close
+  // removes the anchor from the DOM before the pointer can reach it, and the link
+  // is then unclickable however correct its `href` is. A host callback adds one
+  // more reason to hold it - it is the hover source for an out-of-element preview -
+  // but it is not the reason the hold is needed.
+  const interactive = hasNoteLink;
+  const linked = hasNoteLink;
   return {
     // A permanent binding would leave every tooltip open at once, so only a linked
     // tooltip takes over its own lifecycle, and then only while hovered.
-    permanent: linksAreInteractive ? true : (tooltip?.permanent ?? false),
-    interactive: linksAreInteractive,
-    linked: linksAreInteractive,
+    permanent: linked ? true : (tooltip?.permanent ?? false),
+    interactive,
+    linked,
   };
 }
 
