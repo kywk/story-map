@@ -3,12 +3,15 @@ import {
   StoryMapParseError,
   coerceLocation,
   coerceMedia,
-  compareNoteDates,
+   compareNoteDates,
+  compileTagFilter,
+  createFolderMatcher,
   effectiveNoteDisplay,
   extractFencedBlock,
   extractFrontmatterTags,
   isPathInFolder,
   locationOnlySlide,
+  matchesCompiledTagFilter,
   matchesTagFilter,
   mergeResolvedSlide,
   parseStoryMapObject,
@@ -904,5 +907,21 @@ describe('isPathInFolder', () => {
 
   it('matches every file for a root folder', () => {
     expect(isPathInFolder('Anywhere/Note.md', '')).toBe(true);
+  });
+
+  it('reuses a compiled folder matcher with identical behavior', () => {
+    const matcher = createFolderMatcher('/Places/');
+    expect(matcher('Places/Santiago.md')).toBe(true);
+    expect(matcher('Places2/Santiago.md')).toBe(false);
+    expect(createFolderMatcher('')('Anywhere/Note.md')).toBe(true);
+  });
+});
+
+describe('compileTagFilter', () => {
+  it('pre-compiles include and exclude tag sets and matches identically to matchesTagFilter', () => {
+    const filter = compileTagFilter(['#Travel', 'Chile'], [' #Draft ']);
+    expect(matchesCompiledTagFilter({ tags: ['chile'] }, filter)).toBe(true);
+    expect(matchesCompiledTagFilter({ tags: ['chile', 'draft'] }, filter)).toBe(false);
+    expect(matchesCompiledTagFilter({ tags: ['peru'] }, filter)).toBe(false);
   });
 });

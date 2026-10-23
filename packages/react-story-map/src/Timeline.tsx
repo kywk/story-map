@@ -1,10 +1,11 @@
 import { memo, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { RefCallback } from 'react';
 import type { StoryMapConfig, StorySlide } from '@story-map/story-map-core';
 import { NoteLink } from './StoryMap.js';
 import type { StoryMapProps } from './StoryMap.js';
+
+const REMARK_PLUGINS = [remarkGfm];
 
 export interface StoryTimelineProps {
   story: StoryMapConfig;
@@ -48,11 +49,12 @@ export function StoryTimeline({
   onNoteHover,
   noteLinkClassName,
 }: StoryTimelineProps) {
-  const rowRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const listRef = useRef<HTMLOListElement | null>(null);
 
   // Keep the active row visible without measuring or animating it.
   useEffect(() => {
-    rowRefs.current[activeIndex]?.scrollIntoView({ block: 'nearest' });
+    const activeRow = listRef.current?.children.item(activeIndex) as HTMLElement | null | undefined;
+    activeRow?.scrollIntoView?.({ block: 'nearest' });
   }, [activeIndex]);
 
   return (
@@ -61,17 +63,14 @@ export function StoryTimeline({
         {story.title && (
           <div className="story-map__story-title story-map__timeline-header">{story.title}</div>
         )}
-        <ol className="story-map__timeline">
+        <ol ref={listRef} className="story-map__timeline">
           {story.slides.map((slide, index) => (
             <TimelineRow
               key={slide.id ?? index}
               slide={slide}
               index={index}
               active={index === activeIndex}
-              onSelect={() => onGo(index)}
-              rowRef={(element) => {
-                rowRefs.current[index] = element;
-              }}
+              onGo={onGo}
               onNoteClick={onNoteClick}
               onNoteHover={onNoteHover}
               noteLinkClassName={noteLinkClassName}
@@ -87,8 +86,7 @@ interface TimelineRowProps {
   slide: StorySlide;
   index: number;
   active: boolean;
-  onSelect: () => void;
-  rowRef: RefCallback<HTMLLIElement>;
+  onGo: (index: number) => void;
   onNoteClick?: StoryMapProps['onNoteClick'] | undefined;
   onNoteHover?: StoryMapProps['onNoteHover'] | undefined;
   noteLinkClassName?: string | undefined;
@@ -98,8 +96,7 @@ function TimelineRowImpl({
   slide,
   index,
   active,
-  onSelect,
-  rowRef,
+  onGo,
   onNoteClick,
   onNoteHover,
   noteLinkClassName,
@@ -118,7 +115,7 @@ function TimelineRowImpl({
     );
 
   return (
-    <li ref={rowRef} className="story-map__timeline-item" data-active={active ? '' : undefined}>
+    <li className="story-map__timeline-item" data-active={active ? '' : undefined}>
       {dateNode}
       {slide.media?.type === 'image' && (
         <figure className="story-map__timeline-media">
@@ -134,14 +131,14 @@ function TimelineRowImpl({
           type="button"
           className="story-map__timeline-select"
           aria-current={active ? 'true' : undefined}
-          onClick={onSelect}
+          onClick={() => onGo(index)}
         >
           {slide.title ?? label}
         </button>
       </h3>
       {slide.text && (
         <div className="story-map__timeline-text">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{slide.text}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={REMARK_PLUGINS}>{slide.text}</ReactMarkdown>
         </div>
       )}
       {slide.notePath !== undefined && (

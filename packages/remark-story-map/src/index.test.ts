@@ -819,4 +819,28 @@ describe('remarkStoryMap host resolution', () => {
       rmSync(vaultRoot, { recursive: true, force: true });
     }
   });
+
+  it('defers vault scanning until a story-map or leaflet block is actually visited', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'storymap-lazy-'));
+    try {
+      const transform = remarkStoryMap({ vaultRoot: root });
+      // Transforming a document with no map blocks does not trigger a scan yet.
+      const plainTree: Root = { type: 'root', children: [{ type: 'code', lang: 'yaml', value: 'a: 1' }] };
+      transform(plainTree);
+
+      // A note written after plugin initialization is still discovered on the first real map block.
+      writeFileSync(
+        path.join(root, 'LateNote.md'),
+        matter.stringify('Body', { title: 'Late Note', location: [10, 20] }),
+      );
+      const mapTree = storyMapTree('slides:\n  - note: "[[LateNote]]"\n');
+      transform(mapTree);
+
+      const config = readConfig(mapTree.children[0] as Html);
+      const slides = config.slides as Array<Record<string, unknown>>;
+      expect(slides[0]?.title).toBe('Late Note');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -7,6 +7,8 @@ import { MapCanvas } from './MapCanvas.js';
 import { StoryTimeline } from './Timeline.js';
 import { noteLinkAttributes } from './noteLink.js';
 import type { NoteLinkShape } from './noteLink.js';
+
+const REMARK_PLUGINS = [remarkGfm];
 
 export interface StoryMapProps {
   story: StoryMapConfig;
@@ -40,9 +42,12 @@ export function StoryMap({
     setActiveIndex((current) => clamp(current, 0, story.slides.length - 1));
   }, [story.slides.length]);
 
-  function goTo(next: number) {
-    setActiveIndex(clamp(next, 0, story.slides.length - 1));
-  }
+  const goTo = useCallback(
+    (next: number) => {
+      setActiveIndex(clamp(next, 0, story.slides.length - 1));
+    },
+    [story.slides.length],
+  );
 
   if (!activeSlide) {
     return (
@@ -113,7 +118,7 @@ export function StoryMap({
             <StoryMediaView slide={activeSlide} />
             {activeSlide.text && (
               <div className="story-map__text">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{activeSlide.text}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={REMARK_PLUGINS}>{activeSlide.text}</ReactMarkdown>
               </div>
             )}
             {!isFull && (

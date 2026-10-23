@@ -107,6 +107,8 @@ export interface GeoMapProps {
 interface MarkerEntry {
   layer: Layer;
   range: MarkerZoomRange;
+  bounded: boolean;
+  visible: boolean;
   element: Element | null;
   emphasis(active: boolean): void;
 }
@@ -184,7 +186,11 @@ export function GeoMap({
   /** Add or remove each marker so only those inside their `mapzoom` range show. */
   function applyZoomVisibility(group: LayerGroup, zoom: number) {
     for (const entry of markersRef.current) {
-      if (isMarkerVisibleAtZoom(entry.range, zoom)) group.addLayer(entry.layer);
+      if (!entry.bounded) continue;
+      const shouldShow = isMarkerVisibleAtZoom(entry.range, zoom);
+      if (shouldShow === entry.visible) continue;
+      entry.visible = shouldShow;
+      if (shouldShow) group.addLayer(entry.layer);
       else group.removeLayer(entry.layer);
     }
   }
@@ -456,7 +462,8 @@ function createMarker(
     emphasis(active);
     element?.classList.toggle(ACTIVE_CLASS, active);
   };
-  return { layer, range: plan.range, element, emphasis: styled };
+  const bounded = plan.range.minZoom !== undefined || plan.range.maxZoom !== undefined;
+  return { layer, range: plan.range, bounded, visible: true, element, emphasis: styled };
 }
 
 /**

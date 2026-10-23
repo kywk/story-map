@@ -504,11 +504,22 @@ export function normalizeVaultFolder(folder: string): string {
     .replace(/\/+$/, '');
 }
 
-export function isPathInFolder(filePath: string, folder: string): boolean {
+/**
+ * Build a reusable folder-prefix matcher so scanning thousands of notes does not
+ * re-run `normalizeVaultFolder` on every file.
+ */
+export function createFolderMatcher(folder: string): (filePath: string) => boolean {
   const normalizedFolder = normalizeVaultFolder(folder);
-  const normalizedFile = filePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  if (!normalizedFolder) return true;
-  return normalizedFile.startsWith(`${normalizedFolder}/`);
+  if (!normalizedFolder) return () => true;
+  const prefix = `${normalizedFolder}/`;
+  return (filePath: string) => {
+    const normalizedFile = filePath.replace(/\\/g, '/').replace(/^\/+/, '');
+    return normalizedFile.startsWith(prefix);
+  };
+}
+
+export function isPathInFolder(filePath: string, folder: string): boolean {
+  return createFolderMatcher(folder)(filePath);
 }
 
 export function normalizeTag(value: string): string {
@@ -536,21 +547,6 @@ export function extractFrontmatterTags(frontmatter: Record<string, unknown>): st
   return [...tags];
 }
 
-export function matchesTagFilter(
-  frontmatter: Record<string, unknown>,
-  includeTags?: readonly string[],
-  excludeTags?: readonly string[],
-): boolean {
-  const include = normalizeTagList(includeTags);
-  const exclude = normalizeTagList(excludeTags);
-  if (include.length === 0 && exclude.length === 0) return true;
-
-  const tags = new Set(extractFrontmatterTags(frontmatter));
-  if (exclude.some((tag) => tags.has(tag))) return false;
-  if (include.length > 0 && !include.some((tag) => tags.has(tag))) return false;
-  return true;
-}
-
 function normalizeTagList(values?: readonly string[]): string[] {
   const tags = new Set<string>();
   for (const value of values ?? []) {
@@ -558,6 +554,52 @@ function normalizeTagList(values?: readonly string[]): string[] {
     if (tag) tags.add(tag);
   }
   return [...tags];
+}
+
+export interface CompiledTagFilter {
+  readonly include: ReadonlySet<string>;
+  readonly exclude: ReadonlySet<string>;
+}
+
+/**
+ * Pre-normalize `includeTags` and `excludeTags` once before scanning a folder,
+ * avoiding repeated per-note tag-list normalization in large vaults.
+ */
+export function compileTagFilter(
+  includeTags?: readonly string[],
+  excludeTags?: readonly string[],
+): CompiledTagFilter {
+  return {
+    include: new Set(normalizeTagList(includeTags)),
+    exclude: new Set(normalizeTagList(excludeTags)),
+  };
+}
+
+export function matchesCompiledTagFilter(
+  frontmatter: Record<string, unknown>,
+  filter: CompiledTagFilter,
+): boolean {
+  if (filter.include.size === 0 && filter.exclude.size === 0) return true;
+
+  const tags = extractFrontmatterTags(frontmatter);
+  for (const tag of tags) {
+    if (filter.exclude.has(tag)) return false;
+  }
+  if (filter.include.size > 0) {
+    for (const tag of tags) {
+      if (filter.include.has(tag)) return true;
+    }
+    return false;
+  }
+  return true;
+}
+
+export function matchesTagFilter(
+  frontmatter: Record<string, unknown>,
+  includeTags?: readonly string[],
+  excludeTags?: readonly string[],
+): boolean {
+  return matchesCompiledTagFilter(frontmatter, compileTagFilter(includeTags, excludeTags));
 }
 
 export function resolveInitialSlideIndex(

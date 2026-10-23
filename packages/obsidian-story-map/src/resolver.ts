@@ -1,9 +1,10 @@
 import type { App, TFile } from 'obsidian';
 import {
+  compileTagFilter,
+  createFolderMatcher,
   effectiveNoteDisplay,
-  isPathInFolder,
   locationOnlySlide,
-  matchesTagFilter,
+  matchesCompiledTagFilter,
   mergeResolvedSlide,
   parseWikiLinkRef,
   slideFromNoteFrontmatter,
@@ -74,20 +75,27 @@ async function resolveFolderSlides(
   includeTags?: readonly string[],
   excludeTags?: readonly string[],
 ): Promise<StorySlide[]> {
-  const entries = app.vault
-    .getMarkdownFiles()
-    .filter((file) => isPathInFolder(file.path, noteFolder))
-    .map((file) => {
-      const frontmatter = readFrontmatter(app, file);
-      return {
-        path: file.path,
-        date: toTimestamp(frontmatter[dateField]),
-        file,
-        frontmatter,
-      };
-    })
-    .filter((entry) => entry.frontmatter['story-map-note'] === true)
-    .filter((entry) => matchesTagFilter(entry.frontmatter, includeTags, excludeTags));
+  const inFolder = createFolderMatcher(noteFolder);
+  const tagFilter = compileTagFilter(includeTags, excludeTags);
+  const entries: Array<{
+    path: string;
+    date: number | null;
+    file: TFile;
+    frontmatter: Record<string, unknown>;
+  }> = [];
+
+  for (const file of app.vault.getMarkdownFiles()) {
+    if (!inFolder(file.path)) continue;
+    const frontmatter = readFrontmatter(app, file);
+    if (frontmatter['story-map-note'] !== true) continue;
+    if (!matchesCompiledTagFilter(frontmatter, tagFilter)) continue;
+    entries.push({
+      path: file.path,
+      date: toTimestamp(frontmatter[dateField]),
+      file,
+      frontmatter,
+    });
+  }
 
   return Promise.all(
     sortNoteDates(entries, order).map((entry) =>

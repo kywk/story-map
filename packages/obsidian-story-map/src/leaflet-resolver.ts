@@ -1,6 +1,6 @@
 import type { App } from 'obsidian';
 import {
-  isPathInFolder,
+  createFolderMatcher,
   markerFromNoteFrontmatter,
   toGeoMapConfig,
   type GeoMapConfig,
@@ -53,9 +53,10 @@ export function resolveMarkerFolder(
 ): GeoMarker[] {
   if (folders.length === 0) return [];
 
+  const matchers = folders.map(createFolderMatcher);
   const files = app.vault
     .getMarkdownFiles()
-    .filter((file) => folders.some((folder) => isPathInFolder(file.path, folder)))
+    .filter((file) => matchers.some((inFolder) => inFolder(file.path)))
     .sort((a, b) => a.path.localeCompare(b.path));
 
   const markers: GeoMarker[] = [];

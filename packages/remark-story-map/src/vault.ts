@@ -1,13 +1,14 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 import {
   DEFAULT_DATE_FIELD,
+  compileTagFilter,
+  createFolderMatcher,
   effectiveNoteDisplay,
-  isPathInFolder,
   locationOnlySlide,
   markerFromNoteFrontmatter,
-  matchesTagFilter,
+  matchesCompiledTagFilter,
   mergeResolvedSlide,
   parseWikiLinkRef,
   slideFromNoteFrontmatter,
@@ -58,15 +59,21 @@ interface IndexedNote {
 }
 
 export class VaultIndex {
-  private readonly byBasename = new Map<string, string[]>();
-  private readonly byRelativePath = new Map<string, string>();
+  private readonly byBasename = new Map<string, IndexedNote[]>();
+  private readonly byRelativePath = new Map<string, IndexedNote>();
   private readonly notes: IndexedNote[] = [];
+  private scanned = false;
 
-  constructor(private readonly options: VaultResolveOptions) {
-    this.scan(options.vaultRoot);
+  constructor(private readonly options: VaultResolveOptions) {}
+
+  private ensureScanned(): void {
+    if (this.scanned) return;
+    this.scanned = true;
+    this.scan(this.options.vaultRoot);
   }
 
   resolveSource(source: StoryMapSourceConfig, sourcePath?: string): StoryMapConfig {
+    this.ensureScanned();
     const noteDisplay = effectiveNoteDisplay(source.layout.mode, source.noteDisplay);
     const explicitSlides = source.slides ?? [];
     const slides = explicitSlides.length > 0
@@ -118,6 +125,7 @@ export class VaultIndex {
     source: LeafletSourceConfig,
     presentation: LeafletHostPresentation = {},
   ): GeoMarker[] {
+    this.ensureScanned();
     const markers = source.markerFolder.flatMap((folder) => this.markersInFolder(folder, presentation));
     const used = new Set<string>();
     return markers.map((marker) => {
@@ -145,8 +153,9 @@ export class VaultIndex {
     // the two hosts emit markers in the same order for the same folder.
     // Folder order still follows the authored `markerFolder` sequence, because
     // the list is a flatMap over it.
+    const inFolder = createFolderMatcher(folder);
     const indexed = this.notes
-      .filter((note) => isPathInFolder(note.relativePath, folder))
+      .filter((note) => inFolder(note.relativePath))
       .sort((left, right) => left.relativePath.localeCompare(right.relativePath));
 
     for (const note of indexed) {
@@ -183,6 +192,7 @@ export class VaultIndex {
     sourcePath?: string,
     dateField: string = DEFAULT_DATE_FIELD,
   ): StoryMapConfig {
+    this.ensureScanned();
     return {
       ...story,
       slides: this.resolveExplicitSlides(
@@ -214,15 +224,20 @@ export class VaultIndex {
     includeTags?: readonly string[],
     excludeTags?: readonly string[],
   ): StorySlide[] {
+    const inFolder = createFolderMatcher(noteFolder);
+    const tagFilter = compileTagFilter(includeTags, excludeTags);
     const entries = this.notes
-      .filter((note) => isPathInFolder(note.relativePath, noteFolder))
+      .filter(
+        (note) =>
+          note.frontmatter['story-map-note'] === true &&
+          inFolder(note.relativePath) &&
+          matchesCompiledTagFilter(note.frontmatter, tagFilter),
+      )
       .map((note) => ({
         path: note.relativePath,
         date: toTimestamp(note.frontmatter[dateField]),
         note,
-      }))
-      .filter((entry) => entry.note.frontmatter['story-map-note'] === true)
-      .filter((entry) => matchesTagFilter(entry.note.frontmatter, includeTags, excludeTags));
+      }));
 
     return sortNoteDates(entries, order).map((entry) =>
       this.slideForNote(entry.note, noteDisplay, layoutMode, entry.date),
@@ -318,42 +333,50 @@ export class VaultIndex {
   private findIndexed(ref: string): IndexedNote | undefined {
     const normalized = ref.replace(/\\/g, '/').replace(/\.md$/i, '');
     const exact = this.byRelativePath.get(normalized.toLowerCase());
-    if (exact) return this.notes.find((note) => note.absolutePath === exact);
+    if (exact) return exact;
 
     const basename = path.posix.basename(normalized).toLowerCase();
     const matches = this.byBasename.get(basename) ?? [];
     if (matches.length > 1) {
       throw new Error(`Ambiguous WikiLink '${ref}'. Use a Vault-relative path.`);
     }
-    const match = matches[0];
-    return match ? this.notes.find((note) => note.absolutePath === match) : undefined;
+    return matches[0];
   }
 
   private scan(directory: string): void {
     if (!existsSync(directory)) return;
 
-    for (const entry of readdirSync(directory)) {
-      if (entry.startsWith('.') || EXCLUDED_DIRECTORIES.has(entry)) continue;
-      const full = path.join(directory, entry);
-      const stat = statSync(full);
-      if (stat.isDirectory()) {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const name = entry.name;
+      if (name.startsWith('.') || EXCLUDED_DIRECTORIES.has(name)) continue;
+      const full = path.join(directory, name);
+      if (entry.isDirectory()) {
         this.scan(full);
         continue;
       }
-      if (!entry.toLowerCase().endsWith('.md')) continue;
+      if (!entry.isFile() || !name.toLowerCase().endsWith('.md')) continue;
 
       const relative = path
         .relative(this.options.vaultRoot, full)
         .replace(/\\/g, '/')
         .replace(/\.md$/i, '');
       const basename = path.basename(relative).toLowerCase();
-      const current = this.byBasename.get(basename) ?? [];
-      current.push(full);
-      this.byBasename.set(basename, current);
-      this.byRelativePath.set(relative.toLowerCase(), full);
 
-      const frontmatter = (matter(readFileSync(full, 'utf8')).data ?? {}) as Record<string, unknown>;
-      this.notes.push({ absolutePath: full, relativePath: relative, frontmatter });
+      const raw = readFileSync(full, 'utf8');
+      const frontmatter = extractYamlFrontmatter(raw);
+      const indexed: IndexedNote = { absolutePath: full, relativePath: relative, frontmatter };
+
+      const current = this.byBasename.get(basename) ?? [];
+      current.push(indexed);
+      this.byBasename.set(basename, current);
+      this.byRelativePath.set(relative.toLowerCase(), indexed);
+      this.notes.push(indexed);
     }
   }
+}
+
+function extractYamlFrontmatter(raw: string): Record<string, unknown> {
+  const match = /^\uFEFF?---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/.exec(raw);
+  if (!match) return {};
+  return (matter(match[0]).data ?? {}) as Record<string, unknown>;
 }

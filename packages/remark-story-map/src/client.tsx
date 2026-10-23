@@ -146,9 +146,27 @@ export function mountStoryMaps(scope: ParentNode = document) {
 export function startStoryMapClient() {
   if (typeof document === 'undefined') return () => {};
 
-  const run = () => mountStoryMaps(document);
+  let scheduled = false;
+  const run = () => {
+    scheduled = false;
+    mountStoryMaps(document);
+  };
+  const schedule = () => {
+    if (scheduled) return;
+    scheduled = true;
+    queueMicrotask(run);
+  };
+
   run();
-  const observer = new MutationObserver(run);
+  const observer = new MutationObserver((records) => {
+    for (const record of records) {
+      if (record.addedNodes.length === 0 && record.removedNodes.length === 0) continue;
+      const target = record.target as Element | null;
+      if (target?.closest?.('.story-map')) continue;
+      schedule();
+      break;
+    }
+  });
   observer.observe(document.body, { childList: true, subtree: true });
   return () => observer.disconnect();
 }

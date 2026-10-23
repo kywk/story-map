@@ -54,6 +54,7 @@ export function createLinkedTooltipController(
   // not enough: the closures live in the layer's own event registry, so a re-tracked
   // layer would fire twice.
   const tracked = new Map<Layer, { over: () => void; out: () => void }>();
+  const boundElements = new WeakSet<HTMLElement>();
   let open: { layer: TooltipLayerLike; element: HTMLElement | null } | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -85,10 +86,13 @@ export function createLinkedTooltipController(
     cancelPendingClose();
     open = { layer, element };
     layer.openTooltip?.();
-    element?.addEventListener('mouseover', cancelPendingClose);
-    element?.addEventListener('mouseenter', cancelPendingClose);
-    element?.addEventListener('mouseout', scheduleClose);
-    element?.addEventListener('mouseleave', scheduleClose);
+    if (element && !boundElements.has(element)) {
+      boundElements.add(element);
+      element.addEventListener('mouseover', cancelPendingClose);
+      element.addEventListener('mouseenter', cancelPendingClose);
+      element.addEventListener('mouseout', scheduleClose);
+      element.addEventListener('mouseleave', scheduleClose);
+    }
   }
 
   function track(raw: Layer) {

@@ -98,11 +98,7 @@ export class StoryMapView extends TextFileView {
 
   private async render(source: string): Promise<void> {
     const token = ++this.renderToken;
-    this.unmountReact();
-
     const host = this.ensureHost();
-    host.empty();
-    host.removeClass('story-map-host--error');
 
     try {
       const block = extractFencedBlock(source, STORY_MAP_FENCE);
@@ -116,8 +112,12 @@ export class StoryMapView extends TextFileView {
       const story = await resolveObsidianStory(this.app, parsed, this.file?.path ?? '');
       if (token !== this.renderToken) return;
 
+      host.removeClass('story-map-host--error');
       const { onNoteClick, onNoteHover } = this.noteLinks();
-      this.root = createRoot(host);
+      if (!this.root) {
+        host.empty();
+        this.root = createRoot(host);
+      }
       this.root.render(
         <StoryMap
           story={{ ...story, height: '100%' }}
@@ -130,6 +130,8 @@ export class StoryMapView extends TextFileView {
       );
     } catch (error) {
       if (token !== this.renderToken) return;
+      this.unmountReact();
+      host.empty();
       host.addClass('story-map-host--error');
       host.setText(formatStoryMapError(error));
     }

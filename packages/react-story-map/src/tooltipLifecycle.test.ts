@@ -213,4 +213,19 @@ describe('linked marker tooltip lifecycle', () => {
     // Exactly one handler survived the rebuild, not two stacked ones.
     expect(stale.openCount).toBe(1);
   });
+
+  it('attaches DOM listeners to a tooltip element only once across repeated hovers', () => {
+    const controller = createLinkedTooltipController();
+    const fake = new FakeLayer();
+    controller.track(layer(fake));
+
+    fake.fire('mouseover');
+    fake.fire('mouseout');
+    fake.fire('mouseover');
+
+    expect(fake.element.listeners.get('mouseover')?.size).toBe(1);
+    expect(fake.element.listeners.get('mouseenter')?.size).toBe(1);
+    expect(fake.element.listeners.get('mouseout')?.size).toBe(1);
+    expect(fake.element.listeners.get('mouseleave')?.size).toBe(1);
+  });
 });

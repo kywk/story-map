@@ -57,6 +57,12 @@ export function resolveMarkerVisual(
   types: readonly MarkerTypeDefinition[] | undefined,
 ): MarkerVisual {
   const resolution = resolveMarkerType({ authoredType: marker.type, types });
+  return visualFromResolution(resolution);
+}
+
+function visualFromResolution(
+  resolution: ReturnType<typeof resolveMarkerType>,
+): MarkerVisual {
   const definition = resolution.definition;
   const icon = definition?.icon;
   const base: MarkerVisual = {
@@ -92,6 +98,13 @@ export function markerZoomRange(
   types: readonly MarkerTypeDefinition[] | undefined,
 ): MarkerZoomRange {
   const resolution = resolveMarkerType({ authoredType: marker.type, types });
+  return rangeFromResolution(marker, resolution);
+}
+
+function rangeFromResolution(
+  marker: GeoMarker,
+  resolution: ReturnType<typeof resolveMarkerType>,
+): MarkerZoomRange {
   const minZoom = marker.minZoom ?? resolution.minZoom;
   const maxZoom = marker.maxZoom ?? resolution.maxZoom;
   return {
@@ -156,10 +169,11 @@ export function buildMarkerPlan(
 ): MarkerPlan[] {
   return markers.map((marker) => {
     const mode = effectiveTooltipMode(marker, defaultTooltip);
+    const resolution = resolveMarkerType({ authoredType: marker.type, types });
     return {
       marker,
-      visual: resolveMarkerVisual(marker, types),
-      range: markerZoomRange(marker, types),
+      visual: visualFromResolution(resolution),
+      range: rangeFromResolution(marker, resolution),
       tooltip: tooltipBinding(mode),
       hasTooltipContent: marker.title !== undefined || marker.description !== undefined || marker.notePath !== undefined,
     };

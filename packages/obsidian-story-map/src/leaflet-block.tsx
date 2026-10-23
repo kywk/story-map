@@ -86,9 +86,6 @@ export class LeafletBlockController {
   }
 
   private render(el: HTMLElement, source: string, sourcePath: string, token: number): void {
-    this.unmount(el);
-    el.empty();
-    el.removeClass('story-map-host--error');
     el.addClass('geo-story-map-block-host');
 
     try {
@@ -105,8 +102,18 @@ export class LeafletBlockController {
         notePreview: settings.interaction.notePreview,
       });
 
-      const root = createRoot(el);
-      this.roots.set(el, { root, token });
+      el.removeClass('story-map-host--error');
+      const existing = this.roots.get(el);
+      let root: Root;
+      if (existing) {
+        existing.token = token;
+        root = existing.root;
+      } else {
+        el.empty();
+        root = createRoot(el);
+        this.roots.set(el, { root, token });
+      }
+
       root.render(
         <LeafletBlock
           config={config}
@@ -122,6 +129,8 @@ export class LeafletBlockController {
     } catch (error) {
       // A block this plugin cannot read reports inside itself: the rest of the note
       // still renders, and the rest of the vault is untouched.
+      this.unmount(el);
+      el.empty();
       el.addClass('story-map-host--error');
       el.setText(formatLeafletError(error));
     }
